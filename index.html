@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InterviewPrep | Master JS, React & RN</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <h1>PrepDocs</h1>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-item active" data-file="javascript.md" id="btn-js">
+                    <span class="icon">JS</span>
+                    <span class="label">JavaScript</span>
+                </button>
+                <button class="nav-item" data-file="react.md" id="btn-react">
+                    <span class="icon">⚛️</span>
+                    <span class="label">React JS</span>
+                </button>
+                <button class="nav-item" data-file="react-native.md" id="btn-rn">
+                    <span class="icon">📱</span>
+                    <span class="label">React Native</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="footer-btn">
+                    <span class="theme-icon">🌙</span>
+                    <span class="theme-text">Dark Mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <span id="current-category">JavaScript</span> / <span class="active-page">Checklist</span>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search concepts...">
+                </div>
+            </header>
+            
+            <section id="markdown-content" class="markdown-body">
+                <div class="loader">Loading your roadmap...</div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Concept Explanation -->
+    <div id="concept-modal" class="modal-overlay">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Concept Name</h2>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </header>
+            <div class="modal-body">
+                <div id="modal-explanation" class="explanation-text"></div>
+                <div class="code-section">
+                    <h3>Code Example</h3>
+                    <pre><code id="modal-code" class="language-javascript"></code></pre>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button id="done-btn" class="primary-btn">Got it!</button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="conceptsData.js"></script>
+    <script src="conceptsData2.js"></script>
+    <script src="conceptsData3.js"></script>
+    <script src="conceptsData4.js"></script>
+    <script src="conceptsData5.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
