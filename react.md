@@ -75,3 +75,19 @@ This document outlines the essential and advanced React concepts required for hi
 - [ ] **Vite**: Modern build tool for fast development.
 - [ ] **Tailwind CSS / Styled Components**: Styling solutions in the React ecosystem.
 - [ ] **TypeScript with React**: Typing props, state, hooks, and events.
+
+## 🆕 React 19 (The Future)
+- [ ] **Actions**: Handling data mutations and state transitions.
+- [ ] **The `use` Hook**: Consuming promises and context during render.
+- [ ] **useOptimistic**: Implementing optimistic UI updates.
+- [ ] **useFormStatus & useFormState**: Form-specific hooks for better UX.
+- [ ] **React Server Components (RSC) Deep Dive**: The shift in mental model.
+- [ ] **Ref as a Prop**: Passing refs directly without `forwardRef`.
+- [ ] **Server Actions**: Calling server-side functions directly from client components.
+
+## 🏗️ Advanced Architecture
+- [ ] **Atomic Design**: Organizing components into Atoms, Molecules, Organisms.
+- [ ] **Feature-based Folder Structure**: Scaling large React applications.
+- [ ] **Micro-Frontends with React**: Module Federation and orchestration.
+- [ ] **Monorepos for React**: Using Turborepo or Nx for scale.
+
