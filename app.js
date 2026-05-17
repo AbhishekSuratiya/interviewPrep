@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const data = getConceptData(conceptName);
+        if (!data) {
+            console.warn(`No data found for concept: ${conceptName}`);
+            return; // Exit if no data is found to prevent crash
+        }
         modalTitle.textContent = conceptName;
         modalExplanation.innerHTML = data.explanation;
         modalCode.textContent = data.code;
