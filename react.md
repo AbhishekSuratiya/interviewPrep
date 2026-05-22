@@ -24,6 +24,53 @@ This document outlines the essential and advanced React concepts required for hi
 - [ ] **useImperativeHandle**: Customizing the instance value that is exposed to parent components when using `ref`.
 - [ ] **Custom Hooks**: Extracting component logic into reusable functions.
 
+## 📅 Hooks Timeline (By React Version)
+- [ ] **React 16.8 (2019) — Initial Hooks Release**:
+    - [ ] `useState`, `useEffect`, `useContext`, `useReducer`
+    - [ ] `useCallback`, `useMemo`, `useRef`
+    - [ ] `useImperativeHandle`, `useLayoutEffect`, `useDebugValue`
+- [ ] **React 16.13 (2020) — Experimental Concurrent Hooks**:
+    - [ ] `useDeferredValue` *(experimental)*
+    - [ ] `useTransition` *(experimental)*
+- [ ] **React 17 (2020)**:
+    - [ ] No new hooks — preparation release for concurrent rendering.
+- [ ] **React 18 (2022) — Concurrent Features Stable**:
+    - [ ] `useId` — Generating unique IDs for accessibility & SSR hydration.
+    - [ ] `useTransition` — Mark state updates as non-urgent (stable).
+    - [ ] `useDeferredValue` — Defer re-rendering of non-critical content (stable).
+    - [ ] `useSyncExternalStore` — Subscribe to external stores with concurrent-safe reads.
+    - [ ] `useInsertionEffect` — Inject styles before DOM mutations (for CSS-in-JS libraries).
+- [ ] **React 19 (2024) — Async & Server-Oriented Hooks**:
+    - [ ] `use` — Consume promises and context during render.
+    - [ ] `useActionState` — Manage state transitions from async actions.
+    - [ ] `useOptimistic` — Optimistic UI updates while async action is pending.
+    - [ ] `useFormStatus` — Read status of a parent `<form>` (pending, data, method).
+- [ ] **React 19.2 (2025)**:
+    - [ ] `useEffectEvent` — Capture the latest values in effects without re-running them.
+
+## 🔬 Hooks Internals (Deep Tech)
+- [ ] **How `useState` Works Internally**:
+    - [ ] `mountState` vs `updateState` — first render vs re-render paths.
+    - [ ] The `queue` object and how updates are batched.
+    - [ ] Why `setState(prev => prev + 1)` is different from `setState(count + 1)`.
+- [ ] **How React Stores Hooks in a Linked List**:
+    - [ ] Each component's Fiber node has a `memoizedState` linked list.
+    - [ ] Each hook call creates a node: `{ memoizedState, next, queue }`.
+    - [ ] Hooks are traversed in call order on every render.
+- [ ] **Why Hooks Order Matters**:
+    - [ ] React relies on call order (not names) to match hooks to their state.
+    - [ ] Conditional/loop hook calls break the linked list traversal.
+    - [ ] The ESLint rule `rules-of-hooks` and what it prevents.
+- [ ] **How Closures Cause Stale State Bugs**:
+    - [ ] `useEffect` captures values from the render it was created in.
+    - [ ] The "stale closure" trap: referencing old state in `setTimeout`/event handlers.
+    - [ ] Fixes: functional updates `setState(prev => ...)`, `useRef` for latest value, and `useEffectEvent`.
+- [ ] **How Fiber Tracks Hooks Per Component**:
+    - [ ] Fiber tree structure: `child`, `sibling`, `return` pointers.
+    - [ ] `currentlyRenderingFiber` — the global pointer React uses during render.
+    - [ ] `workInProgress` Fiber and how hooks are copied/updated during reconciliation.
+    - [ ] Double-buffering: `current` tree vs `workInProgress` tree.
+
 ## 🗃️ State Management
 - [ ] **Lifting State Up**: Sharing state between components by moving it to their closest common ancestor.
 - [ ] **Context API**: Managing global state without "prop drilling".
@@ -76,14 +123,15 @@ This document outlines the essential and advanced React concepts required for hi
 - [ ] **Tailwind CSS / Styled Components**: Styling solutions in the React ecosystem.
 - [ ] **TypeScript with React**: Typing props, state, hooks, and events.
 
-## 🆕 React 19 (The Future)
+## 🆕 React 19 & Beyond
 - [ ] **Actions**: Handling data mutations and state transitions.
 - [ ] **The `use` Hook**: Consuming promises and context during render.
 - [ ] **useOptimistic**: Implementing optimistic UI updates.
-- [ ] **useFormStatus & useFormState**: Form-specific hooks for better UX.
+- [ ] **useFormStatus & useActionState**: Form-specific hooks for better UX.
 - [ ] **React Server Components (RSC) Deep Dive**: The shift in mental model.
 - [ ] **Ref as a Prop**: Passing refs directly without `forwardRef`.
 - [ ] **Server Actions**: Calling server-side functions directly from client components.
+- [ ] **useEffectEvent (React 19.2)**: Stable event handlers inside effects without re-triggering them.
 
 ## 🏗️ Advanced Architecture
 - [ ] **Atomic Design**: Organizing components into Atoms, Molecules, Organisms.
