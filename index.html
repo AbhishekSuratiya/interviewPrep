@@ -3,94 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InterviewPrep | Master JS, React & RN</title>
+    <title>PrepDocs | Master JS, React & React Native</title>
+    <meta name="description" content="A premium interview preparation guide for JavaScript, React JS, and React Native — with detailed concept explanations and code examples.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
 </head>
-<body class="dark-mode">
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <span class="logo-icon">⚡</span>
-                <h1>PrepDocs</h1>
+<body>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon-wrap">
+                        <span class="logo-icon">⚡</span>
+                    </div>
+                    <div class="logo-text">
+                        <h1 class="logo-title">PrepDocs</h1>
+                        <span class="logo-subtitle">Interview Guide</span>
+                    </div>
+                </div>
             </div>
-            <nav class="nav-links">
-                <button class="nav-item active" data-file="javascript.md" id="btn-js">
-                    <span class="icon">JS</span>
-                    <span class="label">JavaScript</span>
+
+            <nav class="sidebar-nav" id="sidebar-nav">
+                <div class="nav-label">Skills</div>
+                <button class="nav-item active" data-skill="javascript" id="nav-js">
+                    <span class="nav-icon js-icon">JS</span>
+                    <span class="nav-label-text">JavaScript</span>
+                    <span class="nav-arrow">›</span>
                 </button>
-                <button class="nav-item" data-file="react.md" id="btn-react">
-                    <span class="icon">⚛️</span>
-                    <span class="label">React JS</span>
+                <button class="nav-item" data-skill="react" id="nav-react">
+                    <span class="nav-icon react-icon">⚛️</span>
+                    <span class="nav-label-text">React JS</span>
+                    <span class="nav-arrow">›</span>
                 </button>
-                <button class="nav-item" data-file="react-native.md" id="btn-rn">
-                    <span class="icon">📱</span>
-                    <span class="label">React Native</span>
-                </button>
-                <button class="nav-item" data-file="sprinklr.md" id="btn-sprinklr">
-                    <span class="icon">🏢</span>
-                    <span class="label">Sprinklr Guide</span>
+                <button class="nav-item" data-skill="react-native" id="nav-rn">
+                    <span class="nav-icon rn-icon">📱</span>
+                    <span class="nav-label-text">React Native</span>
+                    <span class="nav-arrow">›</span>
                 </button>
             </nav>
+
             <div class="sidebar-footer">
-                <button id="theme-toggle" class="footer-btn">
-                    <span class="theme-icon">🌙</span>
-                    <span class="theme-text">Dark Mode</span>
+                <button id="theme-toggle" class="theme-btn">
+                    <span class="theme-icon" id="theme-icon">🌙</span>
+                    <span class="theme-text" id="theme-text">Dark Mode</span>
                 </button>
             </div>
         </aside>
 
-        <main class="content-area">
-            <header class="content-header">
-                <div class="breadcrumb">
-                    <span id="current-category">JavaScript</span> / <span class="active-page">Checklist</span>
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-home">PrepDocs</span>
+                        <span class="breadcrumb-sep">›</span>
+                        <span class="breadcrumb-current" id="breadcrumb-current">JavaScript</span>
+                    </div>
                 </div>
-                <div class="search-bar">
-                    <input type="text" id="search-input" placeholder="Search concepts...">
+                <div class="topbar-right">
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-input" class="search-input" placeholder="Search topics...">
+                        <kbd class="search-kbd">⌘K</kbd>
+                    </div>
                 </div>
             </header>
-            
-            <section id="markdown-content" class="markdown-body">
-                <div class="loader">Loading your roadmap...</div>
-            </section>
+
+            <!-- Skill Hero -->
+            <div class="skill-hero" id="skill-hero">
+                <div class="skill-hero-bg"></div>
+                <div class="skill-hero-content">
+                    <div class="skill-badge" id="skill-badge">JS</div>
+                    <div class="skill-info">
+                        <h2 class="skill-title" id="skill-title">JavaScript</h2>
+                        <p class="skill-subtitle" id="skill-subtitle">Advanced Concepts for Interview Preparation</p>
+                    </div>
+                    <div class="skill-stats" id="skill-stats">
+                        <div class="stat-item">
+                            <span class="stat-num" id="stat-sections">0</span>
+                            <span class="stat-label">Sections</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="stat-topics">0</span>
+                            <span class="stat-label">Topics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sections Container -->
+            <div class="sections-container" id="sections-container">
+                <div class="loading-state" id="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading concepts...</p>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- Modal for Concept Explanation -->
-    <div id="concept-modal" class="modal-overlay">
-        <div class="modal-content">
-            <header class="modal-header">
-                <h2 id="modal-title">Concept Name</h2>
-                <button id="close-modal" class="close-btn">&times;</button>
-            </header>
-            <div class="modal-body">
-                <div id="modal-explanation" class="explanation-text"></div>
-                <div class="code-section">
-                    <h3>Code Example</h3>
-                    <pre><code id="modal-code" class="language-javascript"></code></pre>
+    <!-- Code Modal -->
+    <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
+        <div class="code-modal" id="code-modal" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-tag">Code Example</span>
+                    <h3 class="modal-title" id="modal-title">Topic Name</h3>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-copy-btn" id="modal-copy-btn" title="Copy code">
+                        <span class="copy-icon">📋</span>
+                        <span class="copy-text">Copy</span>
+                    </button>
+                    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">✕</button>
                 </div>
             </div>
-            <footer class="modal-footer">
-                <button id="done-btn" class="primary-btn">Got it!</button>
-            </footer>
+            <div class="modal-body">
+                <pre class="modal-code-block" id="modal-code-block"><code id="modal-code"></code></pre>
+            </div>
         </div>
     </div>
 
-    <script src="conceptsData.js"></script>
-    <script src="conceptsData2.js"></script>
-    <script src="conceptsData3.js"></script>
-    <script src="conceptsData4.js"></script>
-    <script src="conceptsData5.js"></script>
-    <script src="conceptsData6.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

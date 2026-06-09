@@ -1,0 +1,293 @@
+{
+  "skill": "JavaScript",
+  "icon": "JS",
+  "color": "#f6e05e",
+  "sections": [
+    {
+      "id": "core-internals",
+      "title": "Core Language Internals",
+      "emoji": "🧠",
+      "topics": [
+        {
+          "id": "execution-context",
+          "title": "Execution Context",
+          "summary": "The environment where JS code is executed — Global, Function, and Eval.",
+          "explanation": "The environment where JS code is executed. Three types: Global, Function, Eval. Each has a Creation Phase (memory allocation for vars/functions) and Execution Phase (code runs line-by-line). The Variable Environment, Lexical Environment, and 'this' binding are set during creation. Understanding this is critical because every closure, hoisting behavior, and 'this' confusion stems from how execution contexts are created and stacked.",
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
+          "imageCaption": "JavaScript Runtime Environment — Call Stack, Web APIs, Callback Queue & Event Loop",
+          "code": "var x = 10;\nfunction foo() {\n  var y = 20; // New Function Execution Context\n  console.log(x + y); // 30 — x found via scope chain\n}\nfoo(); // Pushed onto Call Stack\n\n// Each EC has:\n// - Variable Environment (var declarations)\n// - Lexical Environment (let/const + references)\n// - this binding",
+          "situations": [
+            {
+              "question": "Your app has a weird bug where a variable is 'undefined' even though you declared it. How do you diagnose this?",
+              "answer": "This is almost certainly a hoisting issue. I'd check: 1) If it's a 'var' declaration — it gets hoisted as 'undefined'. 2) If it's in a different scope than where it's accessed. 3) Use browser DevTools > Sources > put a breakpoint, inspect the Scope panel to see what's in the current Execution Context. I'd also recommend converting all 'var' to 'let/const' in the codebase to get TDZ errors instead of silent 'undefined'."
+            },
+            {
+              "question": "In a code review, a junior dev asks why the same function returns different values when called from different places. What's your answer?",
+              "answer": "This is a 'this' binding issue tied to Execution Context. The function's 'this' depends on the call-site, not where it was defined. I'd walk them through the 4 rules: default binding (global/undefined in strict mode), implicit binding (object method), explicit binding (call/apply/bind), and new binding. For React developers, this is why we use arrow functions in event handlers — they inherit 'this' from the lexical context, not the call-site."
+            }
+          ]
+        },
+        {
+          "id": "call-stack",
+          "title": "Call Stack",
+          "summary": "LIFO data structure tracking function calls — stack overflow on deep recursion.",
+          "explanation": "A LIFO (Last In, First Out) data structure tracking function calls. When a function is called, its execution context is pushed on top. When it returns, it's popped off. Stack overflow happens during infinite recursion. The default call stack size in V8 (Node.js/Chrome) is approximately 10,000–15,000 frames. The call stack is synchronous — it can only process one thing at a time, which is why long-running JS blocks the UI.",
+          "code": "function first() { second(); }\nfunction second() { third(); }\nfunction third() { console.log('done'); }\nfirst();\n// Stack: [Global] → [first] → [second] → [third]\n// After third() returns: → [second] → [first] → [Global]\n\n// Stack Overflow Example:\nfunction recurse() { recurse(); }\ntry { recurse(); } catch(e) { console.log(e); } // RangeError",
+          "situations": [
+            {
+              "question": "Your app is freezing the browser tab for 2-3 seconds when processing a large dataset. How do you fix it?",
+              "answer": "The long-running synchronous code is blocking the Call Stack, which starves the Event Loop. Solutions: 1) Break the work into chunks using setTimeout(fn, 0) or scheduler.yield() (Chrome 115+) to yield control back between chunks. 2) Move the heavy computation to a Web Worker so it runs on a separate thread. 3) Use requestIdleCallback for non-critical work. In React apps, use startTransition() to mark heavy state updates as non-urgent — React will yield to user interactions."
+            },
+            {
+              "question": "You see a 'Maximum call stack size exceeded' error in production. What's your approach?",
+              "answer": "1) Use the browser DevTools call stack panel to see the full trace. 2) Look for a recursive function that has no base case or a faulty condition. 3) If intentional deep recursion, convert to iterative (use an explicit stack data structure). 4) For tree traversal, use iterative BFS/DFS instead. 5) For mutual recursion (A calls B calls A), use trampolining — each recursive call returns a function instead of calling itself directly."
+            }
+          ]
+        },
+        {
+          "id": "event-loop",
+          "title": "Event Loop",
+          "summary": "Single-threaded async — Microtasks (Promises) before Macrotasks (setTimeout).",
+          "explanation": "JS is single-threaded. The Event Loop continuously monitors the Call Stack and the Task Queues. When the Call Stack is empty: 1) It processes ALL pending Microtasks (Promise.then, queueMicrotask, MutationObserver) completely. 2) Then it picks ONE Macrotask (setTimeout, setInterval, setImmediate, I/O callback) and runs it. 3) After each Macrotask, it again drains ALL Microtasks before picking another Macrotask. This is the precise ordering that determines async execution order.",
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
+          "imageCaption": "The JavaScript Event Loop — Call Stack, Web APIs (setTimeout, fetch), Callback Queue, and Microtask Queue",
+          "code": "console.log('1 — synchronous');\nsetTimeout(() => console.log('2 — macrotask'), 0);\nPromise.resolve().then(() => console.log('3 — microtask 1'));\nPromise.resolve().then(() => console.log('4 — microtask 2'));\nconsole.log('5 — synchronous');\n\n// Output: 1, 5, 3, 4, 2\n// Reason: sync runs first → call stack empty → ALL microtasks → ONE macrotask",
+          "situations": [
+            {
+              "question": "Your UI is showing stale data for 300ms after a user action. The data is fetched correctly, but the render is delayed. What's happening?",
+              "answer": "This is a classic Event Loop priority issue. If you're doing heavy synchronous work after triggering a fetch, you're blocking the Call Stack from processing the Promise.then() microtasks that would trigger the re-render. Solution: 1) Move heavy computation before the fetch, not after. 2) In React 18+, wrap the heavy computation in startTransition() so React yields to the UI update first. 3) Use Web Workers for computation so the main thread stays free for microtasks."
+            },
+            {
+              "question": "You have Promise.all with 5 API calls and sometimes one silently fails. How do you handle this reliably?",
+              "answer": "Promise.all short-circuits on the FIRST rejection — the other 4 calls might still complete but you never get their results. Use Promise.allSettled() instead, which waits for ALL promises regardless of outcomes. Then inspect each result: { status: 'fulfilled', value: ... } or { status: 'rejected', reason: ... }. Implement per-promise error tracking so you can retry individual failures rather than retrying all 5."
+            },
+            {
+              "question": "A senior says 'your setTimeout(fn, 0) is executing AFTER a queueMicrotask() call even though setTimeout ran first'. Explain this.",
+              "answer": "This is expected Event Loop behavior. setTimeout schedules a Macrotask, while queueMicrotask schedules a Microtask. Even if setTimeout is called first, when the Call Stack empties, ALL microtasks are drained BEFORE any macrotask runs. The order guarantee is: synchronous code → microtasks (completely drained) → one macrotask. This is why setTimeout(fn, 0) doesn't mean 'run immediately' — it means 'run after the current microtask queue is empty'."
+            }
+          ]
+        },
+        {
+          "id": "closures",
+          "title": "Closures",
+          "summary": "A function that retains access to its outer scope even after it returns.",
+          "explanation": "A closure is a function that retains access to its outer scope's variables even after the outer function has returned. Every function in JS forms a closure. Closures are the backbone of: module pattern (private state), React hooks (useState captures state via closure), event handlers (captured variables), memoization (cached results), and currying. The key insight: a closure doesn't copy the variable — it keeps a live reference to the Lexical Environment.",
+          "code": "// Classic counter — private state via closure\nfunction counter() {\n  let count = 0; // Closed over by both methods\n  return {\n    increment: () => ++count,\n    decrement: () => --count,\n    getCount: () => count\n  };\n}\nconst c = counter();\nc.increment(); c.increment();\nconsole.log(c.getCount()); // 2\n// count cannot be accessed from outside\n\n// Classic closure bug:\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 3, 3, 3\n}\n// Fix with let:\nfor (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 0, 1, 2\n}",
+          "situations": [
+            {
+              "question": "A useEffect in your React component is logging stale state — it always shows the initial value of count instead of the current value. How do you fix it?",
+              "answer": "This is a stale closure bug. The useEffect captures the value of 'count' at the time it was created (on first render, since deps array is []). The closure holds a reference to the old 'count' variable from the first render's scope. Fixes: 1) Add 'count' to the dependency array — React will re-create the effect with fresh closure on each count change. 2) Use a ref: const countRef = useRef(count); keep it synced in a separate useEffect, and read countRef.current inside the stale closure. 3) Use functional state updates: setCount(prev => prev + 1) instead of setCount(count + 1)."
+            },
+            {
+              "question": "You're building a rate limiter for API calls and a junior dev's implementation leaks memory. What are you looking for?",
+              "answer": "Typical closure memory leak: the rate limiter function closes over a large object or a reference to data that never gets cleaned up. Common pattern: storing closures in arrays/maps (e.g., pending callbacks) that grow unboundedly. Fix: 1) Use WeakMap for storing data keyed by objects — entries auto-GC when the key object is unreferenced. 2) Always clear your timers and remove event listeners in cleanup functions. 3) Use DevTools Memory profiler to take heap snapshots before and after and look for 'Detached' closures."
+            }
+          ]
+        },
+        {
+          "id": "scope-chain",
+          "title": "Scope Chain",
+          "summary": "How JS walks up nested scopes to find variables — determined at write-time.",
+          "explanation": "When a variable is accessed, JS first looks in the current (local) scope. If not found, it walks up to the parent scope, then grandparent, all the way to the global scope. This is the Scope Chain. The key distinction: scope is determined lexically (at write-time) — where a function is defined determines its scope chain, NOT where it is called. This is why closures work even when a function is called in a completely different scope.",
+          "code": "const global = 'G'; // Global scope\n\nfunction outer() {\n  const outerVar = 'O'; // Outer function scope\n  \n  function inner() {\n    const innerVar = 'I'; // Inner function scope\n    // Scope chain: inner → outer → global\n    console.log(innerVar, outerVar, global); // 'I', 'O', 'G'\n  }\n  \n  inner();\n}\nouter();",
+          "situations": [
+            {
+              "question": "A module in your codebase accidentally overrides a global variable causing bugs in unrelated modules. How do you prevent this pattern?",
+              "answer": "This is a global scope pollution problem. Prevention: 1) Always use 'let'/'const' — they're block-scoped and won't leak. 2) Use ES Modules (import/export) — each module has its own scope. 3) 'use strict' — throws an error for undeclared variables instead of creating globals. 4) Linting: ESLint's 'no-global-assign' and 'no-implicit-globals' rules catch this at CI time. 5) Audit: search for 'window.foo =' assignments in your codebase."
+            }
+          ]
+        },
+        {
+          "id": "hoisting",
+          "title": "Hoisting",
+          "summary": "var/function declarations hoisted — let/const hoisted but in TDZ until init.",
+          "explanation": "'var' declarations and function declarations are moved to the top of their scope during compilation. 'var' is initialized as undefined. 'let'/'const' are hoisted but NOT initialized — they sit in the Temporal Dead Zone (TDZ) until the declaration is reached. Function expressions (const fn = function(){}) are NOT hoisted. This happens in the Creation Phase of the Execution Context before any code runs.",
+          "code": "console.log(a); // undefined — var hoisted, initialized to undefined\nvar a = 5;\n\nfoo(); // Works! — function declaration hoisted in full\nfunction foo() { console.log('hoisted'); }\n\n// bar(); // TypeError: bar is not a function\nvar bar = function() {}; // function expression, NOT hoisted\n\n// TDZ with let:\n// console.log(b); // ReferenceError: Cannot access 'b' before init\nlet b = 10;",
+          "situations": [
+            {
+              "question": "You find a production bug where a function call happens before its definition in a large file and it works in some places but throws in others. Explain the inconsistency.",
+              "answer": "If it's a function declaration (function foo() {}), it's fully hoisted and always works regardless of call order. If it's a function expression (const foo = () => {}) or assigned to let/var, it's NOT hoisted. The inconsistency likely comes from mixing both styles in the file. Audit: enforce a rule with ESLint 'func-style' and 'no-use-before-define'. As a migration step, convert all function declarations to const arrow functions at the top of the file, which makes ordering explicit."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "async-js",
+      "title": "Async JavaScript",
+      "emoji": "⏳",
+      "topics": [
+        {
+          "id": "promises",
+          "title": "Promises",
+          "summary": "Pending → Fulfilled/Rejected. .then(), .catch(), .finally() for chaining.",
+          "explanation": "An object representing the eventual completion or failure of an async operation. States: Pending → Fulfilled (resolve) or Rejected (reject). Once settled, a Promise is immutable. Key: .then() always returns a NEW Promise — that's how chaining works. An unhandled Promise rejection crashes Node.js and triggers an error in browsers. Always have a .catch() or try/catch with async/await.",
+          "code": "const p = new Promise((resolve, reject) => {\n  setTimeout(() => resolve('Done!'), 1000);\n});\n\np.then(val => console.log(val))  // 'Done!'\n .catch(err => console.error(err))\n .finally(() => console.log('Always runs'));\n\n// Common mistake — forgetting to RETURN inside .then():\nfetch('/api/user')\n  .then(res => {\n    res.json(); // Bug! Not returned — next .then gets undefined\n  })\n  .then(user => console.log(user)); // undefined\n\n// Fix:\n  .then(res => res.json()) // Implicit return",
+          "situations": [
+            {
+              "question": "In your dashboard, you have 6 independent API calls for widgets. They're running sequentially and it takes 6 seconds. How do you parallelize this?",
+              "answer": "Replace sequential await calls with Promise.all(). Example: instead of 'const a = await fetch(url1); const b = await fetch(url2);' (sequential, 2+ seconds), do 'const [a, b] = await Promise.all([fetch(url1), fetch(url2)])' (parallel, max of each). For partial failures, use Promise.allSettled() so one failing widget doesn't break the whole dashboard. Add individual error handling per promise so each widget shows its own error state."
+            },
+            {
+              "question": "A Promise in your codebase hangs indefinitely in production — the .then() never fires and neither does .catch(). How do you debug this?",
+              "answer": "A Promise that never resolves or rejects creates a 'pending forever' situation, often causing memory leaks. Debug: 1) Add a timeout wrapper: Promise.race([yourPromise, timeoutAfter(5000)]). 2) Check if the Promise executor has an error that was swallowed before resolve/reject was called. 3) Use Chrome DevTools > Sources > 'Pause on uncaught exceptions' to catch errors in async code. 4) Add AbortController with a timeout signal to fetch calls. In React, always abort fetch in useEffect cleanup."
+            }
+          ]
+        },
+        {
+          "id": "async-await",
+          "title": "Async/Await",
+          "summary": "Syntactic sugar over Promises — async code reads like synchronous code.",
+          "explanation": "Syntactic sugar over Promises. 'async' functions always return a Promise (even if you return a plain value — it gets wrapped in Promise.resolve()). 'await' pauses execution of the async function until the Promise settles. It does NOT block the thread — other microtasks/macrotasks can run while awaiting. Use try/catch for error handling. Common mistake: awaiting inside loops creates sequential behavior when parallel is intended.",
+          "code": "async function loadUserData(id) {\n  try {\n    const res = await fetch(`/api/user/${id}`);\n    if (!res.ok) throw new Error(`HTTP ${res.status}`);\n    const user = await res.json();\n    return user;\n  } catch (err) {\n    console.error('Failed:', err);\n    throw err; // Re-throw so caller can handle\n  }\n}\n\n// MISTAKE: Sequential when should be parallel\nasync function bad() {\n  const a = await fetch('/api/a'); // Waits 1s\n  const b = await fetch('/api/b'); // Waits another 1s\n}\n\n// FIX: Parallel\nasync function good() {\n  const [a, b] = await Promise.all([\n    fetch('/api/a'), fetch('/api/b') // Both start at same time\n  ]);\n}",
+          "situations": [
+            {
+              "question": "Your app makes 50 API calls in a loop using await. It's taking 50 seconds when it should take 1. How do you fix it?",
+              "answer": "You're awaiting sequentially inside a loop. Each call waits for the previous to finish. Fix: 1) Map to Promises and use Promise.all() for true parallelism: 'await Promise.all(ids.map(id => fetch(id)))'. 2) If the API has rate limits (e.g., max 5 concurrent), use a concurrency limiter — process in batches of 5: chunk the array and Promise.all each batch. 3) For very large sets, use a queue with a concurrency limit (p-limit library or custom implementation). Monitor memory too — 50 concurrent requests can overwhelm both your client and server."
+            },
+            {
+              "question": "A junior dev says 'async/await is slower than Promises because it pauses execution'. Is this true? How do you correct them?",
+              "answer": "Not true — async/await IS Promises. There's zero performance difference. The V8 engine compiles async/await to Promise chains. The 'pause' is just a yield to the Event Loop, not a sleep. The only real consideration: await inside a try/catch has a tiny overhead vs .catch() because the engine needs to set up error handling context — but this is nanoseconds and irrelevant in practice. Async/await is actually preferred because it produces cleaner stack traces that show the actual async function name instead of anonymous Promise callbacks."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "functions",
+      "title": "Functions",
+      "emoji": "⚙️",
+      "topics": [
+        {
+          "id": "closures-fn",
+          "title": "Closures (Deep Dive)",
+          "summary": "Every function forms a closure — live reference to outer scope, not a copy.",
+          "explanation": "A closure is a function bundled with its Lexical Environment — the scope in which it was created. The closure holds a LIVE REFERENCE to variables, not a snapshot copy. This is why incrementing a counter through a closure works. React hooks rely entirely on closures: useState's setter, useEffect's callback, useCallback's memoized function — all are closures over their surrounding scope at render time.",
+          "code": "// Module pattern using closures\nconst userService = (() => {\n  let _users = []; // Private — only accessible via methods\n  let _nextId = 1;\n  \n  return {\n    add(name) {\n      const user = { id: _nextId++, name };\n      _users.push(user);\n      return user;\n    },\n    getAll() { return [..._users]; }, // Return copy, not reference\n    remove(id) { _users = _users.filter(u => u.id !== id); }\n  };\n})();\n\nuserService.add('Abhishek'); // { id: 1, name: 'Abhishek' }\nconsole.log(userService.getAll()); // [{ id: 1, name: 'Abhishek' }]",
+          "situations": [
+            {
+              "question": "Your React app has a performance issue — a useCallback function is recreated on every render despite having an empty dependency array. Profiler shows it's a new reference every time. Why?",
+              "answer": "If useCallback with [] is producing a new function reference every render, the component is likely unmounting and remounting (check for key prop changes). Another common cause: if the component receives new props that are objects/arrays, and those are referenced inside the callback even though you didn't list them in deps — ESLint will warn about this. Verify with Object.is() in a useEffect to confirm reference equality. Also check if you're accidentally calling useCallback inside a conditional or loop."
+            }
+          ]
+        },
+        {
+          "id": "debouncing",
+          "title": "Debouncing",
+          "summary": "Delay execution until X ms of silence — ideal for search inputs.",
+          "explanation": "Debouncing ensures a function executes only after a specified wait time has elapsed since the LAST call. If called again within the wait period, the timer resets. This is crucial for search inputs (don't fire API per keystroke), window resize handlers (don't recalculate layout on every pixel), and auto-save features. The debounce function returns a new function that closes over a timer variable.",
+          "code": "function debounce(fn, delay) {\n  let timerId; // Closed over by returned function\n  return function(...args) {\n    clearTimeout(timerId); // Cancel previous timer\n    timerId = setTimeout(() => {\n      fn.apply(this, args); // Call with correct this + args\n    }, delay);\n  };\n}\n\n// React usage with useCallback for stable reference:\nconst handleSearch = useCallback(\n  debounce((query) => {\n    if (!query.trim()) return;\n    fetchResults(query);\n  }, 300),\n  [] // Create once\n);\n// Cleanup: call handleSearch.cancel() on unmount",
+          "situations": [
+            {
+              "question": "Your search input makes API calls but users report seeing results from previous searches appearing after typing fast. What's the issue?",
+              "answer": "This is a race condition — multiple debounced requests are in-flight and responses arrive out of order (request for 'react' arrives AFTER request for 'react hooks'). Fix: 1) Use AbortController — cancel the previous request when a new one starts. 2) Use a request ID/timestamp: ignore responses where the response's request ID doesn't match the latest one. 3) Libraries like TanStack Query or SWR handle this automatically. In a search component: keep a ref to the AbortController and call controller.abort() at the start of each new search."
+            }
+          ]
+        },
+        {
+          "id": "memoization",
+          "title": "Memoization",
+          "summary": "Cache expensive computation results — foundation of React.memo and useMemo.",
+          "explanation": "Memoization is an optimization technique that caches the results of expensive function calls. When called with the same arguments again, the cached result is returned without recomputation. This trades memory for CPU time. In React: useMemo memoizes computed values, useCallback memoizes function references, React.memo wraps components to skip re-renders. The cache key must uniquely represent the inputs — JSON.stringify is simple but slow for large objects; consider hashing or WeakMap for object keys.",
+          "code": "function memoize(fn) {\n  const cache = new Map();\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) {\n      console.log('Cache hit!');\n      return cache.get(key);\n    }\n    const result = fn.apply(this, args);\n    cache.set(key, result);\n    return result;\n  };\n}\n\nconst expensiveFib = memoize(function fib(n) {\n  if (n <= 1) return n;\n  return expensiveFib(n - 1) + expensiveFib(n - 2);\n});\n\nconsole.log(expensiveFib(40)); // Computed once\nconsole.log(expensiveFib(40)); // Cache hit — instant",
+          "situations": [
+            {
+              "question": "After adding useMemo to a heavily-computed list, your app is actually SLOWER. How do you diagnose this?",
+              "answer": "useMemo has overhead: it compares all dependency values on every render using Object.is(). If: 1) The computation is cheap (< 1ms), the comparison overhead exceeds the savings. 2) The dependencies change every render (objects/arrays created inline), useMemo never hits cache and you pay comparison cost for nothing. 3) The memoized value is a large array that takes time to compare. Diagnose: use React DevTools Profiler to measure render times with/without useMemo. Rule of thumb: only memoize if computation takes > 1ms or if the memoized value is used as a dependency in another hook."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "objects-oop",
+      "title": "Objects & OOP",
+      "emoji": "🏗️",
+      "topics": [
+        {
+          "id": "prototype-chain",
+          "title": "Prototype & Prototype Chain",
+          "summary": "Objects inherit via [[Prototype]] link — Object.prototype is the top.",
+          "explanation": "Every object has a hidden [[Prototype]] property linking to another object. When you access a property, JS first looks at the object's own properties, then walks UP the prototype chain until found or until null is reached (Object.prototype's prototype is null). This is the mechanism behind inheritance in JS. ES6 classes are syntactic sugar — they still use prototypes under the hood. Understanding this is essential for debugging 'property not found' errors and optimizing V8's hidden classes.",
+          "code": "// Object.create for explicit prototype setting\nconst animal = {\n  type: 'Animal',\n  describe() { return `I am a ${this.type}`; }\n};\n\nconst dog = Object.create(animal);\ndog.type = 'Dog'; // Own property shadows prototype\ndog.bark = function() { return 'Woof!'; };\n\nconsole.log(dog.describe()); // 'I am a Dog' — found on dog (own)\nconsole.log(dog.bark()); // 'Woof!' — own property\nconsole.log(dog.hasOwnProperty('type')); // true — own\nconsole.log(dog.hasOwnProperty('describe')); // false — on prototype\n\n// Prototype chain: dog → animal → Object.prototype → null",
+          "situations": [
+            {
+              "question": "A library you're using has a security vulnerability where external code is modifying Object.prototype and your objects are behaving unexpectedly. How do you fix and prevent this?",
+              "answer": "This is prototype pollution — a critical security vulnerability (CVE-rated) where attackers inject properties onto Object.prototype that then appear on ALL objects. Fixes: 1) Create objects with null prototype: Object.create(null) — no prototype chain, immune to pollution. 2) Use hasOwnProperty() or Object.hasOwn() checks before trusting object properties. 3) Freeze Object.prototype: Object.freeze(Object.prototype) early in app bootstrap. 4) Use libraries like 'sanitize' that filter __proto__, constructor, and prototype keys from user input. 5) Update the vulnerable library — prototype pollution is taken seriously and patched quickly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "es6-features",
+      "title": "ES6+ Advanced Features",
+      "emoji": "⚡",
+      "topics": [
+        {
+          "id": "destructuring",
+          "title": "Destructuring",
+          "summary": "Extract values from arrays/objects with defaults, renaming, and nesting.",
+          "explanation": "Destructuring is a concise syntax to extract values from arrays or objects. Supports: default values, renaming, nested patterns, rest operator, and skipping elements. Key use case in React: destructuring props, state, and hook return values. Performance-wise, destructuring creates no overhead — it's syntax sugar over property access.",
+          "code": "// Object destructuring with rename and default\nconst { name: fullName, age = 25, address: { city } } = {\n  name: 'Abhishek',\n  address: { city: 'Delhi' }\n}; // age defaults to 25\n\n// Array destructuring with skip\nconst [, second, , fourth] = [1, 2, 3, 4];\n\n// Function params — very common in React\nfunction UserCard({ name, role = 'User', onDelete }) {\n  return `${name} (${role})`;\n}\n\n// Swapping variables — no temp needed\nlet a = 1, b = 2;\n[a, b] = [b, a]; // a=2, b=1",
+          "situations": [
+            {
+              "question": "You're destructuring a deeply nested API response and it crashes when a field is missing. How do you handle optional chaining in destructuring?",
+              "answer": "Destructuring does NOT natively handle undefined nested paths — it throws 'Cannot destructure property of undefined'. Solutions: 1) Use optional chaining BEFORE destructuring: 'const city = response?.address?.city'. 2) Provide a default at each level: 'const { address: { city } = {} } = response ?? {}'. 3) Use a library like Lodash's _.get() for deep access: 'const city = _.get(response, 'address.city', 'Unknown')'. 4) For API responses, validate/normalize at the boundary using Zod or Yup schemas before your components consume the data."
+            }
+          ]
+        },
+        {
+          "id": "optional-chaining",
+          "title": "Optional Chaining",
+          "summary": "?. short-circuits to undefined instead of throwing on null/undefined access.",
+          "explanation": "The ?. operator safely accesses deeply nested properties. If the left side is null or undefined, it short-circuits and returns undefined instead of throwing a TypeError. Works for: property access (obj?.prop), method calls (obj?.method()), array indexing (arr?.[0]), and constructor calls (new Ctor?.()). Do NOT overuse it — it can hide real bugs where a value is unexpectedly null.",
+          "code": "const user = { profile: { address: { city: 'Delhi' } } };\n\n// Safe deep access\nconsole.log(user?.profile?.address?.city); // 'Delhi'\nconsole.log(user?.phone?.number); // undefined — no throw\nconsole.log(user?.getProfile?.()); // undefined if no method\n\n// With nullish coalescing for default\nconst city = user?.profile?.address?.city ?? 'Unknown';\n\n// Array item access\nconst firstFriend = user?.friends?.[0]?.name ?? 'No friends';",
+          "situations": [
+            {
+              "question": "Your team is overusing ?. everywhere and it's masking real bugs in production. How do you address this code quality issue?",
+              "answer": "Optional chaining overuse is a code smell — it hides invalid states instead of fixing them. Approach: 1) Add type-checking (TypeScript) — proper types prevent most cases where ?. is used defensively. 2) Validate at API boundaries — use Zod/Yup to ensure data shape matches expectation. If data is wrong, throw early with a clear error. 3) ESLint rule: 'no-unsafe-optional-chaining' catches cases where ?. is used on non-nullable types. 4) Code review principle: if you write a ?., ask 'should this value ever be null/undefined here? If no, don't use ?.'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security & Optimization",
+      "emoji": "🛡️",
+      "topics": [
+        {
+          "id": "xss",
+          "title": "XSS (Cross-Site Scripting)",
+          "summary": "Never use innerHTML with user input — React escapes by default.",
+          "explanation": "XSS allows attackers to inject malicious scripts into web pages. Types: Stored XSS (persisted in DB, executed for all visitors), Reflected XSS (via URL params), DOM-based XSS (client-side manipulation). Prevention: always escape output, use textContent over innerHTML, implement CSP headers, and use frameworks that auto-escape (React). React's dangerouslySetInnerHTML bypasses XSS protection — never use it with unvalidated user content.",
+          "code": "// VULNERABLE — Never do this\nelement.innerHTML = userInput;\n\n// SAFE alternatives\nelement.textContent = userInput; // Escapes HTML entities\nelement.innerText = userInput;\n\n// React is safe by default:\n<div>{userInput}</div> // Auto-escaped to text\n\n// React UNSAFE — only with sanitized content:\nimport DOMPurify from 'dompurify';\n<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />\n\n// CSP Header to prevent inline scripts:\n// Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-randomvalue'",
+          "situations": [
+            {
+              "question": "Your security audit found an XSS vulnerability in a rich text editor component that uses dangerouslySetInnerHTML. How do you fix it without removing the feature?",
+              "answer": "1) Install DOMPurify (industry standard HTML sanitizer). 2) Sanitize BEFORE storing AND before rendering: DOMPurify.sanitize(content, { ALLOWED_TAGS: ['p', 'b', 'i', 'ul', 'li', 'a'], ALLOWED_ATTR: ['href'] }). 3) Add CSP headers that block inline scripts even if XSS succeeds: 'Content-Security-Policy: script-src self'. 4) For rich text editors, use a pre-built secure one (TipTap, Slate) that has XSS prevention built in. 5) Add automated security testing: use jest + jsdom to verify your sanitization is effective."
+            }
+          ]
+        },
+        {
+          "id": "performance-optimization",
+          "title": "Performance Optimization",
+          "summary": "CRP, bundle size, lazy loading, code splitting, runtime performance.",
+          "explanation": "Web performance optimization spans multiple layers: 1) Critical Rendering Path — minimize render-blocking CSS/JS, inline critical CSS. 2) Bundle: tree shaking, code splitting, dynamic imports, brotli compression. 3) Runtime: avoid layout thrashing (batch DOM reads/writes), debounce expensive handlers, use passive event listeners. 4) Network: HTTP/2, CDN, proper cache-control headers. 5) Images: WebP/AVIF format, responsive srcset, lazy loading. Key metrics: FCP (< 1.8s), LCP (< 2.5s), CLS (< 0.1), INP (< 200ms).",
+          "code": "// 1. Code splitting with dynamic import\nconst Dashboard = React.lazy(() => import('./Dashboard'));\n\n// 2. Avoid layout thrashing\nconst width = container.offsetWidth; // Read once\nelements.forEach(el => {\n  el.style.width = width + 'px'; // Write in batch\n});\n\n// 3. Passive event listeners for scroll (no preventDefault)\ndocument.addEventListener('scroll', handler, { passive: true });\n\n// 4. RequestAnimationFrame for visual updates\nconst animate = () => {\n  el.style.transform = `translateX(${getPosition()}px)`;\n  requestAnimationFrame(animate);\n};",
+          "situations": [
+            {
+              "question": "Your React app has a 4MB JavaScript bundle. Users on mobile complain about slow load times. How do you cut this in half?",
+              "answer": "Step 1: Analyze — run 'npx webpack-bundle-analyzer' or 'npx source-map-explorer'. Find the largest chunks. Common culprits: moment.js (2MB — replace with day.js), lodash (imported entire lib — use lodash-es with tree shaking), chart libraries. Step 2: Route-based code splitting with React.lazy() — every route is a separate chunk. Step 3: Remove unused dependencies ('npx depcheck'). Step 4: Defer non-critical scripts with 'defer'/'async'. Step 5: Enable brotli compression on server (60% smaller than gzip). Step 6: Use next/dynamic or Vite's built-in splitting. Target: < 150KB initial JS, rest lazy-loaded."
+            },
+            {
+              "question": "Your product manager says LCP is 5.2 seconds. What's your optimization plan?",
+              "answer": "LCP (Largest Contentful Paint) is dominated by the largest image or text block. Attack plan: 1) Identify: use Chrome DevTools > Performance > LCP element. 2) If it's an image: add fetchpriority='high', use WebP format, serve from CDN, add <link rel='preload'>. 3) If it's text: ensure font is preloaded and uses font-display: swap, inline critical CSS. 4) Check if render-blocking scripts delay LCP: move scripts to end or add defer. 5) Fix TTFB (Time to First Byte) if > 600ms — server-side caching or edge rendering. 6) For SPA: switch critical page to SSR/SSG in Next.js — HTML ships with content, no JS needed for LCP."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
