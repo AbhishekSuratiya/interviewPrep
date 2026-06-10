@@ -12,6 +12,7 @@ const SKILLS = [
   { id: 'javascript',   file: 'data/javascript.json',   bodyClass: 'skill-javascript' },
   { id: 'react',        file: 'data/react.json',         bodyClass: 'skill-react' },
   { id: 'react-native', file: 'data/react-native.json',  bodyClass: 'skill-react-native' },
+  { id: 'typescript',   file: 'data/typescript.json',    bodyClass: 'skill-typescript' },
 ];
 
 // ================================================================
