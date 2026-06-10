@@ -156,13 +156,33 @@ function renderSkill(data) {
   if (dom.skillBadge) dom.skillBadge.textContent = data.icon;
   if (dom.skillSubtitle) dom.skillSubtitle.textContent = 'Advanced Concepts for Interview Preparation';
 
-  // Stats
-  const totalTopics = data.sections.reduce((acc, s) => acc + s.topics.length, 0);
-  if (dom.statSections) dom.statSections.textContent = data.sections.length;
+  const seniorSections = data.seniorSections || [];
+
+  // Stats — combined sections + topics across both regular and senior
+  const totalSections = data.sections.length + seniorSections.length;
+  const totalTopics =
+    data.sections.reduce((acc, s) => acc + s.topics.length, 0) +
+    seniorSections.reduce((acc, s) => acc + s.topics.length, 0);
+  if (dom.statSections) dom.statSections.textContent = totalSections;
   if (dom.statTopics) dom.statTopics.textContent = totalTopics;
 
-  // Render sections
-  const html = data.sections.map((section, si) => renderSection(section, si)).join('');
+  // Render regular sections
+  let html = data.sections.map((section, si) => renderSection(section, si, false)).join('');
+
+  // Render senior sections with a divider banner
+  if (seniorSections.length > 0) {
+    html += `
+      <div class="senior-divider" id="senior-level-divider">
+        <div class="senior-divider-inner">
+          <span class="senior-divider-badge">🎯 Senior Level</span>
+          <div class="senior-divider-line"></div>
+          <span class="senior-divider-desc">Advanced topics for senior engineers</span>
+        </div>
+      </div>
+    `;
+    html += seniorSections.map((section, si) => renderSection(section, si, true)).join('');
+  }
+
   dom.sectionsContainer.innerHTML = html || '<div class="no-results"><div class="no-results-icon">📭</div><h3>No content</h3></div>';
 
   // Bind accordion triggers
@@ -175,17 +195,18 @@ function renderSkill(data) {
 // ================================================================
 // RENDER SECTION
 // ================================================================
-function renderSection(section, sectionIndex) {
+function renderSection(section, sectionIndex, isSenior = false) {
   const topicsHtml = section.topics.map((topic, ti) =>
     renderTopic(topic, ti, section.id)
   ).join('');
 
   return `
-    <div class="section-card" data-section-id="${escapeAttr(section.id)}">
+    <div class="section-card${isSenior ? ' section-card--senior' : ''}" data-section-id="${escapeAttr(section.id)}">
       <div class="section-header">
         <div class="section-emoji">${section.emoji}</div>
         <h2 class="section-title">${escapeHtml(section.title)}</h2>
         <span class="section-count">${section.topics.length} topics</span>
+        ${isSenior ? '<span class="section-senior-tag">Senior</span>' : ''}
       </div>
       <div class="topics-grid">
         ${topicsHtml}

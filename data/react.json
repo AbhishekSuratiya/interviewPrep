@@ -371,5 +371,180 @@
         }
       ]
     }
+  ],
+  "seniorSections": [
+    {
+      "id": "concurrent-react",
+      "title": "Concurrent React — Deep Internals",
+      "emoji": "⚡",
+      "topics": [
+        {
+          "id": "scheduler-priority",
+          "title": "React Scheduler & Priority Lanes",
+          "summary": "React's internal scheduler assigns priority lanes — user input > animations > data updates.",
+          "explanation": "React's Concurrent Mode uses a priority-based scheduler. Each update gets a 'lane' — a bitmask representing its priority: SyncLane (highest, user input), InputContinuousLane (drag, scroll), DefaultLane (setState), TransitionLane (startTransition), IdleLane (lowest). The scheduler yields to higher-priority work between renders using requestAnimationFrame and postMessage-based task scheduling. This is what makes React Concurrent mode feel instant: user typing always preempts data fetching re-renders.",
+          "code": "// Lanes in practice:\n\n// HIGH PRIORITY (SyncLane) — runs before paint, never interrupted:\ndocument.addEventListener('click', () => {\n  // Click handlers run in SyncLane context\n  setIsMenuOpen(true); // Guaranteed to run before next frame\n});\n\n// DEFAULT priority — can be interrupted:\nfetch('/api/data').then(data => {\n  setData(data); // DefaultLane — may be interrupted by user input\n});\n\n// TRANSITION priority — intentionally deferrable:\nstartTransition(() => {\n  setSearchResults(filterItems(all, query)); // TransitionLane — lowest priority work\n});\n\n// IDLE priority:\nconst [output] = useDeferredValue(expensiveCompute); // Runs in idle time\n\n// Concurrent feature dependencies:\n// useTransition, useDeferredValue, Suspense data fetching\n// all depend on React's priority lane system",
+          "situations": [
+            {
+              "question": "You wrap a state update in startTransition but the UI still stutters. What are you likely doing wrong?",
+              "answer": "Common mistakes: 1) The expensive computation happens BEFORE startTransition: const filtered = filterHuge(items, q); startTransition(() => setResults(filtered)); — the computation already blocked the thread. Fix: move the computation INSIDE startTransition. 2) Using useEffect inside the transition — effects are synchronous in commit phase. Move to synchronous computation inside the transition callback. 3) The component tree is deeply un-memoized — transition saves the main thread from blocking but doesn't skip rendering. Add React.memo to children. 4) The 'urgent' state (input value) and 'deferred' state update are coupled. Separate them: setQuery(q) is urgent, setResults inside startTransition is deferred."
+            },
+            {
+              "question": "Explain the difference between Suspense for code splitting vs Suspense for data fetching. Why did only data fetching Suspense come later?",
+              "answer": "Suspense for code splitting (React 16.6): React.lazy() throws a Promise when the module isn't loaded yet — Suspense catches it, shows fallback, re-renders when Promise resolves. Simple, no state management implications. Suspense for data fetching (React 18+): requires Concurrent Mode because data fetching Suspense is stateful — React must remember where it was in the render tree when it suspended, then resume. Without Concurrent Mode, a suspended render would be lost. The implementation requires: 1) A 'cache' (like React Query cache or React Cache) that stores promises with read() that throws while pending. 2) React's Fiber tree tracks suspended nodes. 3) After hydration (Promise resolves), React replays from the suspended boundary. This is why Suspense data fetching only works with libraries that implement the 'Suspense contract' (TanStack Query, SWR with suspense: true)."
+            }
+          ]
+        },
+        {
+          "id": "react-compiler",
+          "title": "React Compiler (React Forget)",
+          "summary": "Auto-memoization compiler — eliminates manual useMemo/useCallback.",
+          "explanation": "React Compiler (previously 'React Forget') is a build-time compiler that automatically adds memoization to React components. It analyzes your component's code statically, determines which values can be memoized, and inserts the equivalent of useMemo/useCallback/React.memo automatically. This means you write plain JavaScript and the compiler optimizes re-renders. Available in React 19, enabled with the Babel plugin. Caveat: components must follow the Rules of Hooks and must be pure (no side effects in render). Components that break these rules won't be optimized.",
+          "code": "// BEFORE React Compiler: manual memoization\nconst UserDashboard = React.memo(({ userId, data }) => {\n  const sortedData = useMemo(() => data.sort(byDate), [data]);\n  const handleClick = useCallback((id) => {\n    updateUser(id);\n  }, []);\n\n  return <UserList data={sortedData} onSelect={handleClick} />;\n});\n\n// AFTER React Compiler: just write plain components\n// The compiler automatically inserts memoization!\nfunction UserDashboard({ userId, data }) {\n  const sortedData = data.sort(byDate); // Compiler knows to memoize this\n  \n  function handleClick(id) { // Compiler knows to memoize this too\n    updateUser(id);\n  }\n\n  return <UserList data={sortedData} onSelect={handleClick} />;\n}\n// Compiler output is equivalent to the manual version above\n// but with correct dependency tracking automatically",
+          "situations": [
+            {
+              "question": "With React Compiler available, should you remove all your existing useMemo and useCallback calls? What's your migration strategy?",
+              "answer": "Gradual approach: 1) Enable React Compiler with the 'opt-in' setting first — it skips components it can't safely optimize. 2) Use the React Compiler playground to verify what the compiler produces for your components. 3) The compiler can co-exist with manual memoization — it won't double-memoize correctly. 4) Remove useMemo/useCallback only after verifying the compiler optimizes that component (check DevTools Profiler). 5) Keep manual memoization for: external library callbacks that need stable references for imperative APIs, components with mutation-based side effects the compiler can't track. 6) Add 'use no memo' directive on components that intentionally shouldn't be memoized (rare). Net result: less boilerplate, but still understand memoization for cases where compiler can't help."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "react-architecture",
+      "title": "Application Architecture",
+      "emoji": "🏗️",
+      "topics": [
+        {
+          "id": "compound-components",
+          "title": "Compound Components & Render Props",
+          "summary": "Flexible, inversion-of-control component APIs — Radix UI, Headless UI patterns.",
+          "explanation": "Compound Components expose multiple related sub-components that work together via shared implicit state (Context). The parent manages state, children access it via useContext. This gives consumers total control over layout and composition while the library manages behavior. Used by Radix UI, Headless UI, React Select. Render Props (deprecated by hooks but still seen) pass render functions as props for inversion of control. The key design principle: separate behavior from presentation.",
+          "code": "// Compound Component Pattern\nconst SelectContext = createContext(null);\n\nfunction Select({ children, value, onChange }) {\n  return (\n    <SelectContext.Provider value={{ value, onChange }}>\n      <div role=\"listbox\">{children}</div>\n    </SelectContext.Provider>\n  );\n}\n\nSelect.Option = function Option({ value, children }) {\n  const { value: selected, onChange } = useContext(SelectContext);\n  const isSelected = selected === value;\n  \n  return (\n    <div\n      role=\"option\"\n      aria-selected={isSelected}\n      onClick={() => onChange(value)}\n      className={isSelected ? 'selected' : ''}\n    >\n      {children}\n    </div>\n  );\n};\n\n// Flexible consumer API:\n<Select value={country} onChange={setCountry}>\n  <Select.Option value=\"in\">India 🇮🇳</Select.Option>\n  <Select.Option value=\"us\">USA 🇺🇸</Select.Option>\n  {/* Consumer controls layout, library controls behavior */}\n</Select>",
+          "situations": [
+            {
+              "question": "You're building a design system's Accordion component. How do you design the API to allow custom styling without exposing internal complexity?",
+              "answer": "Use Compound Components with Headless pattern: 1) AccordionRoot manages open/close state. 2) AccordionItem registers itself, gets an ID. 3) AccordionTrigger reads its item's state from context, applies aria-expanded. 4) AccordionContent conditionally renders. Consumers control all styling, you control all behavior: <Accordion.Root value={open} onValueChange={setOpen}> <Accordion.Item value='item-1'> <Accordion.Trigger className={myStyles.trigger}>Title</Accordion.Trigger> <Accordion.Content>Body</Accordion.Content> </Accordion.Item> </Accordion.Root>. For primitives: expose 'asChild' prop (Radix UI pattern) — renders consumer's element instead of yours: <Accordion.Trigger asChild><button className='my-button'>Styled Trigger</button></Accordion.Trigger>. This achieves 100% styling flexibility with 0% behavior coupling."
+            }
+          ]
+        },
+        {
+          "id": "micro-frontends",
+          "title": "Micro-Frontends",
+          "summary": "Module Federation, iframes, Web Components — team independence at scale.",
+          "explanation": "Micro-frontends extend microservice thinking to the frontend: different teams own different UI sections independently. Approaches: 1) Module Federation (Webpack 5 / Rspack): remote bundles loaded at runtime, share React instances to avoid duplicate React. 2) iframes: true isolation, poor DX, complex communication. 3) Web Components: framework-agnostic, encapsulated. 4) Single-SPA: orchestrator that mounts/unmounts apps. Senior engineers understand the tradeoffs: MFEs solve team scaling but add: network latency (multiple bundles), version coordination, shared state complexity, increased testing surface.",
+          "code": "// Webpack Module Federation config (webpack.config.js)\n// HOST app:\nnew ModuleFederationPlugin({\n  name: 'host',\n  remotes: {\n    checkout: 'checkout@https://checkout.myapp.com/remoteEntry.js',\n    catalog: 'catalog@https://catalog.myapp.com/remoteEntry.js',\n  },\n  shared: {\n    react: { singleton: true, requiredVersion: '^18.0.0' },\n    'react-dom': { singleton: true, requiredVersion: '^18.0.0' },\n    // Singleton = only one React instance, shared across all remotes\n  }\n});\n\n// REMOTE app (checkout):  \nnew ModuleFederationPlugin({\n  name: 'checkout',\n  filename: 'remoteEntry.js',\n  exposes: {\n    './CheckoutFlow': './src/CheckoutFlow', // What host can import\n  },\n  shared: { react: { singleton: true } }\n});\n\n// Host usage:\nconst CheckoutFlow = React.lazy(() => import('checkout/CheckoutFlow'));\n// Loaded at RUNTIME from checkout.myapp.com — no static dependency!",
+          "situations": [
+            {
+              "question": "Your company wants to split a monolithic React app into micro-frontends managed by 3 different teams. What architecture do you recommend and what are the risks?",
+              "answer": "Recommendation: Module Federation with a host shell app. Architecture: 1) Shell app: routing, authentication, global state (user, theme), navigation shell. 2) Remote MFEs: isolated domains (catalog, checkout, account). 3) Shared packages: design system, auth library — published as npm packages, not federated. Risks and mitigations: 1) Version drift: teams update React independently — mandate singleton React in shared config and add CI checks. 2) Styling conflicts: use CSS Modules or CSS-in-JS with scoped names. 3) Auth token sharing: shared auth library via postMessage or shared cookie domain. 4) Performance: each MFE is another network request — preload remotes, use HTTP/2 push. 5) Deployment complexity: each MFE deploys independently, breaking changes need coordination — implement API versioning for MFE contracts. For most teams <50 engineers: a well-modularized monorepo is simpler."
+            }
+          ]
+        },
+        {
+          "id": "custom-hooks-advanced",
+          "title": "Advanced Custom Hooks Design",
+          "summary": "Hooks as abstractions — reusable stateful logic with clean APIs and proper cleanup.",
+          "explanation": "Expert-level custom hooks encapsulate complex stateful logic with clean external APIs. Key principles: single responsibility, proper cleanup, TypeScript generics for reusability, controlled/uncontrolled variants, and suspense compatibility. Patterns: useControllable (manages state that can be either controlled by parent or internal), useEventCallback (stable callback reference that always calls latest version), useIsomorphicLayoutEffect (SSR-safe), usePrevious (track previous value).",
+          "code": "// useEventCallback — stable reference, always fresh value\nfunction useEventCallback<T extends (...args: any[]) => any>(fn: T): T {\n  const ref = useRef<T>(fn);\n  useLayoutEffect(() => { ref.current = fn; }); // Always sync\n  return useCallback((...args) => ref.current(...args), []) as T;\n}\n\n// useControllable — works as controlled OR uncontrolled\nfunction useControllable<T>(\n  controlledValue: T | undefined,\n  onChange: ((v: T) => void) | undefined,\n  defaultValue: T\n): [T, (v: T) => void] {\n  const [internal, setInternal] = useState(defaultValue);\n  const isControlled = controlledValue !== undefined;\n  const value = isControlled ? controlledValue : internal;\n  \n  const setValue = useEventCallback((next: T) => {\n    if (!isControlled) setInternal(next);\n    onChange?.(next);\n  });\n  \n  return [value, setValue];\n}\n\n// Usage in a component that works both ways:\nfunction Toggle({ checked, onCheckedChange, defaultChecked = false }) {\n  const [isOn, setIsOn] = useControllable(checked, onCheckedChange, defaultChecked);\n  return <button onClick={() => setIsOn(!isOn)}>{isOn ? 'ON' : 'OFF'}</button>;\n}",
+          "situations": [
+            {
+              "question": "You need to build a useFetch hook that handles caching, deduplication, race conditions, and retry. Walk through your implementation.",
+              "answer": "Layer by layer: 1) State: const [state, dispatch] = useReducer(fetchReducer, { status: 'idle', data: null, error: null }) with clear status types. 2) Abort: const controllerRef = useRef(null); abort on re-fetch. 3) Cache: external Map keyed by URL + params (outside component to survive remounts). Store {data, timestamp}. 4) Deduplication: pending Map keyed by URL — if there's already a pending Promise for this URL, subscribe to it instead of creating a new fetch. 5) Retry: withRetry wrapper around fetch with exponential backoff. 6) Cleanup: return () => controllerRef.current?.abort() from useEffect. Warning: this is essentially TanStack Query. In production: use TanStack Query. Build this only as an exercise or if you have very specific constraints TanStack Query doesn't support."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ssr-ssg-advanced",
+      "title": "SSR, SSG & Streaming",
+      "emoji": "🌊",
+      "topics": [
+        {
+          "id": "ssr-internals",
+          "title": "SSR Internals & Hydration",
+          "summary": "renderToString vs renderToPipeableStream. Hydration mismatches. Selective hydration.",
+          "explanation": "Classic SSR (renderToString): renders the entire React tree to a string on the server, sends it to the client, then React 'hydrates' — attaches event handlers by reconciling the HTML with a re-render. Blocking — the browser waits for the full string. Streaming SSR (renderToPipeableStream, React 18): sends HTML chunks as they're ready, enabling progressive rendering. The browser starts parsing and rendering before the full response arrives. Selective hydration: Suspense boundaries can defer hydration — user-visible parts hydrate first, offscreen parts hydrate later.",
+          "code": "// Classic renderToString (blocking):\nimport { renderToString } from 'react-dom/server';\nconst html = renderToString(<App />); // Blocks until entire tree renders\nres.send(`<html><body>${html}</body></html>`);\n\n// Streaming SSR (React 18+):\nimport { renderToPipeableStream } from 'react-dom/server';\n\nconst { pipe, abort } = renderToPipeableStream(<App />, {\n  // Critical JS chunks to load first:\n  bootstrapScripts: ['/static/js/main.js'],\n  \n  // Once the shell (above all Suspense boundaries) is ready:\n  onShellReady() {\n    res.statusCode = 200;\n    res.setHeader('Content-Type', 'text/html');\n    pipe(res); // Stream HTML directly to response!\n  },\n  \n  onError(error) {\n    console.error(error);\n    res.statusCode = 500;\n  }\n});\n\n// In your component tree, Suspense enables streaming:\nfunction Page() {\n  return (\n    <main>\n      <Header /> {/* Sends immediately */}\n      <Suspense fallback={<Skeleton />}>\n        <SlowDataComponent /> {/* Streams when data is ready */}\n      </Suspense>\n    </main>\n  );\n}",
+          "situations": [
+            {
+              "question": "Your SSR app has hydration mismatches causing 'Text content did not match' errors. How do you diagnose and fix this?",
+              "answer": "Hydration mismatch: the HTML server sent doesn't match what React renders on client. Common causes: 1) Date/time: server renders '2026-01-01', client re-renders 'today' from new Date() — fix: pass timestamp as prop from server. 2) Random IDs: Math.random() differs between server and client — fix: use useId() which is stable. 3) Window/localStorage access: only exists on client — fix: guard with typeof window !== 'undefined' or useEffect. 4) Browser extensions injecting DOM nodes. 5) Server/client timezone mismatch. Debug: React 18 provides detailed mismatch messages in dev mode showing exact attribute differences. Fix pattern: suppressHydrationWarning={true} on elements where mismatch is intentional (e.g., dynamically styled elements). For third-party widgets: mount them inside a useEffect with createPortal to skip SSR entirely."
+            },
+            {
+              "question": "What is the 'Island Architecture' and how does it differ from full SSR and full CSR?",
+              "answer": "Island Architecture: the server renders a mostly static HTML page. 'Islands' of interactivity are separately hydrated on the client. Each island is an isolated React tree that hydrates independently. Used by: Astro, Fresh (Deno). Compared to: Full SSR (Next.js pages): entire page is a React tree that hydrates — loads all JS even for static content. Full CSR (Vite SPA): all JS loaded, all rendering on client. Islands: only the JS for interactive islands ships to client. Static content has zero JS. Benefits: minimal JS payload, fast TTI for content-heavy sites, each island hydrates with its own priority. Tradeoffs: islands can't share React state directly (must use external store like nanostores or URL state). Best for: documentation sites, blogs, marketing pages with a few interactive components."
+            }
+          ]
+        },
+        {
+          "id": "incremental-static-regen",
+          "title": "ISR & On-Demand Revalidation",
+          "summary": "Stale-while-revalidate at the infrastructure level — Next.js ISR mechanics.",
+          "explanation": "ISR (Incremental Static Regeneration) combines static generation's speed with SSR's freshness. Pages are pre-built statically but revalidated at a configurable interval (revalidate seconds). The first request after expiry triggers background regeneration while serving the stale page (stale-while-revalidate CDN pattern). On-demand ISR: trigger revalidation via a webhook (revalidatePath, revalidateTag) when data actually changes. React 19 extends this via fetch() cache: 'force-cache' with next.tags for granular tag-based invalidation.",
+          "code": "// Next.js App Router: time-based revalidation\nasync function ProductPage({ params }) {\n  // Revalidate every 60 seconds (ISR):\n  const product = await fetch(`/api/products/${params.id}`, {\n    next: { revalidate: 60 } // CDN caches for 60s\n  }).then(r => r.json());\n  \n  return <Product data={product} />;\n}\n\n// Tag-based invalidation (on-demand ISR):\nasync function getProduct(id) {\n  return fetch(`/api/products/${id}`, {\n    next: { tags: [`product-${id}`, 'products'] } // Cache tags\n  });\n}\n\n// Webhook route (called when product updates in CMS):\nexport async function POST(request) {\n  const { productId } = await request.json();\n  \n  // Invalidate just this product's cache:\n  revalidateTag(`product-${productId}`);\n  \n  // OR invalidate all products:\n  revalidatePath('/products', 'layout');\n  \n  return Response.json({ revalidated: true });\n}",
+          "situations": [
+            {
+              "question": "Your e-commerce product pages need to be fast (static) but inventory updates need to reflect within 30 seconds. How do you architect this?",
+              "answer": "Hybrid approach: 1) Product details (images, description, price) — ISR with revalidate: 3600. Prices rarely change, static is fast. 2) Inventory/stock count — don't statically render. Show a Client Component that fetches stock via a lightweight API route on the client. This way, the static page loads fast, then the stock count updates via client fetch. 3) OR: use on-demand ISR with a webhook from your inventory system. When stock changes, call revalidateTag('product-${id}'). Next request gets fresh data. 4) Stock = 0 edge case: trigger an immediate revalidation via API when stock hits 0 so 'out of stock' shows quickly. Use SWR with refreshInterval: 30000 on the client as a fallback polling mechanism if webhooks fail."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "accessibility-advanced",
+      "title": "Accessibility (a11y) — Senior Level",
+      "emoji": "♿",
+      "topics": [
+        {
+          "id": "aria-patterns",
+          "title": "ARIA Patterns & WAI-ARIA Spec",
+          "summary": "Roles, states, properties — ARIA Live Regions, focus management, keyboard navigation.",
+          "explanation": "Senior engineers implement ARIA beyond basic alt text. Key patterns: 1) Composite widgets (combobox, tree, grid) require roving tabindex for keyboard navigation. 2) ARIA Live Regions (aria-live, aria-atomic, aria-relevant) announce dynamic content to screen readers. 3) Focus management: trap focus in modals (focus-trap-react), return focus on close. 4) Keyboard patterns: arrow keys navigate within widgets, Escape closes overlays, Enter/Space activate. WAI-ARIA Authoring Practices Guide is the specification for these patterns.",
+          "code": "// Focus trap in Modal (accessibility requirement):\nimport { createFocusTrap } from 'focus-trap';\n\nfunction Modal({ isOpen, onClose, children }) {\n  const modalRef = useRef(null);\n  \n  useEffect(() => {\n    if (!isOpen) return;\n    // Trap focus inside modal\n    const trap = createFocusTrap(modalRef.current, {\n      onDeactivate: onClose,\n      initialFocus: '.modal-title', // Focus first meaningful element\n    });\n    trap.activate();\n    return () => trap.deactivate(); // Release on close\n  }, [isOpen]);\n  \n  return (\n    <div\n      ref={modalRef}\n      role=\"dialog\"\n      aria-modal=\"true\"\n      aria-labelledby=\"modal-title\"\n    >\n      <h2 id=\"modal-title\" className=\"modal-title\">Confirm Action</h2>\n      {children}\n      <button onClick={onClose}>Cancel</button>\n    </div>\n  );\n}\n\n// ARIA Live Region for toast notifications:\nfunction ToastContainer({ toasts }) {\n  return (\n    <div\n      aria-live=\"polite\"  // 'assertive' for errors\n      aria-atomic=\"false\" // Announce each toast individually\n      className=\"visually-hidden\" // Off-screen, screen reader only\n    >\n      {toasts.map(t => <p key={t.id}>{t.message}</p>)}\n    </div>\n  );\n}",
+          "situations": [
+            {
+              "question": "A screen reader user reports that your dropdown menu is completely inaccessible. How do you implement it correctly?",
+              "answer": "Implement the ARIA Combobox or Menu Button pattern from WAI-ARIA APG: 1) Trigger button: role='button' with aria-expanded and aria-controls pointing to the menu ID. 2) Menu: role='menu' with id matching controls. 3) Menu items: role='menuitem'. 4) Keyboard: Enter/Space opens menu, focuses first item. Arrow keys navigate items (roving tabindex or aria-activedescendant). Escape closes and returns focus to trigger. Home/End jump to first/last. 5) Close on outside click + Escape. 6) For search dropdowns (combobox): role='combobox' on input, role='listbox' on dropdown, role='option' on items, aria-activedescendant tracks focused option. Use Radix UI's DropdownMenu or Headless UI's Menu — they implement these patterns correctly. Testing: test with NVDA (Windows), VoiceOver (Mac), screen reader + keyboard only."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "react-testing-advanced",
+      "title": "React Testing — Senior Level",
+      "emoji": "🧪",
+      "topics": [
+        {
+          "id": "testing-patterns",
+          "title": "Testing Patterns & Anti-patterns",
+          "summary": "Test behavior not implementation. MSW for network. Playwright for E2E.",
+          "explanation": "Expert React testing follows 'test behavior, not implementation': query by role/text (not testId), test what users see and do (not state values), use MSW for network layer. Anti-patterns: testing implementation details (useState values, component class names), testing library components you didn't write, over-mocking (mocking fetch module instead of using MSW). Senior engineers also set up Playwright for critical user journeys and use Testing Library's accessibility-first queries.",
+          "code": "// BAD: Testing implementation details\nit('should set loading state', () => {\n  render(<UserProfile />);\n  expect(component.state('isLoading')).toBe(true); // Never do this\n  expect(wrapper.find('.loading-spinner')).toHaveLength(1); // Fragile\n});\n\n// GOOD: Test user-observable behavior\nit('shows spinner while loading user profile', async () => {\n  server.use(\n    http.get('/api/user', () => new Promise(() => {})) // Never resolves\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(screen.getByRole('progressbar')).toBeInTheDocument();\n});\n\nit('shows user name after successful load', async () => {\n  server.use(\n    http.get('/api/user', () =>\n      HttpResponse.json({ name: 'Abhishek', email: 'a@b.com' })\n    )\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(await screen.findByText('Abhishek')).toBeInTheDocument();\n});\n\nit('shows error when API fails', async () => {\n  server.use(\n    http.get('/api/user', () => new HttpResponse(null, { status: 500 }))\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(await screen.findByRole('alert')).toHaveTextContent(/failed to load/i);\n});",
+          "situations": [
+            {
+              "question": "Your test suite takes 8 minutes to run and CI is slow. How do you cut test time without removing tests?",
+              "answer": "Systematic approach: 1) Parallelize: Jest --runInBand is serial — use workers (default). Set maxWorkers to 50% of CPUs in CI. 2) Shard: split tests across CI machines (GitHub Actions matrix): jest --shard=1/4, 2/4, 3/4, 4/4. 3) Change detection: in CI, run only tests related to changed files: jest --onlyChanged or Nx affected:test. 4) Fix slow tests: use jest.useFakeTimers() for tests with real timeouts (setTimeout), mock heavy external modules. 5) Separate unit from E2E: run units on every push, E2E on PR merge only. 6) Use Vitest instead of Jest — native ESM, much faster HMR and test discovery. 7) Check for test isolation issues: tests that fail in parallel but not serial — shared global state between tests."
+            }
+          ]
+        },
+        {
+          "id": "playwright-e2e",
+          "title": "Playwright E2E Testing",
+          "summary": "Cross-browser E2E. Parallel execution. Component testing. Network interception.",
+          "explanation": "Playwright is the modern E2E testing framework. Advantages over Cypress: multi-browser (Chrome, Firefox, WebKit), multiple tabs/windows, native mobile emulation, better parallel execution, and network interception that works across all browsers. For React: Playwright Component Testing allows rendering components in a real browser without a full app server. Key patterns: locators (get by role, text, label for accessibility-aware querying), network mocking, visual regression testing, auth state sharing.",
+          "code": "// playwright.config.ts\nexport default defineConfig({\n  testDir: './e2e',\n  fullyParallel: true, // Run all tests in parallel\n  forbidOnly: !!process.env.CI, // Fail if test.only left in code\n  retries: process.env.CI ? 2 : 0, // Retry on CI\n  workers: process.env.CI ? '50%' : undefined,\n  reporter: 'html',\n  use: {\n    baseURL: 'http://localhost:3000',\n    trace: 'on-first-retry', // Record trace on failure\n    screenshot: 'only-on-failure',\n  },\n  projects: [\n    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },\n    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },\n    { name: 'mobile', use: { ...devices['iPhone 13'] } },\n  ],\n});\n\n// Test: checkout flow with network mocking\ntest('complete checkout flow', async ({ page, context }) => {\n  // Mock payment API\n  await context.route('**/api/payment', route =>\n    route.fulfill({ json: { success: true, orderId: 'ord_123' } })\n  );\n  \n  await page.goto('/cart');\n  await page.getByRole('button', { name: 'Checkout' }).click();\n  await page.getByLabel('Card number').fill('4242424242424242');\n  await page.getByRole('button', { name: 'Pay now' }).click();\n  \n  await expect(page.getByRole('heading', { name: 'Order confirmed' })).toBeVisible();\n  await expect(page.getByText('ord_123')).toBeVisible();\n});",
+          "situations": [
+            {
+              "question": "How do you handle authentication in Playwright tests so every test doesn't have to log in from scratch?",
+              "answer": "Use Playwright's storageState for session sharing: 1) Create a global setup file that logs in once: authenticate with credentials, save context storageState to a file (auth.json). 2) Configure playwright.config.ts to use this storageState for all tests. 3) Tests start already authenticated. For multiple user roles: create separate storageState files (admin.json, editor.json). Use project dependencies: { name: 'as-admin', use: { storageState: 'admin.json' } }. For tests that require a fresh login (testing login page itself): override with { storageState: { cookies: [], origins: [] } } to clear auth. Advanced: use API to create test users programmatically rather than UI-based login — faster and more reliable."
+            }
+          ]
+        }
+      ]
+    }
   ]
 }
