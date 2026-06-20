@@ -1,0 +1,32 @@
+{
+  "name": "interviewprep",
+  "version": "1.0.0",
+  "description": "Welcome to the Senior Interview Prep project!",
+  "main": "app.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbhishekSuratiya/interviewPrep.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AbhishekSuratiya/interviewPrep/issues"
+  },
+  "homepage": "https://github.com/AbhishekSuratiya/interviewPrep#readme",
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "tailwindcss": "^4.3.1",
+    "vite": "^8.0.16"
+  }
+}

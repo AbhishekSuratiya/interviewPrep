@@ -1,0 +1,424 @@
+{
+  "skill": "React Native",
+  "icon": "📱",
+  "color": "#9b59b6",
+  "sections": [
+    {
+      "id": "new-arch-complete",
+      "title": "New Architecture — Complete Flow",
+      "emoji": "🏗️",
+      "topics": [
+        {
+          "id": "complete-flow",
+          "title": "Complete Execution Flow: JS → Native",
+          "summary": "From JS bundle load to pixels on screen — every step and component explained.",
+          "explanation": "The complete flow: 1) App Launch: Native (Java/Kotlin on Android, ObjC/Swift on iOS) starts. 2) JS Engine Start: Hermes (or JSC) loads the JS bundle — bytecode if Hermes. 3) Metro Bundler (dev) or pre-built bundle (prod) provides JS. 4) React Initialization: 'require('react-native')' bootstraps the framework. 5) Root Component Render: ReactDOM.render equivalent calls your App component. 6) React Render Phase: your components run, producing a React element tree. 7) Fabric Shadow Tree: Yoga layout engine calculates positions in C++. 8) Commit Phase: changes applied to the native view hierarchy. 9) GPU Composition: RenderThread (Android) / Core Animation (iOS) composites layers into pixels. 10) Touch Events: reverse flow — OS detects touch → Gesture Handler → React event system → your handler.",
+          "imageUrl": "https://reactnative.dev/img/diagram_react-native-components_dark.png",
+          "imageCaption": "React Native: JS thread produces a React element tree → Fabric shadow tree → Native views → Screen",
+          "code": "// App launch sequence (simplified):\n\n// 1. Native bootstrap (MainActivity.kt / AppDelegate.mm)\nclass MainActivity : ReactActivity() {\n  override fun getMainComponentName() = \"MyApp\"\n  // Starts ReactHost → loads JS bundle → runs JS\n}\n\n// 2. JS bundle runs — React initializes\nAppRegistry.registerComponent('MyApp', () => App);\n\n// 3. React renders your component tree\nfunction App() {\n  return <View><Text>Hello</Text></View>;\n}\n// JSX → React.createElement() → element tree (plain objects)\n\n// 4. Fabric processes element tree:\n//    ReactShadowNode → Yoga measures layout\n//    C++ SharedTree → native view descriptors\n\n// 5. Commit Phase — native views created/updated:\n//    View → android.widget.View (Android) or UIView (iOS)\n//    Text → android.widget.TextView or UILabel\n\n// 6. RenderThread composites to GPU → pixels on screen"
+        },
+        {
+          "id": "jsi-detail",
+          "title": "JSI — JavaScript Interface",
+          "summary": "Direct C++ binding from JS. No JSON serialization. Enables TurboModules & Fabric.",
+          "explanation": "JSI (JavaScript Interface) is the foundation of the New Architecture. It exposes a C++ API to the JavaScript engine. Key capabilities: 1) JS can hold DIRECT REFERENCES to C++ objects (HostObjects). 2) Method calls are synchronous — no async bridge queue. 3) No JSON serialization/deserialization overhead. 4) Engine-agnostic: works with Hermes, V8, JavaScriptCore. JSI enables: TurboModules (native modules via JSI, lazy-loaded), Fabric (renderer using JSI for sync layout), and Reanimated worklets (JS functions running on UI thread via JSI).",
+          "code": "// JSI HostObject (C++ side — simplified):\nclass NativeStorageHostObject : public jsi::HostObject {\n  jsi::Value get(jsi::Runtime& rt, const jsi::PropNameID& name) override {\n    auto nameStr = name.utf8(rt);\n    if (nameStr == \"getString\") {\n      return jsi::Function::createFromHostFunction(rt, name, 1,\n        [this](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {\n          auto key = args[0].asString(rt).utf8(rt);\n          return jsi::String::createFromUtf8(rt, mmkvStorage.getString(key));\n          // SYNCHRONOUS return — no callback needed!\n        });\n    }\n    return jsi::Value::undefined();\n  }\n};\n\n// Install JSI module (called from React Native's setupJsi):\nvoid install(jsi::Runtime& rt) {\n  auto storage = std::make_shared<NativeStorageHostObject>();\n  rt.global().setProperty(rt, \"__NativeStorage\",\n    jsi::Object::createFromHostObject(rt, storage));\n}\n\n// JS side — synchronous call:\nconst value = global.__NativeStorage.getString('user_id'); // No await!"
+        },
+        {
+          "id": "fabric-detail",
+          "title": "Fabric Renderer",
+          "summary": "New renderer: sync layout, priority-based, shared C++ shadow tree between threads.",
+          "explanation": "Fabric replaces the old UIManager. Key improvements: 1) Synchronous layout: Yoga calculations happen on the C++ thread that communicates directly with the UI thread — no async layout queue. 2) Priority-based rendering: gestures/animations run at higher priority than data updates. 3) Shared immutable C++ tree: instead of serializing layout data across the bridge, Fabric uses a shared pointer to C++ shadow nodes between JS and UI threads. 4) Enables React Concurrent features in native: useTransition, Suspense, and time-slicing affect native rendering too.",
+          "code": "// Fabric rendering pipeline:\n// 1. JS Render Phase:\nfunction MyComponent() {\n  return <View style={{ flex: 1, padding: 16 }}><Text>Hello</Text></View>;\n}\n// createElement → ReactShadowNode objects\n\n// 2. Yoga Layout (C++ thread):\n// ShadowView tree → layout calculations\n// flex: 1 → height: 800, width: 390 (calculated)\n// padding: 16 → content starts at 16,16\n\n// 3. Commit Phase (UI thread):\n// Create/update native views synchronously\n// android.view.View → setLayout(x, y, width, height)\n\n// 4. Mount Effect:\n// Layout effects (useLayoutEffect) fire here\n// Refs are attached\n\n// 5. Native Rendering:\n// Android RenderThread, iOS Core Animation\n// GPU composition → screen pixels @ 60-120fps"
+        },
+        {
+          "id": "turbomodules-detail",
+          "title": "TurboModules",
+          "summary": "Lazy-loaded native modules via JSI. Codegen ensures type safety from TS spec.",
+          "explanation": "TurboModules replace the old NativeModules bridge. Key differences: 1) Lazy loading: modules initialize only when first called, not at app startup — improving launch time. 2) JSI-based: direct function calls, no bridge queue. 3) Codegen: TypeScript spec files auto-generate C++, Java, and ObjC code — type mismatches are caught at build time, not runtime. 4) Synchronous support: can return values synchronously (JSI allows it). Process: write a TypeScript spec → run Codegen → implement in native language → automatic glue code.",
+          "code": "// 1. TypeScript Spec (NativeCalculator.ts):\nimport type { TurboModule } from 'react-native';\nimport { TurboModuleRegistry } from 'react-native';\n\nexport interface Spec extends TurboModule {\n  // Codegen generates native signatures from these:\n  add(a: number, b: number): number;       // Synchronous!\n  multiply(a: number, b: number): number;\n  fetchRemote(url: string): Promise<string>; // Async OK too\n}\n\nexport default TurboModuleRegistry.getEnforcing<Spec>('Calculator');\n\n// 2. Android implementation (CalculatorModule.kt):\n@ReactModule(name = CalculatorModule.NAME)\nclass CalculatorModule(reactContext: ReactApplicationContext)\n  : NativeCalculatorSpec(reactContext) {\n  \n  override fun add(a: Double, b: Double) = a + b  // Type-safe from spec!\n  override fun multiply(a: Double, b: Double) = a * b\n}\n\n// 3. JS usage — lazy loaded, direct JSI call:\nimport NativeCalculator from './NativeCalculator';\nconst result = NativeCalculator.add(5, 3); // 8 — synchronous!"
+        },
+        {
+          "id": "hermes-engine",
+          "title": "Hermes JavaScript Engine",
+          "summary": "Facebook's JS engine: AOT bytecode compilation, low memory, fast startup.",
+          "explanation": "Hermes is a JavaScript engine optimized specifically for React Native. Key advantages vs JavaScriptCore: 1) AOT compilation: JS is compiled to bytecode at build time (not at runtime) — drastically reduces startup time. 2) Low memory: designed for resource-constrained mobile devices. 3) Smaller memory footprint: bytecode is more compact than JS source. 4) Debugging: supports Chrome DevTools protocol. 5) Profiler: Hermes produces CPU profiles that show JS flamecharts. Hermes is now the default engine for React Native 0.70+ on both Android and iOS.",
+          "code": "// Enable Hermes:\n// Android (android/app/build.gradle):\nandroid {\n  defaultConfig {\n    ...\n  }\n}\n// In React Native 0.70+: Hermes is ON by default\n// Disable: set hermesEnabled=false in gradle.properties\n\n// iOS (ios/Podfile):\nuse_react_native!(:hermes_enabled => true)\n\n// Verify Hermes is running:\nconst isHermes = () => !!global.HermesInternal;\nconsole.log('Using Hermes:', isHermes());\n\n// Hermes bytecode benefits:\n// - Normal APK: JS parsed at every app launch\n// - With Hermes: bytecode already parsed, just load + run\n// - Result: 30-50% faster app startup\n// - Memory: 30% less peak memory vs JSC"
+        },
+        {
+          "id": "yoga-layout",
+          "title": "Yoga Layout Engine",
+          "summary": "Facebook's C++ Flexbox implementation — cross-platform layout consistency.",
+          "explanation": "Yoga is a cross-platform layout engine written in C++ that implements the CSS Flexbox specification. It runs on a background thread, calculates the size and position of every view, then commits the layout to the native thread. Yoga ensures layout consistency between iOS and Android. Key: Yoga does NOT support CSS Grid (only Flexbox), some CSS properties are not implemented, and there are minor differences from browser Flexbox behavior (e.g., flexShrink defaults differ).",
+          "code": "// Yoga Flexbox in React Native:\n// Note: all values are unitless (density-independent pixels)\n<View\n  style={{\n    flex: 1,             // Take all available space\n    flexDirection: 'row', // Default in RN is 'column' (unlike web!)\n    justifyContent: 'space-between',\n    alignItems: 'center',\n    padding: 16,\n    gap: 8,              // Gap support added in RN 0.71\n  }}\n>\n  <Text style={{ flex: 1 }}>Left</Text>  {/* Takes 1/3 */}\n  <Text style={{ flex: 2 }}>Right</Text> {/* Takes 2/3 */}\n</View>\n\n// Key differences from web Flexbox:\n// flexDirection: 'column' is DEFAULT (not row like CSS)\n// All numbers are unitless (density-aware points, not px)\n// No percentage widths without Dimensions API\n// No display: 'grid' (Flexbox only)"
+        },
+        {
+          "id": "new-arch-deep-dive",
+          "title": "New Architecture — System Deep Dive",
+          "summary": "JSI + Fabric + TurboModules + Threading model — how every piece connects end-to-end.",
+          "explanation": "The New Architecture fundamentally changes how React Native interacts with native code — replacing the asynchronous Bridge with a direct, synchronous communication model. The full flow: 1) JS Thread (Hermes engine): your JSX runs here, creating a Fiber Tree — a virtual blueprint of your UI. 2) JSI (JavaScript Interface): the game-changer. It allows JavaScript to hold direct references to C++ objects and call them synchronously — no JSON serialization/deserialization, no async bridge queue. 3) Fabric (Concurrent Renderer): syncs the Fiber Tree (JS side) with the Shadow Tree (C++ mirror). The Shadow Tree is a C++ replica of your UI used for layout calculations. 4) Yoga Engine (Background Thread): performs all heavy layout math — flexbox constraints, exact pixel dimensions — based on the device's screen geometry. Results are passed to the Render Thread. 5) UI Thread: the only thread allowed to 'paint' pixels. Fabric pushes the finalized layout here for native rendering on Android (RenderThread) or iOS (Core Animation). 6) Turbo Modules: unlike the old arch where ALL native modules initialized at startup, Turbo Modules are lazy-loaded — only the modules your code actually calls are initialized, drastically reducing startup time. OLD ARCH problem: every data exchange required JSON serialization → bridge queue → deserialization. Tasks processed sequentially → bottlenecks → UI lag. NEW ARCH solution: JSI enables synchronous direct calls; Fabric enables concurrent, priority-based rendering; Turbo Modules enable lazy native initialization.",
+          "code": "// =====================================================\n// THREADING MODEL: 4 threads working in harmony\n// =====================================================\n\n// 1. JS Thread — your logic & JSX (powered by Hermes)\nfunction MyScreen() {\n  const [count, setCount] = useState(0);\n  return <View><Text>{count}</Text></View>;\n  //     ^ JSX → Fiber Tree (blueprint of the UI)\n}\n\n// 2. Render Thread — managed by Fabric\n// Syncs Fiber Tree <-> Shadow Tree (C++ mirror)\n// Shadow Tree = C++ replica used for layout calculations\n\n// 3. Background Thread — Yoga engine\n// Yoga takes Shadow Tree + screen geometry:\n//   flex: 1 → calculates exact px: width=390, height=844\n//   padding: 16 → content origin: (16, 16)\n// Results sent to Render Thread when done.\n\n// 4. UI Thread — final native paint\n// Receives finalized layout from Fabric\n// android.view.View / UIView gets setLayout(x, y, w, h)\n// GPU composites → pixels on screen @ 60-120fps\n\n// =====================================================\n// JSI: Direct C++ <-> JS — NO JSON, NO QUEUE\n// =====================================================\n\n// Old Bridge (bottleneck):\n// JS → JSON.stringify → async queue → JSON.parse → Native\n//   Every call had serialization + async overhead\n\n// JSI (direct reference):\n// JS holds a direct C++ HostObject reference\n// Method calls are SYNCHRONOUS — no await needed!\nconst value = global.NativeStorage.getString('key'); // sync!\n\n// Internally:\nclass NativeStorageHostObject : public jsi::HostObject {\n  jsi::Value get(jsi::Runtime& rt, const jsi::PropNameID& name) {\n    // Direct C++ execution — returns immediately to JS\n    return jsi::String::createFromUtf8(rt, mmkv.getString(key));\n  }\n};\n\n// =====================================================\n// TURBO MODULES: Lazy loading vs old eager loading\n// =====================================================\n\n// OLD ARCH: ALL modules registered at startup\n// Camera, Bluetooth, Contacts, Location all init'd even if unused\n// → slow startup even if you never use Camera\n\n// NEW ARCH: Turbo Modules — lazy initialized via JSI\nimport { TurboModuleRegistry } from 'react-native';\n\n// Module only initializes when first accessed:\nconst camera = TurboModuleRegistry.getEnforcing('Camera');\n\n// Codegen ensures type safety from your TS spec:\nexport interface Spec extends TurboModule {\n  capturePhoto(options: CaptureOptions): Promise<string>;\n  isAvailable(): boolean; // synchronous!\n}\n\n// =====================================================\n// FULL PIPELINE SUMMARY\n// =====================================================\n// Step 1: JSX written in JS Thread (Hermes)\n// Step 2: Fiber Tree created (React virtual structure)\n// Step 3: JSI syncs Fiber Tree → Shadow Tree (C++)\n// Step 4: Yoga calculates layout (Background Thread)\n// Step 5: Fabric pushes layout → UI Thread\n// Step 6: UI Thread paints native views → screen\n// All of this happens concurrently, with priority lanes:\n//   user input > animations > data updates",
+          "situations": [
+            {
+              "question": "An interviewer asks: 'Explain why the React Native New Architecture is faster than the old one.' Give a complete technical answer.",
+              "answer": "Three root causes of old arch slowness, and how new arch fixes each: 1) SERIALIZATION BOTTLENECK: Old arch serialized all JS<->Native data as JSON strings. A 1000-item list update meant JSON.stringify + queue wait + JSON.parse on the native side. JSI eliminates this — JS holds direct C++ object references, method calls are synchronous with zero serialization. 2) ASYNC BRIDGE QUEUE: Old arch used an async message queue. UI updates couldn't be prioritized — a data fetch response and a touch event were queued equally, causing input lag. Fabric introduces priority lanes (same concept as React's Concurrent Mode): user gestures run at highest priority, data updates can be interrupted. 3) EAGER MODULE LOADING: Old arch initialized EVERY registered native module at startup — even ones never used in this session. TurboModules lazy-load — only modules your code actually calls get initialized. Startup time drops significantly for apps with many native dependencies. Net result: The new arch is not just 'faster' — it enables an entirely different concurrency model: concurrent rendering, synchronous layout, and on-demand native initialization."
+            },
+            {
+              "question": "You need to call a native function 60 times per second (e.g., for a custom animation). With the old arch this is impossible. How does the new arch solve it?",
+              "answer": "Old arch: 60 calls/sec × async bridge overhead = guaranteed frame drops. The bridge queue couldn't handle 60fps native calls from JS. New arch solutions: 1) JSI direct call: with JSI, JS→C++ is a direct synchronous function call. The overhead is microseconds, not milliseconds. 60/sec is trivially fast. 2) Reanimated worklets: for animations specifically, Reanimated 2+ uses JSI to run JS animation functions directly on the UI thread — completely bypassing the JS thread. Your animation logic runs frame-perfectly at 60-120fps even if the JS thread is busy. 3) For custom use cases: create a JSI HostObject that JS can call synchronously. The C++ side can maintain its own timer and push state updates to JS via event emitter. Practical pattern: useAnimatedStyle + worklet in Reanimated gives you 60fps animations with zero bridge overhead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storage-types",
+      "title": "Storage Types in React Native",
+      "emoji": "💾",
+      "topics": [
+        {
+          "id": "storage-overview",
+          "title": "Storage Decision Guide",
+          "summary": "AsyncStorage vs MMKV vs SQLite vs Keychain — choose based on data type and security needs.",
+          "explanation": "React Native has multiple storage options. The right choice depends on: data type (key-value vs relational), security requirements (encrypted vs plain), performance needs (sync vs async), and data size. Decision guide: Simple key-value, non-sensitive → MMKV. Sensitive credentials → Keychain/Keystore. Structured/relational data → WatermelonDB or SQLite. Large files/media → File System (react-native-fs). Temporary/session data → in-memory state. Never use AsyncStorage for auth tokens.",
+          "code": "// Storage comparison:\n// AsyncStorage: ~90 ops/ms, async, unencrypted, simple KV\n// MMKV:         ~4800 ops/ms, sync+async, encrypted, KV\n// SQLite:        relational, async, supports complex queries\n// Keychain:      OS-level encryption, biometric auth, small values\n// react-native-fs: raw file access, large binary data\n\n// When to use each:\n// User preferences → MMKV\n// Auth tokens → Keychain\n// App data (posts, messages) → WatermelonDB / SQLite\n// Large media → react-native-fs + path stored in MMKV\n// Cache → MMKV with TTL logic\n// Analytics queue → MMKV or SQLite"
+        },
+        {
+          "id": "asyncstorage",
+          "title": "AsyncStorage",
+          "summary": "Async, unencrypted, simple KV. Good for non-sensitive preferences. Slow for large data.",
+          "explanation": "AsyncStorage is the original React Native storage API, now maintained by the community (@react-native-async-storage/async-storage). It's asynchronous (Promise-based), unencrypted (plain text), stores string key-value pairs. Good for: simple user preferences, onboarding state, app settings. Limitations: slower than MMKV (~50x), stores strings (must JSON.stringify objects), not encrypted. Maximum value size varies by platform. DEPRECATED pattern: using it for auth tokens.",
+          "code": "import AsyncStorage from '@react-native-async-storage/async-storage';\n\n// Store — must serialize objects\nawait AsyncStorage.setItem('user_prefs', JSON.stringify({ theme: 'dark', lang: 'en' }));\n\n// Retrieve — must deserialize\nconst raw = await AsyncStorage.getItem('user_prefs');\nconst prefs = raw ? JSON.parse(raw) : null;\n\n// Batch operations (more efficient than multiple calls)\nawait AsyncStorage.multiSet([\n  ['@key1', 'value1'],\n  ['@key2', JSON.stringify({ complex: 'data' })],\n]);\n\nconst results = await AsyncStorage.multiGet(['@key1', '@key2']);\n// results: [['@key1', 'value1'], ['@key2', '...']]"
+        },
+        {
+          "id": "mmkv",
+          "title": "MMKV Storage",
+          "summary": "30-50x faster than AsyncStorage. JSI-based synchronous reads. Encryption support.",
+          "explanation": "MMKV (Multi-Map Key-Value) is a storage framework originally built by WeChat/Tencent. The react-native-mmkv library wraps it with JSI for React Native — enabling synchronous reads and writes. 30-50x faster than AsyncStorage. Features: synchronous and async API, native encryption (AES-256), multiple storage instances, React state integration with listeners, and small binary footprint. The go-to replacement for AsyncStorage in performance-critical apps.",
+          "code": "import { MMKV } from 'react-native-mmkv';\n\n// Basic storage instance\nexport const storage = new MMKV();\n\n// Encrypted storage for sensitive data\nexport const secureStorage = new MMKV({\n  id: 'secure-storage',\n  encryptionKey: 'your-encryption-key', // Get from Keychain in production!\n});\n\n// SYNCHRONOUS reads — no await needed!\nconst theme = storage.getString('theme') ?? 'light'; // Instant!\nconst isLoggedIn = storage.getBoolean('isLoggedIn') ?? false;\nconst userData = storage.getString('user');\n\n// Writes\nstorage.set('theme', 'dark');\nstorage.set('visitCount', 42); // Number, no stringifying!\nstorage.set('isLoggedIn', true); // Boolean supported\n\n// Listen for changes — sync with React state\nuseEffect(() => {\n  const listener = storage.addOnValueChangedListener(key => {\n    if (key === 'theme') setTheme(storage.getString('theme'));\n  });\n  return listener.remove;\n}, []);",
+          "situations": [
+            {
+              "question": "Your app reads preferences on every screen navigation and AsyncStorage is causing 50-100ms delays. How do you fix it?",
+              "answer": "Migrate to MMKV: 1) Install react-native-mmkv. 2) Create a migration function that reads all AsyncStorage keys on first launch, writes to MMKV, then deletes AsyncStorage data. 3) Replace all AsyncStorage.getItem() calls with synchronous storage.getString() — no async/await needed, no loading states for preferences. 4) For React integration: read MMKV synchronously during component initialization (lazy useState), add MMKV listeners to keep React state in sync. Result: preference reads go from 50-100ms async to < 1ms synchronous — navigation transitions feel instant."
+            }
+          ]
+        },
+        {
+          "id": "watermelondb",
+          "title": "WatermelonDB & SQLite",
+          "summary": "Relational database for complex data. WatermelonDB for React integration. Lazy loading.",
+          "explanation": "For structured, relational data (social posts with comments, messages in threads, offline-first apps), SQLite or WatermelonDB is the right choice. WatermelonDB: built on top of SQLite, designed specifically for React Native, fully observable (components update automatically when DB changes), lazy loading (only loads data that's needed), and can sync with a server. @op-engineering/op-sqlite: modern SQLite wrapper with JSI for sync operations. Use for: offline-first apps, large datasets (thousands of records), complex queries with joins.",
+          "code": "// WatermelonDB setup:\nimport { Database } from '@nozbe/watermelondb';\nimport SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';\n\n// Schema definition\nconst postsSchema = tableSchema({\n  name: 'posts',\n  columns: [\n    { name: 'title', type: 'string' },\n    { name: 'content', type: 'string' },\n    { name: 'user_id', type: 'string', isIndexed: true },\n    { name: 'created_at', type: 'number' },\n  ],\n});\n\n// Model\nclass Post extends Model {\n  static table = 'posts';\n  @field('title') title;\n  @field('content') content;\n  @relation('users', 'user_id') author; // Relationship\n}\n\n// Component with auto-updating observable\nfunction PostList() {\n  const posts = useDatabase().get('posts').query(\n    Q.where('user_id', currentUser.id),\n    Q.sortBy('created_at', Q.desc)\n  );\n  \n  // Re-renders automatically when DB changes!\n  return posts.map(post => <PostCard key={post.id} post={post} />);\n}"
+        },
+        {
+          "id": "keychain-storage",
+          "title": "Keychain / Keystore (Secure Storage)",
+          "summary": "OS-level encryption for secrets. Biometric auth. Never use AsyncStorage for tokens.",
+          "explanation": "Platform-native secure storage: iOS Keychain stores data encrypted using the device's hardware Secure Enclave. Android Keystore uses hardware-backed key management. react-native-keychain provides a unified API. Supports biometric authentication for access. Use for: auth tokens (JWT, refresh tokens), API keys, passwords, encryption keys. The data survives app uninstall on iOS (can persist across reinstalls — clear on first launch) but not on Android.",
+          "code": "import * as Keychain from 'react-native-keychain';\n\n// Store credentials securely\nawait Keychain.setGenericPassword(\n  'username', // service username (first arg)\n  JSON.stringify({ accessToken, refreshToken }), // value\n  {\n    // Require biometric to access\n    accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,\n    // Only accessible when device is unlocked\n    accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,\n    service: 'com.myapp.auth', // Namespace\n  }\n);\n\n// Retrieve — prompts Face ID/fingerprint if configured\nconst creds = await Keychain.getGenericPassword({ service: 'com.myapp.auth' });\nif (creds) {\n  const { accessToken } = JSON.parse(creds.password);\n}\n\n// Clear on logout\nawait Keychain.resetGenericPassword({ service: 'com.myapp.auth' });"
+        }
+      ]
+    },
+    {
+      "id": "performance-libraries",
+      "title": "Performance Libraries",
+      "emoji": "⚡",
+      "topics": [
+        {
+          "id": "flashlist",
+          "title": "FlashList by Shopify",
+          "summary": "10x faster than FlatList. Recycles native views like RecyclerView. Drop-in replacement.",
+          "explanation": "FlashList solves FlatList's fundamental problem: FlatList destroys and recreates native views as you scroll (expensive). FlashList recycles existing native views — like Android's RecyclerView / iOS UICollectionView — which is the correct pattern for all native list implementations. Result: dramatically reduced JS and native thread work during scrolling. Only required prop beyond FlatList: 'estimatedItemSize'. Drop-in replacement with same API.",
+          "code": "import { FlashList } from '@shopify/flash-list';\n\n// Before (FlatList — creates/destroys native views):\n<FlatList\n  data={posts}\n  renderItem={({ item }) => <PostCard post={item} />}\n  keyExtractor={item => item.id}\n  getItemLayout={(_, i) => ({ length: 120, offset: 120 * i, index: i })}\n/>\n\n// After (FlashList — recycles native views, 10x faster):\n<FlashList\n  data={posts}\n  renderItem={({ item }) => <PostCard post={item} />}\n  keyExtractor={item => item.id}\n  estimatedItemSize={120} // Required — helps FlashList prepare recycling pool\n  // That's it! Same API, 10x better performance\n/>\n\n// For variable-height items:\n<FlashList\n  estimatedItemSize={200} // Rough average — FlashList adapts\n  overrideItemLayout={(layout, item) => {\n    layout.size = item.type === 'video' ? 300 : 150;\n  }}\n/>",
+          "situations": [
+            {
+              "question": "Your social feed with 2000+ posts scrolls at 20fps. Users report janky scrolling. What's your optimization plan?",
+              "answer": "1) Switch to FlashList — native view recycling vs FlatList's create/destroy. 2) Wrap PostCard in React.memo — prevent re-renders when unrelated parent state changes. 3) Memoize renderItem with useCallback. 4) Optimize images: use FastImage (disk+memory cache, priority loading), specify explicit width/height. 5) Defer heavy content: show text first, load likes/comments count after scroll stops (onMomentumScrollEnd). 6) For videos: only play the video that's > 70% visible (IntersectionObserver equivalent via onViewableItemsChanged). 7) Profile: use Perf Monitor — check both JS FPS and UI FPS to know which thread is bottlenecked."
+            }
+          ]
+        },
+        {
+          "id": "react-native-fast-image",
+          "title": "FastImage",
+          "summary": "Disk + memory caching, priority loading, progressive display. Replaces Image.",
+          "explanation": "React Native's built-in Image component has no caching — the same image URL is downloaded multiple times across sessions. FastImage uses SDWebImage (iOS) and Glide (Android) — the same battle-tested image libraries that native apps use. Features: disk caching (survives app restart), memory caching (instant for recently viewed), priority queuing (prioritize visible images), progressive JPEG support, and prefetching. Essential for any image-heavy app.",
+          "code": "import FastImage from 'react-native-fast-image';\n\n// Drop-in replacement for Image with caching:\n<FastImage\n  style={{ width: 200, height: 200, borderRadius: 8 }}\n  source={{\n    uri: 'https://cdn.myapp.com/profile.jpg',\n    // Priority: which images load first during scroll\n    priority: FastImage.priority.high, // For visible images\n    // Cache behavior:\n    cache: FastImage.cacheControl.immutable, // Cache forever (CDN with hash)\n    // OR: FastImage.cacheControl.web — respects Cache-Control headers\n  }}\n  resizeMode={FastImage.resizeMode.cover}\n/>\n\n// Preload images before they scroll into view:\nFastImage.preload([\n  { uri: 'https://cdn.myapp.com/img1.jpg', priority: FastImage.priority.normal },\n  { uri: 'https://cdn.myapp.com/img2.jpg', priority: FastImage.priority.low },\n]);\n\n// Clear cache when needed:\nawait FastImage.clearMemoryCache(); // Clear in-memory only\nawait FastImage.clearDiskCache();   // Clear disk cache"
+        },
+        {
+          "id": "reanimated-v3",
+          "title": "React Native Reanimated v3",
+          "summary": "Worklets on UI thread. SharedValues. withSpring, withTiming, withDecay — 60fps always.",
+          "explanation": "Reanimated 3 is the definitive animation solution for React Native. Architecture: Worklets (small JS functions serialized to run on the UI thread), SharedValues (atomic values accessible from both JS and UI threads via JSI), and Layout Animations (automated entry/exit animations). Runs at 60fps even when the JS thread is completely blocked. Integrates with Gesture Handler for gesture-driven animations. Key APIs: useSharedValue, useAnimatedStyle, useAnimatedGestureHandler, withSpring, withTiming, withSequence, withDelay, withRepeat.",
+          "code": "import Animated, {\n  useSharedValue, useAnimatedStyle,\n  withSpring, withTiming, withSequence, withRepeat,\n  interpolate, Extrapolation, runOnJS,\n} from 'react-native-reanimated';\nimport { GestureDetector, Gesture } from 'react-native-gesture-handler';\n\n// Drag + snap animation:\nfunction DraggableCard() {\n  const offsetX = useSharedValue(0);\n  const offsetY = useSharedValue(0);\n  const scale = useSharedValue(1);\n\n  const pan = Gesture.Pan()\n    .onBegin(() => {\n      scale.value = withSpring(1.05); // Lift card\n    })\n    .onUpdate(e => {\n      offsetX.value = e.translationX;\n      offsetY.value = e.translationY;\n    })\n    .onEnd(() => {\n      offsetX.value = withSpring(0); // Snap back\n      offsetY.value = withSpring(0);\n      scale.value = withSpring(1);\n    });\n\n  const animatedStyle = useAnimatedStyle(() => ({\n    transform: [\n      { translateX: offsetX.value }, // Runs on UI thread\n      { translateY: offsetY.value },\n      { scale: scale.value },\n    ],\n  }));\n\n  return (\n    <GestureDetector gesture={pan}>\n      <Animated.View style={[styles.card, animatedStyle]} />\n    </GestureDetector>\n  );\n}"
+        },
+        {
+          "id": "zustand-rn",
+          "title": "State Management in RN: Zustand + MMKV",
+          "summary": "Zustand for global state + MMKV for persistence = fast, simple, scalable.",
+          "explanation": "The optimal state management pattern for React Native: Zustand for global in-memory state (fast, no Provider, atomic selectors), MMKV for persistent storage (synchronous, 30x faster than AsyncStorage). Use zustand's persist middleware with a custom MMKV storage adapter to automatically persist and hydrate state. This replaces Redux + redux-persist in most RN apps with a simpler, faster solution.",
+          "code": "import { create } from 'zustand';\nimport { persist, createJSONStorage } from 'zustand/middleware';\nimport { MMKV } from 'react-native-mmkv';\n\nconst mmkvInstance = new MMKV({ id: 'app-state' });\n\n// MMKV storage adapter for Zustand\nconst mmkvZustandStorage = {\n  getItem: (name) => mmkvInstance.getString(name) ?? null,\n  setItem: (name, value) => mmkvInstance.set(name, value),\n  removeItem: (name) => mmkvInstance.delete(name),\n};\n\nconst useAppStore = create(\n  persist(\n    (set, get) => ({\n      theme: 'light',\n      user: null,\n      notifications: [],\n      toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),\n      setUser: (user) => set({ user }),\n      addNotification: (n) => set(s => ({ notifications: [n, ...s.notifications].slice(0, 50) })),\n    }),\n    {\n      name: 'app-storage',\n      storage: createJSONStorage(() => mmkvZustandStorage),\n    }\n  )\n);\n\n// Atomic selectors — only re-renders when theme changes:\nconst theme = useAppStore(state => state.theme); // Stable selector"
+        }
+      ]
+    },
+    {
+      "id": "deep-linking",
+      "title": "Deep Linking",
+      "emoji": "🔗",
+      "topics": [
+        {
+          "id": "deep-link-types",
+          "title": "Types of Deep Links",
+          "summary": "Custom URL Schemes, Universal Links (iOS), App Links (Android) — pros and cons.",
+          "explanation": "Three types of deep links: 1) Custom URL Schemes (e.g., myapp://profile/123): Works without installation check, but browsers show a warning dialog. If app is not installed, shows error. Easy to implement. 2) Universal Links (iOS) / App Links (Android): Uses HTTPS URLs (e.g., https://myapp.com/profile/123). Opens app if installed, falls back to website if not. Requires AASA file (iOS) or assetlinks.json (Android). More secure — attacker can't register your HTTPS domain. 3) Deferred Deep Links: user clicks link before installing. After install, app opens to the specific content. Requires Firebase Dynamic Links or Branch.io.",
+          "code": "// React Navigation deep linking config:\nimport { LinkingOptions } from '@react-navigation/native';\n\nconst linking: LinkingOptions<RootStackParamList> = {\n  // Both schemes supported:\n  prefixes: [\n    'myapp://',                 // Custom scheme\n    'https://myapp.com',       // Universal Links\n    'https://www.myapp.com',   // With www\n  ],\n  \n  config: {\n    screens: {\n      Home: '',                           // myapp:// or https://myapp.com\n      Profile: 'user/:userId',            // myapp://user/123\n      Post: 'posts/:postId/:commentId?',  // Optional param\n      Settings: {\n        path: 'settings',\n        screens: {\n          Notifications: 'notifications', // Nested navigator\n        }\n      }\n    }\n  },\n  \n  // Handle cold start (app opened from link):\n  async getInitialURL() {\n    const url = await Linking.getInitialURL();\n    return url;\n  },\n};\n\n// Wrap app:\n<NavigationContainer linking={linking} fallback={<Splash />}>\n  ...\n</NavigationContainer>"
+        },
+        {
+          "id": "universal-links",
+          "title": "Universal Links (iOS) & App Links (Android)",
+          "summary": "HTTPS-based deep links with fallback to website. Requires server configuration.",
+          "explanation": "Universal Links (iOS): requires an apple-app-site-association (AASA) file hosted at https://yourdomain.com/.well-known/apple-app-site-association. App must have Associated Domains entitlement. iOS fetches the AASA file on app install. App Links (Android): requires assetlinks.json at https://yourdomain.com/.well-known/assetlinks.json. Declared in AndroidManifest.xml with autoVerify=true. Android verifies the link at install time. Both provide: seamless link handling, fallback to website when app not installed, and cannot be impersonated by other apps (unlike custom schemes).",
+          "code": "// iOS: apple-app-site-association (AASA file)\n// Host at: https://myapp.com/.well-known/apple-app-site-association\n{\n  \"applinks\": {\n    \"apps\": [],\n    \"details\": [{\n      \"appID\": \"TEAM_ID.com.mycompany.myapp\",\n      \"paths\": [\n        \"/user/*\",      // Handle all /user/ paths\n        \"/posts/*\",\n        \"NOT /admin/*\", // Exclude admin paths\n      ]\n    }]\n  }\n}\n\n// Android: assetlinks.json\n// Host at: https://myapp.com/.well-known/assetlinks.json\n[{\n  \"relation\": [\"delegate_permission/common.handle_all_urls\"],\n  \"target\": {\n    \"namespace\": \"android_app\",\n    \"package_name\": \"com.mycompany.myapp\",\n    // SHA-256 of signing certificate:\n    \"sha256_cert_fingerprints\": [\"AB:CD:EF:...\"]\n  }\n}]\n\n// AndroidManifest.xml intent filter:\n<intent-filter android:autoVerify=\"true\">\n  <action android:name=\"android.intent.action.VIEW\" />\n  <category android:name=\"android.intent.category.DEFAULT\" />\n  <category android:name=\"android.intent.category.BROWSABLE\" />\n  <data android:scheme=\"https\" android:host=\"myapp.com\" />\n</intent-filter>"
+        }
+      ]
+    },
+    {
+      "id": "app-security",
+      "title": "App Security",
+      "emoji": "🔒",
+      "topics": [
+        {
+          "id": "ssl-pinning",
+          "title": "SSL Pinning",
+          "summary": "Pin server certificate in app. Prevents MITM attacks even with trusted CA compromise.",
+          "explanation": "SSL Pinning validates the server's TLS certificate against a trusted copy bundled with the app. Even if an attacker presents a certificate signed by a trusted CA (man-in-the-middle attack), the app rejects it because the certificate doesn't match the pinned one. Types: Certificate Pinning (pin the full cert — fails when cert rotates) vs Public Key Pinning (pin only the public key — survives cert rotation). Use react-native-ssl-pinning or OkHttp pinning (Android) and TrustKit (iOS).",
+          "code": "import { fetch } from 'react-native-ssl-pinning';\n\n// SSL-pinned request:\nconst response = await fetch('https://api.myapp.com/users', {\n  method: 'GET',\n  headers: { Authorization: `Bearer ${token}` },\n  sslPinning: {\n    certs: ['api_cert_sha256'], // Bundle cert in assets folder\n  },\n});\n\n// Alternative: OkHttp pinning for Android (more performant)\n// android/app/src/main/res/xml/network_security_config.xml:\n<network-security-config>\n  <domain-config>\n    <domain includeSubdomains=\"true\">api.myapp.com</domain>\n    <pin-set expiration=\"2026-01-01\">\n      <!-- Primary pin (current cert's public key hash) -->\n      <pin digest=\"SHA-256\">base64encodedHash==</pin>\n      <!-- Backup pin (for rotation) -->\n      <pin digest=\"SHA-256\">backupHash==</pin>\n    </pin-set>\n  </domain-config>\n</network-security-config>",
+          "situations": [
+            {
+              "question": "Your mobile banking app needs to prevent man-in-the-middle attacks even on corporate networks with intercepting proxies. How do you implement this?",
+              "answer": "1) Implement certificate pinning with BOTH primary and backup pins (backup for rotation). 2) Use public key pinning (not cert pinning) — survives cert rotation without app update. 3) Pin setup: openssl command extracts the public key hash from your server's cert. 4) On pin validation failure: refuse the connection, log the attempt (potential attack), show user error. 5) Certificate rotation strategy: add new pin 30 days before old cert expires, deploy app update with both pins, after old cert expires remove old pin. 6) Never implement pinning in a way that leaves no fallback — you'll lock out all users during incidents."
+            }
+          ]
+        },
+        {
+          "id": "code-obfuscation",
+          "title": "Code Obfuscation & Tampering Prevention",
+          "summary": "ProGuard/R8 on Android. Jailbreak/root detection. Certificate checks.",
+          "explanation": "Security layers: 1) ProGuard/R8 (Android): minifies and obfuscates bytecode — makes reverse engineering significantly harder. 2) Hermes bytecode: JS compiled to bytecode — harder to read than JS source. 3) Jailbreak/root detection (react-native-jailmonkey): detect if device security is compromised — you may refuse to run sensitive features. 4) Tampering detection: verify app signature hasn't been modified. 5) Anti-debugging: detect when app is being debugged with Charles/Frida. 6) Sensitive data: never store sensitive logic client-side — move to server.",
+          "code": "import JailMonkey from 'react-native-jailmonkey';\n\n// Check device security on app launch:\nasync function checkDeviceSecurity() {\n  const isJailbroken = JailMonkey.isJailBroken();\n  const isDebugged = JailMonkey.hookDetected();\n  const isOnExternalStorage = JailMonkey.isOnExternalStorage();\n  const hasAdbEnabled = JailMonkey.AdbEnabled(); // Android only\n  \n  if (isJailbroken) {\n    Alert.alert(\n      'Security Warning',\n      'This device is jailbroken/rooted. App cannot run securely.',\n      [{ text: 'Exit', onPress: () => RNExitApp.exitApp() }]\n    );\n    return false;\n  }\n  return true;\n}\n\n// ProGuard config (android/app/proguard-rules.pro):\n# Keep React Native bridge\n-keep class com.facebook.react.** { *; }\n# Keep your models\n-keep class com.myapp.models.** { *; }"
+        }
+      ]
+    },
+    {
+      "id": "navigation-advanced",
+      "title": "Navigation — React Navigation",
+      "emoji": "🗺️",
+      "topics": [
+        {
+          "id": "navigation-types",
+          "title": "Navigation Types & Architecture",
+          "summary": "Stack, Tab, Drawer, MaterialTop — nested navigators for complex flows.",
+          "explanation": "React Navigation 6+ navigator types: Native Stack (createNativeStackNavigator — uses native iOS/Android transitions, fastest), JS Stack (createStackNavigator — JS-based, customizable transitions), Bottom Tabs (createBottomTabNavigator), Top Tabs (createMaterialTopTabNavigator), Drawer (createDrawerNavigator). Key: nest navigators to create complex flows (Tab inside Stack, Stack inside Drawer). Native Stack is strongly preferred over JS Stack for performance — uses UINavigationController (iOS) and Fragment (Android).",
+          "code": "import { createNativeStackNavigator } from '@react-navigation/native-stack';\nimport { createBottomTabNavigator } from '@react-navigation/bottom-tabs';\n\nconst Stack = createNativeStackNavigator();\nconst Tab = createBottomTabNavigator();\n\n// Nested structure:\n// - Stack (root)\n//   - Auth screens (Login, Register)\n//   - Main (Tab)\n//     - Home tab (own nested Stack)\n//     - Profile tab\n//     - Settings tab\n\nfunction MainTabs() {\n  return (\n    <Tab.Navigator\n      screenOptions={({ route }) => ({\n        tabBarIcon: ({ focused, color }) => (\n          <Icon name={route.name.toLowerCase()} color={color} />\n        ),\n      })}\n    >\n      <Tab.Screen name=\"Home\" component={HomeStack} />\n      <Tab.Screen name=\"Profile\" component={ProfileScreen} />\n      <Tab.Screen name=\"Settings\" component={SettingsStack} />\n    </Tab.Navigator>\n  );\n}\n\nfunction RootNavigator() {\n  const { isAuthenticated } = useAuth();\n  return (\n    <Stack.Navigator screenOptions={{ headerShown: false }}>\n      {!isAuthenticated ? (\n        <Stack.Screen name=\"Auth\" component={AuthStack} />\n      ) : (\n        <Stack.Screen name=\"Main\" component={MainTabs} />\n      )}\n    </Stack.Navigator>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "rn-performance",
+      "title": "Performance Optimization",
+      "emoji": "🏎️",
+      "topics": [
+        {
+          "id": "perf-complete",
+          "title": "Complete Performance Optimization Guide",
+          "summary": "Startup, runtime, memory, and animation — systematic approach to 60fps.",
+          "explanation": "React Native performance has multiple dimensions: 1) Startup: Hermes bytecode, inline requires, lazy module loading. 2) JS Thread: avoid heavy computation (use Web Workers), minimize re-renders (memo, useCallback), batch state updates. 3) UI Thread: avoid unnecessary view creation (FlashList recycling), minimize Yoga layout recalculations (fixed dimensions where possible), use native drivers for animations. 4) Bridge (old arch): minimize bridge calls, batch operations. 5) Memory: avoid large closures in effects, release image memory, unsubscribe listeners. 6) Images: FastImage caching, proper resizing at CDN level.",
+          "code": "// Performance checklist:\n\n// 1. Enable Hermes (already covered)\n// gradle.properties: hermesEnabled=true\n\n// 2. InteractionManager — defer work until animations complete\nInteractionManager.runAfterInteractions(() => {\n  loadHeavyData(); // Won't compete with navigation animation\n});\n\n// 3. Native driver for animations — runs on UI thread:\nAnimated.timing(opacity, {\n  toValue: 1,\n  useNativeDriver: true, // CRITICAL — keep off JS thread\n}).start();\n\n// 4. PureComponent / memo for list items\nconst ListItem = React.memo(({ item }) => (\n  <View><Text>{item.title}</Text></View>\n));\n\n// 5. Avoid anonymous functions in render:\n// BAD:\n<Button onPress={() => navigate('Profile', { id })} />\n// GOOD:\nconst handlePress = useCallback(() => navigate('Profile', { id }), [id]);\n<Button onPress={handlePress} />\n\n// 6. Measure with Flipper + Perf Monitor:\n// Enable in: Debug > Show Perf Monitor\n// JS FPS target: 60\n// UI FPS target: 60",
+          "situations": [
+            {
+              "question": "Your React Native app has 500MB size, 5-second startup, janky scroll, and memory crashes on low-end devices. Where do you start?",
+              "answer": "Systematic approach, one issue at a time: 1) App Size (500MB): Enable ABI splits in build.gradle (one APK per CPU arch: ~50MB each instead of one 500MB). Enable ProGuard. Convert images to WebP. Use on-demand resources for large assets. 2) Startup (5s): Enable Hermes bytecode. Enable inlineRequires in metro. Audit top-level imports — move heavy modules inside functions. Use InteractionManager.runAfterInteractions for non-critical initialization. 3) Scroll jank: Switch FlatList → FlashList. Add React.memo to list items. Use FastImage. Enable removeClippedSubviews. 4) Memory crashes: Flipper/Instruments heap snapshots. Look for listener leaks (AppState, Keyboard). Limit image cache size. Implement pagination — don't load all 2000 posts into memory."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "seniorSections": [
+    {
+      "id": "rn-ci-cd",
+      "title": "CI/CD & Release Engineering",
+      "emoji": "🚀",
+      "topics": [
+        {
+          "id": "fastlane-eas",
+          "title": "Fastlane & EAS Build",
+          "summary": "Automate signing, building, testing, and deploying to App Store & Play Store.",
+          "explanation": "Professional React Native release pipelines use: Fastlane for automating code signing, beta distribution (TestFlight, Firebase), and App Store submission. Expo Application Services (EAS) Build for cloud-based native builds without local Xcode/Android Studio. EAS Submit for automated store submission. Key concepts: code signing (provisioning profiles, certificates on iOS; keystore on Android), versioning strategy (CFBundleShortVersionString / versionName for user-facing, buildNumber/versionCode for store ordering), and environment-specific builds (dev/staging/prod).",
+          "code": "# Fastlane Fastfile (ios/fastlane/Fastfile)\nlane :beta do\n  increment_build_number # Auto-increment build number\n  match(type: 'adhoc') # Sync certs from git repo\n  gym(scheme: 'MyApp', configuration: 'Release') # Build IPA\n  firebase_app_distribution(\n    app: ENV['FIREBASE_APP_ID'],\n    groups: 'beta-testers',\n    release_notes: git_branch\n  )\nend\n\nlane :release do\n  match(type: 'appstore')\n  gym(scheme: 'MyApp', configuration: 'Release')\n  deliver(submit_for_review: true, auto_release: false)\nend\n\n# EAS Build config (eas.json):\n{\n  \"build\": {\n    \"development\": {\n      \"developmentClient\": true,\n      \"distribution\": \"internal\"\n    },\n    \"preview\": {\n      \"distribution\": \"internal\",\n      \"ios\": { \"simulator\": false }\n    },\n    \"production\": {\n      \"autoIncrement\": true\n    }\n  }\n}",
+          "situations": [
+            {
+              "question": "Your iOS code signing is broken on CI because certificates expire. How do you set up a sustainable code signing strategy?",
+              "answer": "Use Fastlane Match: 1) Store all certificates and provisioning profiles in a private git repo (encrypted). 2) match(type: 'appstore') downloads and installs certs on any CI machine. 3) One developer manages cert rotation — runs match nuke to revoke old, match to create new, commits encrypted certs. 4) CI never needs a local developer account — just the git repo access and decryption password (stored as CI secret). 5) All developers and CI share the same certs — no 'works on my machine' signing issues. Alternative: EAS Build manages signing entirely in the cloud — no local certs needed at all. For Android: store keystore in a secure vault (AWS Secrets Manager, GitHub Secrets) as a base64-encoded string, restore on CI."
+            },
+            {
+              "question": "How do you implement a phased rollout for a React Native app where you can quickly rollback a bad release?",
+              "answer": "Three-layer strategy: 1) OTA updates (CodePush/EAS Update): JS-only changes can be deployed to 1%, 10%, 50%, 100% of users. Bad release? Roll back immediately with a single command — no app store review. 2) Store rollout: both App Store and Play Store support phased rollouts (1%, 5%, 10%, 25%, 50%, 100%). Pause rollout if crash rate spikes. Play Store supports actual rollback to previous release. App Store doesn't natively support rollback — must submit a new version quickly. 3) Feature flags: ship the feature disabled, enable via remote config. 'Rollback' = flip the flag off. Stack them: feature flags inside OTA inside phased store rollout gives maximum control."
+            }
+          ]
+        },
+        {
+          "id": "ota-updates",
+          "title": "OTA Updates — CodePush & EAS Update",
+          "summary": "Update JS bundle without app store review. Differential updates. Rollback support.",
+          "explanation": "Over-the-air (OTA) updates push new JavaScript bundles directly to users without App Store/Play Store review. Only JS and assets can be updated (native code requires a full store release). Microsoft CodePush (AppCenter) and Expo's EAS Update are the main options. Key concepts: differential updates (send only the diff vs previous bundle), mandatory vs optional updates, rollback channels, and the 30% native code rule (App Store guideline 2.5.2 — OTA cannot fundamentally change the app's purpose or features).",
+          "code": "// CodePush integration:\nimport CodePush from 'react-native-code-push';\n\nconst codePushOptions = {\n  // Check and download on app resume (not startup):\n  checkFrequency: CodePush.CheckFrequency.ON_APP_RESUME,\n  // Install update on next restart (not force-quit):\n  installMode: CodePush.InstallMode.ON_NEXT_RESTART,\n  // For critical fixes — restart immediately:\n  mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,\n};\n\nexport default CodePush(codePushOptions)(App);\n\n// EAS Update workflow (expo-updates):\n// Deploy to 'preview' channel:\n// eas update --channel preview --message 'Fix login bug'\n// Deploy to 'production' (10% rollout):\n// eas update --channel production --rollout-percentage 10\n\n// In app — check for updates manually:\nimport * as Updates from 'expo-updates';\n\nasync function checkForUpdate() {\n  try {\n    const update = await Updates.checkForUpdateAsync();\n    if (update.isAvailable) {\n      await Updates.fetchUpdateAsync();\n      await Updates.reloadAsync(); // Restart with new JS bundle\n    }\n  } catch (e) {\n    console.log('OTA check failed:', e);\n  }\n}",
+          "situations": [
+            {
+              "question": "You deployed a critical OTA update that crashes the app on startup for 30% of users. How do you recover?",
+              "answer": "Immediate actions: 1) Roll back: appcenter codepush rollback MyApp Production (CodePush) or eas update --channel production --rollback-to-release (EAS). This serves the previous bundle to all devices. 2) CodePush's 'Phased rollout' + crash monitoring: if crash rate in Sentry/Bugsnag spikes, your monitoring should auto-trigger a rollback (set up an alert rule). 3) For apps already crashed: CodePush has a 'failsafe' mechanism — if the app fails to start 3 times, it rolls back to the last known good bundle. Ensure this is enabled. 4) Prevention: always test OTA updates on a 'staging' channel before production. Use phased rollout (10% first), monitor Sentry for 30 minutes before expanding."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "offline-first",
+      "title": "Offline-First Architecture",
+      "emoji": "📡",
+      "topics": [
+        {
+          "id": "offline-sync",
+          "title": "Offline Data Sync Strategies",
+          "summary": "Conflict resolution, optimistic updates, sync queues — building truly offline apps.",
+          "explanation": "Offline-first apps work without network and sync when connected. Challenges: 1) Conflict resolution: user edits offline, server changes happen — which wins? 2) Sync queue: outbox pattern — queue mutations offline, replay on reconnect. 3) Partial sync: sync only what the user needs (not entire DB). 4) Operational transforms or CRDTs for collaborative editing. Solutions: WatermelonDB + custom sync, PouchDB + CouchDB, Realm + Atlas Sync, or custom implementation with SQLite + sync engine.",
+          "code": "// Outbox pattern — queue mutations for later sync\nconst useOfflineQueue = () => {\n  const queueMutation = async (mutation) => {\n    // Save to SQLite outbox table:\n    await db.rawQuery(\n      'INSERT INTO outbox (type, payload, created_at) VALUES (?, ?, ?)',\n      [mutation.type, JSON.stringify(mutation.payload), Date.now()]\n    );\n    \n    // Try to sync immediately if online:\n    if (await NetInfo.fetch().then(s => s.isConnected)) {\n      await flushQueue();\n    }\n  };\n  \n  const flushQueue = async () => {\n    const pending = await db.rawQuery('SELECT * FROM outbox ORDER BY created_at');\n    for (const item of pending._array) {\n      try {\n        await api.apply(JSON.parse(item.payload));\n        await db.rawQuery('DELETE FROM outbox WHERE id = ?', [item.id]);\n      } catch (err) {\n        if (err.status === 409) { // Conflict\n          await resolveConflict(item, err.serverState);\n        }\n        break; // Stop on error, retry next sync\n      }\n    }\n  };\n  \n  return { queueMutation, flushQueue };\n};\n\n// Listen for network reconnection to flush queue:\nuseEffect(() => {\n  const unsubscribe = NetInfo.addEventListener(state => {\n    if (state.isConnected) flushQueue();\n  });\n  return unsubscribe;\n}, []);",
+          "situations": [
+            {
+              "question": "Two users edit the same record offline simultaneously. When they reconnect, whose change wins? How do you design conflict resolution?",
+              "answer": "No single right answer — depends on domain. Strategies: 1) Last-Write-Wins (LWW): server timestamp determines winner. Simple, data loss possible. Good for: user profiles, settings. 2) First-Write-Wins: first sync wins, others get 409 Conflict. Prompt user to review. Good for: inventory, limited-quantity items. 3) Merge: for structured data, merge at field level (user A edited 'name', user B edited 'email' — both survive). Good for: documents, forms. 4) Operational Transforms / CRDTs: for real-time collaborative editing (Google Docs model). 5) User-resolves: show a conflict UI with both versions, let user choose. Good for: critical data. Implementation: attach vector clocks or Lamport timestamps to each mutation. On conflict (409), server returns both versions — client runs your resolution function."
+            }
+          ]
+        },
+        {
+          "id": "network-monitoring",
+          "title": "Network State & Connectivity",
+          "summary": "@react-native-community/netinfo. Distinguish offline vs slow network. Queue requests.",
+          "explanation": "NetInfo provides network state: isConnected, isInternetReachable, type (wifi/cellular/none), and details (cellular generation, wifi SSID). Key distinction: isConnected = device is on a network; isInternetReachable = can actually reach the internet (relevant in captive portals). For production apps: implement a custom reachability check (ping your own server) because ISPs sometimes have connectivity with no internet access. Monitor and display offline banners, queue mutations, and retry on reconnect.",
+          "code": "import NetInfo from '@react-native-community/netinfo';\n\n// Network quality hook\nfunction useNetworkState() {\n  const [state, setState] = useState({\n    isConnected: true,\n    isInternetReachable: true,\n    connectionType: 'unknown',\n    isSlowConnection: false,\n  });\n  \n  useEffect(() => {\n    return NetInfo.addEventListener(netState => {\n      const isSlowConnection =\n        netState.type === 'cellular' &&\n        netState.details?.cellularGeneration === '2g';\n      \n      setState({\n        isConnected: netState.isConnected ?? false,\n        isInternetReachable: netState.isInternetReachable ?? false,\n        connectionType: netState.type,\n        isSlowConnection,\n      });\n    });\n  }, []);\n  \n  return state;\n}\n\n// Usage: adapt behavior to network\nfunction DataFetcher() {\n  const { isConnected, isSlowConnection } = useNetworkState();\n  \n  if (!isConnected) return <OfflineBanner />;\n  \n  return (\n    <FlatList\n      // On slow connection: smaller page size, lower quality images\n      pageSize={isSlowConnection ? 5 : 20}\n    />\n  );\n}",
+          "situations": [
+            {
+              "question": "Your app needs to work in subway tunnels where users are intermittently offline. Describe the complete offline-first architecture.",
+              "answer": "Full offline-first stack: 1) Storage: WatermelonDB (SQLite) as source of truth. All reads from local DB — never directly from API. 2) Sync: background sync engine that syncs local changes to server and server changes to local DB when online. 3) Optimistic UI: mutations update local DB immediately, UI reflects change instantly. Sync queue handles server persistence. 4) Conflict resolution: vector clock-based, domain-specific strategy (LWW for most data). 5) Network awareness: NetInfo detects connectivity. Pause sync on offline, resume + flush queue on reconnect. 6) User feedback: subtle offline indicator (not intrusive), queued action counter ('3 changes pending sync'), 'Synced' confirmation. 7) Background sync: use BackgroundFetch (react-native-background-fetch) to sync even when app is backgrounded. Libraries to consider: WatermelonDB + custom sync layer, or Realm + Atlas Device Sync (managed sync)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "native-modules-advanced",
+      "title": "Custom Native Modules",
+      "emoji": "🔧",
+      "topics": [
+        {
+          "id": "writing-native-modules",
+          "title": "Writing TurboModules from Scratch",
+          "summary": "TypeScript spec → Codegen → Native implementation. Complete end-to-end flow.",
+          "explanation": "When no library exists for a native feature, you write a TurboModule. Complete flow: 1) Write TypeScript spec (defines the interface). 2) Run Codegen (generates C++/Java/ObjC bridge code). 3) Implement in Kotlin (Android) and Swift/ObjC (iOS). 4) Register the module. 5) Use from JS. Key insight: Codegen eliminates the type mismatch bugs of the old NativeModules system — TypeScript spec is the single source of truth for both platforms.",
+          "code": "// 1. TypeScript Spec (NativeBiometric.ts)\nimport type { TurboModule } from 'react-native';\nimport { TurboModuleRegistry } from 'react-native';\n\nexport interface Spec extends TurboModule {\n  isAvailable(): boolean; // Synchronous!\n  authenticate(reason: string): Promise<boolean>;\n  getSupportedTypes(): string[]; // synchronous array return\n}\n\nexport default TurboModuleRegistry.getEnforcing<Spec>('Biometric');\n\n// 2. Android (BiometricModule.kt):\n@ReactModule(name = BiometricModule.NAME)\nclass BiometricModule(context: ReactApplicationContext)\n  : NativeBiometricSpec(context) {\n\n  companion object { const val NAME = \"Biometric\" }\n\n  override fun isAvailable(): Boolean {\n    val bm = context.getSystemService(BiometricManager::class.java)\n    return bm.canAuthenticate(BIOMETRIC_STRONG) == BIOMETRIC_SUCCESS\n  }\n\n  override fun authenticate(reason: String, promise: Promise) {\n    val executor = ContextCompat.getMainExecutor(context)\n    val prompt = BiometricPrompt(currentActivity!!, executor, object : AuthCallback() {\n      override fun onAuthenticationSucceeded(result: AuthResult) {\n        promise.resolve(true)\n      }\n      override fun onAuthenticationFailed() {\n        promise.resolve(false)\n      }\n    })\n    prompt.authenticate(PromptInfo.Builder().setTitle(reason).build())\n  }\n}\n\n// 3. JS Usage (auto-typed from spec):\nimport NativeBiometric from './NativeBiometric';\nconst available = NativeBiometric.isAvailable(); // synchronous!\nconst result = await NativeBiometric.authenticate('Confirm identity');",
+          "situations": [
+            {
+              "question": "You need to access a proprietary Bluetooth SDK that only has native SDKs for iOS and Android. How do you wrap it for React Native?",
+              "answer": "Full TurboModule approach: 1) Define the API surface in TypeScript spec — think carefully about the interface (what events does the SDK emit? what commands can you send?). 2) Use events for async device callbacks: module emits events via eventEmitter.emit('device:data', payload) on the native side, JS subscribes via addListener. 3) Android: wrap the Bluetooth SDK in a ReactContextBaseJavaModule or NativeModule spec implementation. Initialize the SDK in ReactApplicationContext onCreate. 4) iOS: wrap in Swift/ObjC module, use RCTEventEmitter for events. 5) Handle SDK lifecycle: start in onHostResume, stop in onHostPause (Android), applicationBecameActive / applicationWillResignActive (iOS). 6) Error handling: map SDK error codes to JS errors with descriptive messages. 7) Create a JS wrapper that gives a clean, idiomatic API hiding the event/callback complexity."
+            }
+          ]
+        },
+        {
+          "id": "native-ui-components",
+          "title": "Custom Native UI Components (Fabric)",
+          "summary": "Fabric Native Components: render native views from JS with full prop type safety.",
+          "explanation": "When you need a native UI element (custom camera view, map overlay, signature pad), you create a Fabric Native Component. Unlike TurboModules (functions/data), Native Components render actual native views. The process mirrors TurboModules: define props in TypeScript, Codegen generates the bridge, implement the native view. Fabric components use the new synchronous layout system and support features like direct manipulation (measure, setNativeProps).",
+          "code": "// 1. TypeScript Component Spec (NativeSignaturePad.ts):\nimport type { HostComponent, ViewProps } from 'react-native';\nimport codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';\n\ninterface NativeProps extends ViewProps {\n  strokeColor?: string;\n  strokeWidth?: number;\n  onSignatureChange?: (event: {\n    nativeEvent: { isEmpty: boolean; dataURL: string }\n  }) => void;\n  onClear?: (event: { nativeEvent: {} }) => void;\n}\n\nexport default codegenNativeComponent<NativeProps>('SignaturePad');\n\n// 2. Android (SignaturePadManager.kt):\n@ReactModule(name = SignaturePadManager.NAME)\nclass SignaturePadManager : ViewGroupManager<SignaturePadView>() {\n  override fun getName() = \"SignaturePad\"\n  override fun createViewInstance(ctx: ThemedReactContext) = SignaturePadView(ctx)\n\n  @ReactProp(name = \"strokeColor\")\n  fun setStrokeColor(view: SignaturePadView, color: String?) {\n    view.setStrokeColor(Color.parseColor(color ?: \"#000000\"))\n  }\n  \n  @ReactProp(name = \"strokeWidth\", defaultFloat = 3f)\n  fun setStrokeWidth(view: SignaturePadView, width: Float) {\n    view.setStrokeWidth(width)\n  }\n}\n\n// 3. JS Usage:\nconst SignaturePad = require('./NativeSignaturePad').default;\n<SignaturePad\n  style={{ flex: 1 }}\n  strokeColor=\"#1a1a1a\"\n  strokeWidth={2}\n  onSignatureChange={({ nativeEvent }) => {\n    if (!nativeEvent.isEmpty) setSignature(nativeEvent.dataURL);\n  }}\n/>",
+          "situations": [
+            {
+              "question": "You need to embed a native SDK's view (like a video player SDK or AR view) inside a React Native screen. What's your approach?",
+              "answer": "Fabric Native Component: 1) Create a wrapper View in native that embeds the SDK's view as a child. On Android: extend ViewGroup, add SDK view in constructor. On iOS: override layoutSubviews to frame the SDK view. 2) Expose SDK's callback to React via onVideoPlaybackChanged, onError events. 3) Use useImperativeHandle + ref (via forwardRef / React 19 ref-as-prop) to expose imperative methods: play(), pause(), seek(). 4) Handle lifecycle: pause video in onHostPause, resume in onHostResume. 5) Aspect ratio: let the SDK view fill the native container, use React's style (flex/aspectRatio) to size the container. 6) For AR (ARCore/ARKit): be careful with the Fabric commit thread — AR views have their own render loops. Use createNodeMock for testing to avoid native initialization."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monorepo-architecture",
+      "title": "Monorepo & Code Sharing",
+      "emoji": "🧩",
+      "topics": [
+        {
+          "id": "nx-turbo-monorepo",
+          "title": "Nx & Turborepo for React Native",
+          "summary": "Share code between RN app, React web, and Node.js backend in one repo.",
+          "explanation": "Monorepos allow sharing code between React Native, React web, and backend. Tools: Nx (powerful, plugin ecosystem for React Native), Turborepo (simpler, Vercel). Code sharing strategy: shared packages for: UI tokens (colors, spacing), business logic (pure functions, hooks that don't use native APIs), TypeScript types, API client, validation schemas. React Native Metro bundler requires specific monorepo configuration (watch folders, module resolver) to resolve symlinked packages.",
+          "code": "// packages/ui-tokens/index.ts (shared)\nexport const colors = {\n  primary: '#6366f1',\n  secondary: '#8b5cf6',\n  // Same tokens in RN and web\n};\n\nexport const spacing = { sm: 8, md: 16, lg: 24 };\n\n// packages/api-client/index.ts (shared)\nexport const createApiClient = (baseUrl: string) => ({\n  getUser: (id: string) => fetch(`${baseUrl}/users/${id}`).then(r => r.json()),\n});\n\n// apps/mobile/metro.config.js\nconst { getDefaultConfig } = require('@react-native/metro-config');\nconst { withNxMetro } = require('@nx/react-native');\n\nconst config = getDefaultConfig(__dirname);\n\nmodule.exports = withNxMetro(config, {\n  // Watch monorepo packages:\n  watchFolders: [\n    path.resolve(__dirname, '../../packages/ui-tokens'),\n    path.resolve(__dirname, '../../packages/api-client'),\n  ],\n});\n\n// Turborepo pipeline (turbo.json):\n{\n  \"pipeline\": {\n    \"build\": { \"dependsOn\": [\"^build\"], \"outputs\": [\"dist/**\"] },\n    \"test\": { \"dependsOn\": [\"build\"] },\n    \"lint\": {}\n  }\n}",
+          "situations": [
+            {
+              "question": "You're setting up a monorepo for a React Native app, a Next.js web app, and a shared component library. What do you put in shared packages vs what stays platform-specific?",
+              "answer": "Shared (platform-agnostic): 1) TypeScript types and interfaces. 2) Business logic: validation, formatting, calculations. 3) API client (uses fetch, available everywhere). 4) Design tokens: colors, typography, spacing values. 5) Utility functions: date formatting, string manipulation. NOT shared (platform-specific): 1) UI components: RN uses View/Text/StyleSheet, web uses div/span/CSS — can share logic via hooks but not markup. 2) Navigation: React Navigation vs React Router. 3) Storage: MMKV vs localStorage. 4) Platform APIs: camera, location, biometrics. Pattern: use React Native Web for actual component sharing, but be aware of performance tradeoffs. Alternatively, shared 'headless' hook libraries (useCombobox logic) that each platform wraps in platform-specific UI."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rn-testing-advanced",
+      "title": "React Native Testing — Senior Level",
+      "emoji": "🧪",
+      "topics": [
+        {
+          "id": "detox-e2e",
+          "title": "Detox E2E Testing",
+          "summary": "Gray-box E2E on real devices/simulators. Stable async detection. CI integration.",
+          "explanation": "Detox is the E2E testing framework for React Native. 'Gray-box' means it has visibility into the React Native runtime — it knows when the JS thread is idle (no pending state updates, no pending animations) before interacting. This makes tests stable without arbitrary sleeps. Detox runs on real iOS Simulator/Android Emulator or physical devices. Uses Maestro as an alternative (declarative YAML, simpler setup). Key patterns: matchers (id, text, label), actions (tap, scroll, typeText), expectations (toBeVisible, toHaveText).",
+          "code": "// Detox setup (.detoxrc.json):\n{\n  \"testRunner\": { \"$0\": \"jest\", \"args\": { \"config\": \"e2e/jest.config.js\" } },\n  \"apps\": {\n    \"ios.debug\": {\n      \"type\": \"ios.app\",\n      \"binaryPath\": \"ios/build/MyApp.app\",\n      \"build\": \"xcodebuild -workspace ios/MyApp.xcworkspace -scheme MyApp -sdk iphonesimulator ...\"\n    }\n  },\n  \"devices\": {\n    \"simulator\": {\n      \"type\": \"ios.simulator\",\n      \"device\": { \"type\": \"iPhone 15\" }\n    }\n  }\n}\n\n// e2e/checkout.test.js:\ndescribe('Checkout flow', () => {\n  beforeAll(async () => {\n    await device.launchApp({ newInstance: true });\n  });\n\n  beforeEach(async () => {\n    await device.reloadReactNative(); // Fresh JS state\n  });\n\n  it('should complete checkout', async () => {\n    // Mock network if needed:\n    await device.setURLBlacklist(['.*api.myapp.com.*']); // Block real network\n    \n    await element(by.id('add-to-cart')).tap();\n    await element(by.id('checkout-button')).tap();\n    await element(by.id('card-number')).typeText('4242424242424242');\n    await element(by.text('Pay Now')).tap();\n    \n    // Detox waits for JS thread to be idle before asserting:\n    await expect(element(by.text('Order Confirmed'))).toBeVisible();\n  });\n});",
+          "situations": [
+            {
+              "question": "Your Detox tests are flaky on CI — they pass locally but fail randomly in CI. How do you make them stable?",
+              "answer": "Flaky test causes: 1) Timing: are you relying on arbitrary delays? Use waitFor() instead of explicit sleeps: await waitFor(element(by.text('Success'))).toBeVisible().withTimeout(5000). 2) Network: mock all network in Detox tests. Use a test server or MSW. Real network in E2E = non-deterministic. 3) Device state: always call device.reloadReactNative() in beforeEach to reset state. 4) Animations: Detox waits for animations to complete. If custom animations bypass React Native's animator, Detox won't know to wait. Use Detox's 'disableSynchronization' API for non-RN animations. 5) Memory: Detox on CI may have less RAM. Check for OOM kills in CI logs. 6) Parallel tests: Detox supports parallel test sharding — each worker needs its own simulator. Configure workers in detoxrc. 7) Retries: add retries in Jest config for flaky tests while you fix the root cause."
+            }
+          ]
+        },
+        {
+          "id": "rn-unit-testing",
+          "title": "React Native Unit & Integration Testing",
+          "summary": "RNTL (React Native Testing Library), jest-native, mocking native modules.",
+          "explanation": "React Native Testing Library (RNTL) mirrors React Testing Library — same query philosophy (by role, text, label), same 'test behavior not implementation' principle. Key differences: queries are synchronous in RN since the JSDOM equivalent uses React Native's own renderer. Native modules must be mocked (they don't exist in Jest's JS environment). jest-native extends Jest's expect with native-specific matchers (toHaveStyle, toBeDisabled). Accessibility matchers are especially important for testing ARIA roles.",
+          "code": "// Setup: mock native modules (in jest.setup.js)\njest.mock('react-native-mmkv', () => ({\n  MMKV: jest.fn().mockImplementation(() => ({\n    getString: jest.fn(),\n    set: jest.fn(),\n    delete: jest.fn(),\n  })),\n}));\n\njest.mock('@react-native-community/netinfo', () => ({\n  addEventListener: jest.fn(() => () => {}),\n  fetch: jest.fn(() => Promise.resolve({ isConnected: true })),\n}));\n\n// Component test:\nimport { render, screen, fireEvent, waitFor } from '@testing-library/react-native';\n\ndescribe('LoginScreen', () => {\n  it('shows error on invalid credentials', async () => {\n    const mockLogin = jest.fn().mockRejectedValue(new Error('Invalid credentials'));\n    render(<LoginScreen onLogin={mockLogin} />);\n    \n    fireEvent.changeText(screen.getByLabelText('Email'), 'test@test.com');\n    fireEvent.changeText(screen.getByLabelText('Password'), 'wrong');\n    fireEvent.press(screen.getByRole('button', { name: 'Login' }));\n    \n    await waitFor(() => {\n      expect(screen.getByText('Invalid credentials')).toBeTruthy();\n    });\n  });\n});",
+          "situations": [
+            {
+              "question": "How do you test a React Native component that uses Platform.OS to render differently on iOS vs Android?",
+              "answer": "Mock Platform.OS per test: jest.mock('react-native/Libraries/Utilities/Platform', () => ({ OS: 'ios', select: jest.fn(spec => spec['ios']) })); For multiple tests with different platforms: use jest.replaceProperty(Platform, 'OS', 'android') inside specific test blocks. Structure: 1) Put Platform.OS checks in a hook (usePlatformStyles) and test the hook in isolation. 2) Test the component for each platform OS value. 3) For Platform.select({ios: ..., android: ...}): mock Platform.select to return the platform-specific value. Key: don't over-test platform differences — if the differences are cosmetic (color, padding), test behavior not styling. If platform-specific behavior is critical (file picker, camera), test each path explicitly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rn-observability",
+      "title": "Observability & Monitoring",
+      "emoji": "🔭",
+      "topics": [
+        {
+          "id": "crash-reporting",
+          "title": "Crash Reporting & Error Tracking",
+          "summary": "Sentry, Bugsnag — JS + native crash symbolication, breadcrumbs, release tracking.",
+          "explanation": "Production RN apps need both JS and native crash reporting. Sentry and Bugsnag support both layers. Key concepts: 1) Symbolication: crash stack traces reference native addresses or minified JS — symbolication maps them back to source. Requires uploading dSYMs (iOS) and mapping files (Android ProGuard). 2) Breadcrumbs: automatic tracking of navigation, network requests, and user actions leading up to crash. 3) Release tracking: tag crashes by app version and OTA update version. 4) Session replay (Sentry): record user interactions leading to crash for debugging. 5) Alert rules: page on-call when crash rate exceeds threshold.",
+          "code": "// Sentry React Native setup:\nimport * as Sentry from '@sentry/react-native';\n\nSentry.init({\n  dsn: 'https://your-dsn@sentry.io/project-id',\n  \n  // Capture performance traces:\n  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,\n  \n  // Link JS errors to native crashes:\n  enableNative: true,\n  \n  // Track which OTA update version caused the crash:\n  release: `${Application.nativeApplicationVersion}+${Updates.updateId}`,\n  \n  // Add navigation breadcrumbs automatically:\n  integrations: [\n    new Sentry.ReactNativeTracing({\n      routingInstrumentation: new Sentry.ReactNavigationInstrumentation(),\n    }),\n  ],\n  \n  // Before send: strip sensitive data\n  beforeSend(event) {\n    // Remove auth tokens from breadcrumbs:\n    event.breadcrumbs = event.breadcrumbs?.filter(\n      b => !b.data?.url?.includes('/auth/')\n    );\n    return event;\n  }\n});\n\n// Wrap app for component error catching:\nexport default Sentry.wrap(App);\n\n// Manual error capture with context:\ntry {\n  await processPayment(data);\n} catch (err) {\n  Sentry.withScope(scope => {\n    scope.setTag('feature', 'payment');\n    scope.setContext('payment_data', { amount: data.amount, method: data.method });\n    Sentry.captureException(err);\n  });\n  throw err;\n}",
+          "situations": [
+            {
+              "question": "Your React Native app has a native crash that only happens in production and you can't reproduce it locally. How do you debug it?",
+              "answer": "Layer-by-layer investigation: 1) Native crash symbolication: ensure you uploaded dSYMs to Sentry/Bugsnag for this exact build. Symbolicated stack trace will show exact Objective-C/Swift or Java/Kotlin file and line. 2) Breadcrumbs: Sentry shows navigation history, network requests, and user actions leading to crash. Look for patterns (does it always crash on a specific screen? After a specific API call?). 3) Device/OS filtering: does it only happen on specific iOS versions? Specific device models? Filter crashes by device in Sentry. 4) Memory issues: EXC_RESOURCE_EXCEPTION or OUT_OF_MEMORY — profile with Instruments (iOS) or Android Profiler on a device with similar specs. 5) Thread safety: crash in a background thread modifying UI? Add main thread guards. 6) Reproduce in TestFlight: build with the same settings, distribute to team for reproduction. 7) Add verbose logging around the crash site in the next build."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

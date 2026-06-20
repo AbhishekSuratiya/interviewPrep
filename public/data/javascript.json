@@ -1,0 +1,665 @@
+{
+  "skill": "JavaScript",
+  "icon": "JS",
+  "color": "#f6e05e",
+  "sections": [
+    {
+      "id": "core-internals",
+      "title": "Core Language Internals",
+      "emoji": "🧠",
+      "topics": [
+        {
+          "id": "execution-context",
+          "title": "Execution Context",
+          "summary": "The environment where JS code is executed — Global, Function, and Eval.",
+          "explanation": "The environment where JS code is executed. Three types: Global, Function, Eval. Each has a Creation Phase (memory allocation for vars/functions) and Execution Phase (code runs line-by-line). The Variable Environment, Lexical Environment, and 'this' binding are set during creation. Understanding this is critical because every closure, hoisting behavior, and 'this' confusion stems from how execution contexts are created and stacked.",
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
+          "imageCaption": "JavaScript Runtime Environment — Call Stack, Web APIs, Callback Queue & Event Loop",
+          "code": "var x = 10;\nfunction foo() {\n  var y = 20; // New Function Execution Context\n  console.log(x + y); // 30 — x found via scope chain\n}\nfoo(); // Pushed onto Call Stack\n\n// Each EC has:\n// - Variable Environment (var declarations)\n// - Lexical Environment (let/const + references)\n// - this binding",
+          "situations": [
+            {
+              "question": "Your app has a weird bug where a variable is 'undefined' even though you declared it. How do you diagnose this?",
+              "answer": "This is almost certainly a hoisting issue. I'd check: 1) If it's a 'var' declaration — it gets hoisted as 'undefined'. 2) If it's in a different scope than where it's accessed. 3) Use browser DevTools > Sources > put a breakpoint, inspect the Scope panel to see what's in the current Execution Context. I'd also recommend converting all 'var' to 'let/const' in the codebase to get TDZ errors instead of silent 'undefined'."
+            },
+            {
+              "question": "In a code review, a junior dev asks why the same function returns different values when called from different places. What's your answer?",
+              "answer": "This is a 'this' binding issue tied to Execution Context. The function's 'this' depends on the call-site, not where it was defined. I'd walk them through the 4 rules: default binding (global/undefined in strict mode), implicit binding (object method), explicit binding (call/apply/bind), and new binding. For React developers, this is why we use arrow functions in event handlers — they inherit 'this' from the lexical context, not the call-site."
+            }
+          ]
+        },
+        {
+          "id": "call-stack",
+          "title": "Call Stack",
+          "summary": "LIFO data structure tracking function calls — stack overflow on deep recursion.",
+          "explanation": "A LIFO (Last In, First Out) data structure tracking function calls. When a function is called, its execution context is pushed on top. When it returns, it's popped off. Stack overflow happens during infinite recursion. The default call stack size in V8 (Node.js/Chrome) is approximately 10,000–15,000 frames. The call stack is synchronous — it can only process one thing at a time, which is why long-running JS blocks the UI.",
+          "code": "function first() { second(); }\nfunction second() { third(); }\nfunction third() { console.log('done'); }\nfirst();\n// Stack: [Global] → [first] → [second] → [third]\n// After third() returns: → [second] → [first] → [Global]\n\n// Stack Overflow Example:\nfunction recurse() { recurse(); }\ntry { recurse(); } catch(e) { console.log(e); } // RangeError",
+          "situations": [
+            {
+              "question": "Your app is freezing the browser tab for 2-3 seconds when processing a large dataset. How do you fix it?",
+              "answer": "The long-running synchronous code is blocking the Call Stack, which starves the Event Loop. Solutions: 1) Break the work into chunks using setTimeout(fn, 0) or scheduler.yield() (Chrome 115+) to yield control back between chunks. 2) Move the heavy computation to a Web Worker so it runs on a separate thread. 3) Use requestIdleCallback for non-critical work. In React apps, use startTransition() to mark heavy state updates as non-urgent — React will yield to user interactions."
+            },
+            {
+              "question": "You see a 'Maximum call stack size exceeded' error in production. What's your approach?",
+              "answer": "1) Use the browser DevTools call stack panel to see the full trace. 2) Look for a recursive function that has no base case or a faulty condition. 3) If intentional deep recursion, convert to iterative (use an explicit stack data structure). 4) For tree traversal, use iterative BFS/DFS instead. 5) For mutual recursion (A calls B calls A), use trampolining — each recursive call returns a function instead of calling itself directly."
+            }
+          ]
+        },
+        {
+          "id": "event-loop",
+          "title": "Event Loop",
+          "summary": "Single-threaded async — Microtasks (Promises) before Macrotasks (setTimeout).",
+          "explanation": "JS is single-threaded. The Event Loop continuously monitors the Call Stack and the Task Queues. When the Call Stack is empty: 1) It processes ALL pending Microtasks (Promise.then, queueMicrotask, MutationObserver) completely. 2) Then it picks ONE Macrotask (setTimeout, setInterval, setImmediate, I/O callback) and runs it. 3) After each Macrotask, it again drains ALL Microtasks before picking another Macrotask. This is the precise ordering that determines async execution order.",
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
+          "imageCaption": "The JavaScript Event Loop — Call Stack, Web APIs (setTimeout, fetch), Callback Queue, and Microtask Queue",
+          "code": "console.log('1 — synchronous');\nsetTimeout(() => console.log('2 — macrotask'), 0);\nPromise.resolve().then(() => console.log('3 — microtask 1'));\nPromise.resolve().then(() => console.log('4 — microtask 2'));\nconsole.log('5 — synchronous');\n\n// Output: 1, 5, 3, 4, 2\n// Reason: sync runs first → call stack empty → ALL microtasks → ONE macrotask",
+          "situations": [
+            {
+              "question": "Your UI is showing stale data for 300ms after a user action. The data is fetched correctly, but the render is delayed. What's happening?",
+              "answer": "This is a classic Event Loop priority issue. If you're doing heavy synchronous work after triggering a fetch, you're blocking the Call Stack from processing the Promise.then() microtasks that would trigger the re-render. Solution: 1) Move heavy computation before the fetch, not after. 2) In React 18+, wrap the heavy computation in startTransition() so React yields to the UI update first. 3) Use Web Workers for computation so the main thread stays free for microtasks."
+            },
+            {
+              "question": "You have Promise.all with 5 API calls and sometimes one silently fails. How do you handle this reliably?",
+              "answer": "Promise.all short-circuits on the FIRST rejection — the other 4 calls might still complete but you never get their results. Use Promise.allSettled() instead, which waits for ALL promises regardless of outcomes. Then inspect each result: { status: 'fulfilled', value: ... } or { status: 'rejected', reason: ... }. Implement per-promise error tracking so you can retry individual failures rather than retrying all 5."
+            },
+            {
+              "question": "A senior says 'your setTimeout(fn, 0) is executing AFTER a queueMicrotask() call even though setTimeout ran first'. Explain this.",
+              "answer": "This is expected Event Loop behavior. setTimeout schedules a Macrotask, while queueMicrotask schedules a Microtask. Even if setTimeout is called first, when the Call Stack empties, ALL microtasks are drained BEFORE any macrotask runs. The order guarantee is: synchronous code → microtasks (completely drained) → one macrotask. This is why setTimeout(fn, 0) doesn't mean 'run immediately' — it means 'run after the current microtask queue is empty'."
+            }
+          ]
+        },
+        {
+          "id": "closures",
+          "title": "Closures",
+          "summary": "A function that retains access to its outer scope even after it returns.",
+          "explanation": "A closure is a function that retains access to its outer scope's variables even after the outer function has returned. Every function in JS forms a closure. Closures are the backbone of: module pattern (private state), React hooks (useState captures state via closure), event handlers (captured variables), memoization (cached results), and currying. The key insight: a closure doesn't copy the variable — it keeps a live reference to the Lexical Environment.",
+          "code": "// Classic counter — private state via closure\nfunction counter() {\n  let count = 0; // Closed over by both methods\n  return {\n    increment: () => ++count,\n    decrement: () => --count,\n    getCount: () => count\n  };\n}\nconst c = counter();\nc.increment(); c.increment();\nconsole.log(c.getCount()); // 2\n// count cannot be accessed from outside\n\n// Classic closure bug:\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 3, 3, 3\n}\n// Fix with let:\nfor (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 0, 1, 2\n}",
+          "situations": [
+            {
+              "question": "A useEffect in your React component is logging stale state — it always shows the initial value of count instead of the current value. How do you fix it?",
+              "answer": "This is a stale closure bug. The useEffect captures the value of 'count' at the time it was created (on first render, since deps array is []). The closure holds a reference to the old 'count' variable from the first render's scope. Fixes: 1) Add 'count' to the dependency array — React will re-create the effect with fresh closure on each count change. 2) Use a ref: const countRef = useRef(count); keep it synced in a separate useEffect, and read countRef.current inside the stale closure. 3) Use functional state updates: setCount(prev => prev + 1) instead of setCount(count + 1)."
+            },
+            {
+              "question": "You're building a rate limiter for API calls and a junior dev's implementation leaks memory. What are you looking for?",
+              "answer": "Typical closure memory leak: the rate limiter function closes over a large object or a reference to data that never gets cleaned up. Common pattern: storing closures in arrays/maps (e.g., pending callbacks) that grow unboundedly. Fix: 1) Use WeakMap for storing data keyed by objects — entries auto-GC when the key object is unreferenced. 2) Always clear your timers and remove event listeners in cleanup functions. 3) Use DevTools Memory profiler to take heap snapshots before and after and look for 'Detached' closures."
+            }
+          ]
+        },
+        {
+          "id": "scope-chain",
+          "title": "Scope Chain",
+          "summary": "How JS walks up nested scopes to find variables — determined at write-time.",
+          "explanation": "When a variable is accessed, JS first looks in the current (local) scope. If not found, it walks up to the parent scope, then grandparent, all the way to the global scope. This is the Scope Chain. The key distinction: scope is determined lexically (at write-time) — where a function is defined determines its scope chain, NOT where it is called. This is why closures work even when a function is called in a completely different scope.",
+          "code": "const global = 'G'; // Global scope\n\nfunction outer() {\n  const outerVar = 'O'; // Outer function scope\n  \n  function inner() {\n    const innerVar = 'I'; // Inner function scope\n    // Scope chain: inner → outer → global\n    console.log(innerVar, outerVar, global); // 'I', 'O', 'G'\n  }\n  \n  inner();\n}\nouter();",
+          "situations": [
+            {
+              "question": "A module in your codebase accidentally overrides a global variable causing bugs in unrelated modules. How do you prevent this pattern?",
+              "answer": "This is a global scope pollution problem. Prevention: 1) Always use 'let'/'const' — they're block-scoped and won't leak. 2) Use ES Modules (import/export) — each module has its own scope. 3) 'use strict' — throws an error for undeclared variables instead of creating globals. 4) Linting: ESLint's 'no-global-assign' and 'no-implicit-globals' rules catch this at CI time. 5) Audit: search for 'window.foo =' assignments in your codebase."
+            }
+          ]
+        },
+        {
+          "id": "hoisting",
+          "title": "Hoisting",
+          "summary": "var/function declarations hoisted — let/const hoisted but in TDZ until init.",
+          "explanation": "'var' declarations and function declarations are moved to the top of their scope during compilation. 'var' is initialized as undefined. 'let'/'const' are hoisted but NOT initialized — they sit in the Temporal Dead Zone (TDZ) until the declaration is reached. Function expressions (const fn = function(){}) are NOT hoisted. This happens in the Creation Phase of the Execution Context before any code runs.",
+          "code": "console.log(a); // undefined — var hoisted, initialized to undefined\nvar a = 5;\n\nfoo(); // Works! — function declaration hoisted in full\nfunction foo() { console.log('hoisted'); }\n\n// bar(); // TypeError: bar is not a function\nvar bar = function() {}; // function expression, NOT hoisted\n\n// TDZ with let:\n// console.log(b); // ReferenceError: Cannot access 'b' before init\nlet b = 10;",
+          "situations": [
+            {
+              "question": "You find a production bug where a function call happens before its definition in a large file and it works in some places but throws in others. Explain the inconsistency.",
+              "answer": "If it's a function declaration (function foo() {}), it's fully hoisted and always works regardless of call order. If it's a function expression (const foo = () => {}) or assigned to let/var, it's NOT hoisted. The inconsistency likely comes from mixing both styles in the file. Audit: enforce a rule with ESLint 'func-style' and 'no-use-before-define'. As a migration step, convert all function declarations to const arrow functions at the top of the file, which makes ordering explicit."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "async-js",
+      "title": "Async JavaScript",
+      "emoji": "⏳",
+      "topics": [
+        {
+          "id": "promises",
+          "title": "Promises",
+          "summary": "Pending → Fulfilled/Rejected. .then(), .catch(), .finally() for chaining.",
+          "explanation": "An object representing the eventual completion or failure of an async operation. States: Pending → Fulfilled (resolve) or Rejected (reject). Once settled, a Promise is immutable. Key: .then() always returns a NEW Promise — that's how chaining works. An unhandled Promise rejection crashes Node.js and triggers an error in browsers. Always have a .catch() or try/catch with async/await.",
+          "code": "const p = new Promise((resolve, reject) => {\n  setTimeout(() => resolve('Done!'), 1000);\n});\n\np.then(val => console.log(val))  // 'Done!'\n .catch(err => console.error(err))\n .finally(() => console.log('Always runs'));\n\n// Common mistake — forgetting to RETURN inside .then():\nfetch('/api/user')\n  .then(res => {\n    res.json(); // Bug! Not returned — next .then gets undefined\n  })\n  .then(user => console.log(user)); // undefined\n\n// Fix:\n  .then(res => res.json()) // Implicit return",
+          "situations": [
+            {
+              "question": "In your dashboard, you have 6 independent API calls for widgets. They're running sequentially and it takes 6 seconds. How do you parallelize this?",
+              "answer": "Replace sequential await calls with Promise.all(). Example: instead of 'const a = await fetch(url1); const b = await fetch(url2);' (sequential, 2+ seconds), do 'const [a, b] = await Promise.all([fetch(url1), fetch(url2)])' (parallel, max of each). For partial failures, use Promise.allSettled() so one failing widget doesn't break the whole dashboard. Add individual error handling per promise so each widget shows its own error state."
+            },
+            {
+              "question": "A Promise in your codebase hangs indefinitely in production — the .then() never fires and neither does .catch(). How do you debug this?",
+              "answer": "A Promise that never resolves or rejects creates a 'pending forever' situation, often causing memory leaks. Debug: 1) Add a timeout wrapper: Promise.race([yourPromise, timeoutAfter(5000)]). 2) Check if the Promise executor has an error that was swallowed before resolve/reject was called. 3) Use Chrome DevTools > Sources > 'Pause on uncaught exceptions' to catch errors in async code. 4) Add AbortController with a timeout signal to fetch calls. In React, always abort fetch in useEffect cleanup."
+            }
+          ]
+        },
+        {
+          "id": "abort-controller",
+          "title": "AbortController",
+          "summary": "Cancel fetch requests and async operations — prevents stale responses and memory leaks.",
+          "explanation": "AbortController provides a way to cancel one or more Web API requests. It creates a signal object that can be passed to fetch() (and other async APIs). Calling controller.abort() triggers the signal, causing any listening operation to throw an AbortError. Essential for: cancelling in-flight fetch on component unmount (React useEffect cleanup), cancelling previous search requests when user types again, implementing request timeouts, and cleaning up WebSocket connections. The AbortSignal.timeout(ms) static method creates a signal that auto-aborts after a delay.",
+          "code": "// Basic fetch cancellation\nconst controller = new AbortController();\nconst { signal } = controller;\n\nfetch('/api/data', { signal })\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => {\n    if (err.name === 'AbortError') {\n      console.log('Request cancelled');\n    } else {\n      throw err; // Re-throw real errors\n    }\n  });\n\n// Cancel after 5 seconds\nsetTimeout(() => controller.abort(), 5000);\n\n// React useEffect cleanup pattern\nuseEffect(() => {\n  const controller = new AbortController();\n\n  async function fetchUser() {\n    try {\n      const res = await fetch(`/api/users/${id}`, { signal: controller.signal });\n      const user = await res.json();\n      setUser(user);\n    } catch (err) {\n      if (err.name !== 'AbortError') setError(err.message);\n    }\n  }\n\n  fetchUser();\n  return () => controller.abort(); // Cleanup on unmount or id change\n}, [id]);\n\n// AbortSignal.timeout — built-in timeout (no manual setTimeout needed)\nconst res = await fetch('/api/data', {\n  signal: AbortSignal.timeout(5000) // Throws TimeoutError after 5s\n});\n\n// Cancel multiple requests with one controller\nconst ctrl = new AbortController();\nPromise.all([\n  fetch('/api/a', { signal: ctrl.signal }),\n  fetch('/api/b', { signal: ctrl.signal }),\n]);\nctrl.abort(); // Cancels both",
+          "situations": [
+            {
+              "question": "Your search input fires API requests on every keystroke. When a user types fast, old results overwrite newer ones. How do you fix this with AbortController?",
+              "answer": "Keep a ref to the latest AbortController and abort it before each new request: const controllerRef = useRef(null); inside the debounced handler — controllerRef.current?.abort(); controllerRef.current = new AbortController(); then pass controllerRef.current.signal to fetch(). Now when a new keystroke triggers a request, the previous in-flight request is cancelled. Catch AbortError separately and don't update state on cancel. This eliminates the race condition entirely. Libraries like TanStack Query handle this automatically via their query key system."
+            },
+            {
+              "question": "You have a long-running server-sent stream. How do you cancel it when the user navigates away?",
+              "answer": "Pass an AbortController signal to the fetch that opens the stream. In the useEffect cleanup (or router's beforeunload), call controller.abort(). The ReadableStream reader will throw an AbortError on the next .read() call, which you catch to exit the reading loop cleanly. For EventSource (SSE), there's no native signal support — wrap it: store the EventSource in a ref and call eventSource.close() in the cleanup. AbortController works natively with fetch-based streams, WebSocket-alternatives, and any API that accepts a signal."
+            }
+          ]
+        },
+        {
+          "id": "async-await",
+          "title": "Async/Await",
+          "summary": "Syntactic sugar over Promises — async code reads like synchronous code.",
+          "explanation": "Syntactic sugar over Promises. 'async' functions always return a Promise (even if you return a plain value — it gets wrapped in Promise.resolve()). 'await' pauses execution of the async function until the Promise settles. It does NOT block the thread — other microtasks/macrotasks can run while awaiting. Use try/catch for error handling. Common mistake: awaiting inside loops creates sequential behavior when parallel is intended.",
+          "code": "async function loadUserData(id) {\n  try {\n    const res = await fetch(`/api/user/${id}`);\n    if (!res.ok) throw new Error(`HTTP ${res.status}`);\n    const user = await res.json();\n    return user;\n  } catch (err) {\n    console.error('Failed:', err);\n    throw err; // Re-throw so caller can handle\n  }\n}\n\n// MISTAKE: Sequential when should be parallel\nasync function bad() {\n  const a = await fetch('/api/a'); // Waits 1s\n  const b = await fetch('/api/b'); // Waits another 1s\n}\n\n// FIX: Parallel\nasync function good() {\n  const [a, b] = await Promise.all([\n    fetch('/api/a'), fetch('/api/b') // Both start at same time\n  ]);\n}",
+          "situations": [
+            {
+              "question": "Your app makes 50 API calls in a loop using await. It's taking 50 seconds when it should take 1. How do you fix it?",
+              "answer": "You're awaiting sequentially inside a loop. Each call waits for the previous to finish. Fix: 1) Map to Promises and use Promise.all() for true parallelism: 'await Promise.all(ids.map(id => fetch(id)))'. 2) If the API has rate limits (e.g., max 5 concurrent), use a concurrency limiter — process in batches of 5: chunk the array and Promise.all each batch. 3) For very large sets, use a queue with a concurrency limit (p-limit library or custom implementation). Monitor memory too — 50 concurrent requests can overwhelm both your client and server."
+            },
+            {
+              "question": "A junior dev says 'async/await is slower than Promises because it pauses execution'. Is this true? How do you correct them?",
+              "answer": "Not true — async/await IS Promises. There's zero performance difference. The V8 engine compiles async/await to Promise chains. The 'pause' is just a yield to the Event Loop, not a sleep. The only real consideration: await inside a try/catch has a tiny overhead vs .catch() because the engine needs to set up error handling context — but this is nanoseconds and irrelevant in practice. Async/await is actually preferred because it produces cleaner stack traces that show the actual async function name instead of anonymous Promise callbacks."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "functions",
+      "title": "Functions",
+      "emoji": "⚙️",
+      "topics": [
+        {
+          "id": "closures-fn",
+          "title": "Closures (Deep Dive)",
+          "summary": "Every function forms a closure — live reference to outer scope, not a copy.",
+          "explanation": "A closure is a function bundled with its Lexical Environment — the scope in which it was created. The closure holds a LIVE REFERENCE to variables, not a snapshot copy. This is why incrementing a counter through a closure works. React hooks rely entirely on closures: useState's setter, useEffect's callback, useCallback's memoized function — all are closures over their surrounding scope at render time.",
+          "code": "// Module pattern using closures\nconst userService = (() => {\n  let _users = []; // Private — only accessible via methods\n  let _nextId = 1;\n  \n  return {\n    add(name) {\n      const user = { id: _nextId++, name };\n      _users.push(user);\n      return user;\n    },\n    getAll() { return [..._users]; }, // Return copy, not reference\n    remove(id) { _users = _users.filter(u => u.id !== id); }\n  };\n})();\n\nuserService.add('Abhishek'); // { id: 1, name: 'Abhishek' }\nconsole.log(userService.getAll()); // [{ id: 1, name: 'Abhishek' }]",
+          "situations": [
+            {
+              "question": "Your React app has a performance issue — a useCallback function is recreated on every render despite having an empty dependency array. Profiler shows it's a new reference every time. Why?",
+              "answer": "If useCallback with [] is producing a new function reference every render, the component is likely unmounting and remounting (check for key prop changes). Another common cause: if the component receives new props that are objects/arrays, and those are referenced inside the callback even though you didn't list them in deps — ESLint will warn about this. Verify with Object.is() in a useEffect to confirm reference equality. Also check if you're accidentally calling useCallback inside a conditional or loop."
+            }
+          ]
+        },
+        {
+          "id": "debouncing",
+          "title": "Debouncing",
+          "summary": "Delay execution until X ms of silence — ideal for search inputs.",
+          "explanation": "Debouncing ensures a function executes only after a specified wait time has elapsed since the LAST call. If called again within the wait period, the timer resets. This is crucial for search inputs (don't fire API per keystroke), window resize handlers (don't recalculate layout on every pixel), and auto-save features. The debounce function returns a new function that closes over a timer variable.",
+          "code": "function debounce(fn, delay) {\n  let timerId; // Closed over by returned function\n  return function(...args) {\n    clearTimeout(timerId); // Cancel previous timer\n    timerId = setTimeout(() => {\n      fn.apply(this, args); // Call with correct this + args\n    }, delay);\n  };\n}\n\n// React usage with useCallback for stable reference:\nconst handleSearch = useCallback(\n  debounce((query) => {\n    if (!query.trim()) return;\n    fetchResults(query);\n  }, 300),\n  [] // Create once\n);\n// Cleanup: call handleSearch.cancel() on unmount",
+          "situations": [
+            {
+              "question": "Your search input makes API calls but users report seeing results from previous searches appearing after typing fast. What's the issue?",
+              "answer": "This is a race condition — multiple debounced requests are in-flight and responses arrive out of order (request for 'react' arrives AFTER request for 'react hooks'). Fix: 1) Use AbortController — cancel the previous request when a new one starts. 2) Use a request ID/timestamp: ignore responses where the response's request ID doesn't match the latest one. 3) Libraries like TanStack Query or SWR handle this automatically. In a search component: keep a ref to the AbortController and call controller.abort() at the start of each new search."
+            }
+          ]
+        },
+        {
+          "id": "memoization",
+          "title": "Memoization",
+          "summary": "Cache expensive computation results — foundation of React.memo and useMemo.",
+          "explanation": "Memoization is an optimization technique that caches the results of expensive function calls. When called with the same arguments again, the cached result is returned without recomputation. This trades memory for CPU time. In React: useMemo memoizes computed values, useCallback memoizes function references, React.memo wraps components to skip re-renders. The cache key must uniquely represent the inputs — JSON.stringify is simple but slow for large objects; consider hashing or WeakMap for object keys.",
+          "code": "function memoize(fn) {\n  const cache = new Map();\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) {\n      console.log('Cache hit!');\n      return cache.get(key);\n    }\n    const result = fn.apply(this, args);\n    cache.set(key, result);\n    return result;\n  };\n}\n\nconst expensiveFib = memoize(function fib(n) {\n  if (n <= 1) return n;\n  return expensiveFib(n - 1) + expensiveFib(n - 2);\n});\n\nconsole.log(expensiveFib(40)); // Computed once\nconsole.log(expensiveFib(40)); // Cache hit — instant",
+          "situations": [
+            {
+              "question": "After adding useMemo to a heavily-computed list, your app is actually SLOWER. How do you diagnose this?",
+              "answer": "useMemo has overhead: it compares all dependency values on every render using Object.is(). If: 1) The computation is cheap (< 1ms), the comparison overhead exceeds the savings. 2) The dependencies change every render (objects/arrays created inline), useMemo never hits cache and you pay comparison cost for nothing. 3) The memoized value is a large array that takes time to compare. Diagnose: use React DevTools Profiler to measure render times with/without useMemo. Rule of thumb: only memoize if computation takes > 1ms or if the memoized value is used as a dependency in another hook."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "objects-oop",
+      "title": "Objects & OOP",
+      "emoji": "🏗️",
+      "topics": [
+        {
+          "id": "prototype-chain",
+          "title": "Prototype & Prototype Chain",
+          "summary": "Objects inherit via [[Prototype]] link — Object.prototype is the top.",
+          "explanation": "Every object has a hidden [[Prototype]] property linking to another object. When you access a property, JS first looks at the object's own properties, then walks UP the prototype chain until found or until null is reached (Object.prototype's prototype is null). This is the mechanism behind inheritance in JS. ES6 classes are syntactic sugar — they still use prototypes under the hood. Understanding this is essential for debugging 'property not found' errors and optimizing V8's hidden classes.",
+          "code": "// Object.create for explicit prototype setting\nconst animal = {\n  type: 'Animal',\n  describe() { return `I am a ${this.type}`; }\n};\n\nconst dog = Object.create(animal);\ndog.type = 'Dog'; // Own property shadows prototype\ndog.bark = function() { return 'Woof!'; };\n\nconsole.log(dog.describe()); // 'I am a Dog' — found on dog (own)\nconsole.log(dog.bark()); // 'Woof!' — own property\nconsole.log(dog.hasOwnProperty('type')); // true — own\nconsole.log(dog.hasOwnProperty('describe')); // false — on prototype\n\n// Prototype chain: dog → animal → Object.prototype → null",
+          "situations": [
+            {
+              "question": "A library you're using has a security vulnerability where external code is modifying Object.prototype and your objects are behaving unexpectedly. How do you fix and prevent this?",
+              "answer": "This is prototype pollution — a critical security vulnerability (CVE-rated) where attackers inject properties onto Object.prototype that then appear on ALL objects. Fixes: 1) Create objects with null prototype: Object.create(null) — no prototype chain, immune to pollution. 2) Use hasOwnProperty() or Object.hasOwn() checks before trusting object properties. 3) Freeze Object.prototype: Object.freeze(Object.prototype) early in app bootstrap. 4) Use libraries like 'sanitize' that filter __proto__, constructor, and prototype keys from user input. 5) Update the vulnerable library — prototype pollution is taken seriously and patched quickly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "es6-features",
+      "title": "ES6+ Advanced Features",
+      "emoji": "⚡",
+      "topics": [
+        {
+          "id": "destructuring",
+          "title": "Destructuring",
+          "summary": "Extract values from arrays/objects with defaults, renaming, and nesting.",
+          "explanation": "Destructuring is a concise syntax to extract values from arrays or objects. Supports: default values, renaming, nested patterns, rest operator, and skipping elements. Key use case in React: destructuring props, state, and hook return values. Performance-wise, destructuring creates no overhead — it's syntax sugar over property access.",
+          "code": "// Object destructuring with rename and default\nconst { name: fullName, age = 25, address: { city } } = {\n  name: 'Abhishek',\n  address: { city: 'Delhi' }\n}; // age defaults to 25\n\n// Array destructuring with skip\nconst [, second, , fourth] = [1, 2, 3, 4];\n\n// Function params — very common in React\nfunction UserCard({ name, role = 'User', onDelete }) {\n  return `${name} (${role})`;\n}\n\n// Swapping variables — no temp needed\nlet a = 1, b = 2;\n[a, b] = [b, a]; // a=2, b=1",
+          "situations": [
+            {
+              "question": "You're destructuring a deeply nested API response and it crashes when a field is missing. How do you handle optional chaining in destructuring?",
+              "answer": "Destructuring does NOT natively handle undefined nested paths — it throws 'Cannot destructure property of undefined'. Solutions: 1) Use optional chaining BEFORE destructuring: 'const city = response?.address?.city'. 2) Provide a default at each level: 'const { address: { city } = {} } = response ?? {}'. 3) Use a library like Lodash's _.get() for deep access: 'const city = _.get(response, 'address.city', 'Unknown')'. 4) For API responses, validate/normalize at the boundary using Zod or Yup schemas before your components consume the data."
+            }
+          ]
+        },
+        {
+          "id": "optional-chaining",
+          "title": "Optional Chaining",
+          "summary": "?. short-circuits to undefined instead of throwing on null/undefined access.",
+          "explanation": "The ?. operator safely accesses deeply nested properties. If the left side is null or undefined, it short-circuits and returns undefined instead of throwing a TypeError. Works for: property access (obj?.prop), method calls (obj?.method()), array indexing (arr?.[0]), and constructor calls (new Ctor?.()). Do NOT overuse it — it can hide real bugs where a value is unexpectedly null.",
+          "code": "const user = { profile: { address: { city: 'Delhi' } } };\n\n// Safe deep access\nconsole.log(user?.profile?.address?.city); // 'Delhi'\nconsole.log(user?.phone?.number); // undefined — no throw\nconsole.log(user?.getProfile?.()); // undefined if no method\n\n// With nullish coalescing for default\nconst city = user?.profile?.address?.city ?? 'Unknown';\n\n// Array item access\nconst firstFriend = user?.friends?.[0]?.name ?? 'No friends';",
+          "situations": [
+            {
+              "question": "Your team is overusing ?. everywhere and it's masking real bugs in production. How do you address this code quality issue?",
+              "answer": "Optional chaining overuse is a code smell — it hides invalid states instead of fixing them. Approach: 1) Add type-checking (TypeScript) — proper types prevent most cases where ?. is used defensively. 2) Validate at API boundaries — use Zod/Yup to ensure data shape matches expectation. If data is wrong, throw early with a clear error. 3) ESLint rule: 'no-unsafe-optional-chaining' catches cases where ?. is used on non-nullable types. 4) Code review principle: if you write a ?., ask 'should this value ever be null/undefined here? If no, don't use ?.'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dom-events",
+      "title": "DOM & Events",
+      "emoji": "🖱️",
+      "topics": [
+        {
+          "id": "event-delegation",
+          "title": "Event Delegation",
+          "summary": "Attach one listener to a parent instead of hundreds to children — efficient and dynamic.",
+          "explanation": "Event delegation leverages event bubbling: events fired on a child element bubble up through all ancestors. Instead of attaching a listener to every list item (100 items = 100 listeners), you attach ONE listener to the parent and check event.target to identify which child was clicked. Benefits: 1) Memory — O(1) listeners vs O(n). 2) Dynamic elements — works for items added AFTER the listener was attached. 3) Setup speed — no need to re-bind on DOM updates. The key method is event.target.closest(selector) which walks up from the clicked element to find the nearest matching ancestor, handling clicks on nested child elements correctly.",
+          "code": "// Without delegation — bad for large lists\ndocument.querySelectorAll('.todo-item').forEach(item => {\n  item.addEventListener('click', handleClick); // N listeners!\n});\n// Also breaks when new items are added dynamically\n\n// WITH delegation — one listener on parent\nconst list = document.getElementById('todo-list');\n\nlist.addEventListener('click', (event) => {\n  // closest() handles clicks on child elements (icon inside button)\n  const item = event.target.closest('.todo-item');\n  if (!item) return; // Click was outside any item\n\n  const deleteBtn = event.target.closest('[data-action=\"delete\"]');\n  const checkbox = event.target.closest('[data-action=\"toggle\"]');\n\n  if (deleteBtn) {\n    const id = deleteBtn.dataset.id;\n    deleteItem(id); // Works for dynamically added items too\n  } else if (checkbox) {\n    toggleItem(checkbox.dataset.id);\n  }\n});\n\n// Dynamically added item — no new listener needed\nlist.insertAdjacentHTML('beforeend',\n  '<li class=\"todo-item\"><button data-action=\"delete\" data-id=\"99\">X</button></li>'\n);\n// The existing listener handles it automatically\n\n// Stopping propagation — use carefully\ndocument.addEventListener('click', () => closeDropdown());\ndropdownToggle.addEventListener('click', (e) => {\n  e.stopPropagation(); // Prevent closeDropdown from firing\n  toggleDropdown();\n});",
+          "situations": [
+            {
+              "question": "You're rendering a table with 10,000 rows and attaching a click handler to each row. The page hangs on render. How do you fix this?",
+              "answer": "Replace per-row listeners with a single delegated listener on the <tbody>: tbody.addEventListener('click', e => { const row = e.target.closest('tr'); if (!row) return; handleRowClick(row.dataset.id); }). This reduces listener count from 10,000 to 1. For the rendering hang itself — also virtualize: only render the ~20 visible rows using a virtual scroll library (TanStack Virtual). Combine delegation + virtualization for truly large datasets: delegation handles the visible rows, virtualization handles the DOM count."
+            },
+            {
+              "question": "A delegated click handler isn't firing for dynamically added elements. How do you debug this?",
+              "answer": "Three common causes: 1) The listener is on an element that's ALSO dynamic — verify the parent you attached to exists at listener-registration time. 2) event.target.closest() selector is wrong — console.log(event.target) on every click to see what element is actually receiving events. 3) A child element is calling e.stopPropagation() — this prevents bubbling so the parent never sees the event. Debug: add a listener to document itself to verify bubbling reaches the top. Fix stopPropagation: if it's third-party code, use capture phase: parent.addEventListener('click', handler, true) — capture fires before stopPropagation in bubble phase."
+            }
+          ]
+        },
+        {
+          "id": "custom-events",
+          "title": "Custom Events",
+          "summary": "Dispatch and listen to your own events — decoupled communication between DOM components.",
+          "explanation": "The CustomEvent API lets you define and dispatch your own events on any DOM element. This enables decoupled communication between web components, widgets, and vanilla JS modules — no direct references needed. CustomEvent extends Event and accepts a detail property for payload. Events bubble by default if bubbles: true is set. This is the foundation of web component communication and is how native HTML elements communicate state changes (input's 'change', form's 'submit').",
+          "code": "// Dispatch a custom event with payload\nfunction addToCart(product) {\n  const event = new CustomEvent('cart:item-added', {\n    bubbles: true,       // Bubbles up the DOM tree\n    composed: true,      // Crosses shadow DOM boundaries (web components)\n    detail: { product, timestamp: Date.now() }\n  });\n  document.dispatchEvent(event);\n}\n\n// Listen anywhere in the tree\ndocument.addEventListener('cart:item-added', (event) => {\n  const { product } = event.detail;\n  updateCartUI(product);\n  updateCartCount();\n});\n\n// Scoped to a component element — better encapsulation\nconst cartWidget = document.getElementById('cart-widget');\ncartWidget.addEventListener('cart:item-added', handler);\n\n// Triggering from a button click\ndocument.getElementById('add-btn').addEventListener('click', () => {\n  addToCart({ id: 1, name: 'Widget', price: 9.99 });\n});\n\n// Cleanup — always remove listeners\nfunction cleanup() {\n  document.removeEventListener('cart:item-added', handler);\n}",
+          "situations": [
+            {
+              "question": "You have three independent widget modules that need to stay in sync but shouldn't import each other. How do you coordinate them?",
+              "answer": "Use CustomEvents on a shared event bus element (document or a dedicated bus node). Each module dispatches events for state changes and listens for events from others — no direct imports. Pattern: 1) Define an event catalog (constants file with event names and JSDoc types for detail). 2) Modules dispatch: dispatchEvent(new CustomEvent('inventory:updated', { bubbles: true, detail: { sku, qty } })). 3) Other modules listen and react. This is the same pattern as Redux (actions = events, reducers = listeners) but without the library. For TypeScript, type the detail: new CustomEvent<CartPayload>('cart:item-added', { detail }). Always removeEventListener in cleanup to avoid memory leaks."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security & Optimization",
+      "emoji": "🛡️",
+      "topics": [
+        {
+          "id": "xss",
+          "title": "XSS (Cross-Site Scripting)",
+          "summary": "Never use innerHTML with user input — React escapes by default.",
+          "explanation": "XSS allows attackers to inject malicious scripts into web pages. Types: Stored XSS (persisted in DB, executed for all visitors), Reflected XSS (via URL params), DOM-based XSS (client-side manipulation). Prevention: always escape output, use textContent over innerHTML, implement CSP headers, and use frameworks that auto-escape (React). React's dangerouslySetInnerHTML bypasses XSS protection — never use it with unvalidated user content.",
+          "code": "// VULNERABLE — Never do this\nelement.innerHTML = userInput;\n\n// SAFE alternatives\nelement.textContent = userInput; // Escapes HTML entities\nelement.innerText = userInput;\n\n// React is safe by default:\n<div>{userInput}</div> // Auto-escaped to text\n\n// React UNSAFE — only with sanitized content:\nimport DOMPurify from 'dompurify';\n<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />\n\n// CSP Header to prevent inline scripts:\n// Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-randomvalue'",
+          "situations": [
+            {
+              "question": "Your security audit found an XSS vulnerability in a rich text editor component that uses dangerouslySetInnerHTML. How do you fix it without removing the feature?",
+              "answer": "1) Install DOMPurify (industry standard HTML sanitizer). 2) Sanitize BEFORE storing AND before rendering: DOMPurify.sanitize(content, { ALLOWED_TAGS: ['p', 'b', 'i', 'ul', 'li', 'a'], ALLOWED_ATTR: ['href'] }). 3) Add CSP headers that block inline scripts even if XSS succeeds: 'Content-Security-Policy: script-src self'. 4) For rich text editors, use a pre-built secure one (TipTap, Slate) that has XSS prevention built in. 5) Add automated security testing: use jest + jsdom to verify your sanitization is effective."
+            }
+          ]
+        },
+        {
+          "id": "performance-optimization",
+          "title": "Performance Optimization",
+          "summary": "CRP, bundle size, lazy loading, code splitting, runtime performance.",
+          "explanation": "Web performance optimization spans multiple layers: 1) Critical Rendering Path — minimize render-blocking CSS/JS, inline critical CSS. 2) Bundle: tree shaking, code splitting, dynamic imports, brotli compression. 3) Runtime: avoid layout thrashing (batch DOM reads/writes), debounce expensive handlers, use passive event listeners. 4) Network: HTTP/2, CDN, proper cache-control headers. 5) Images: WebP/AVIF format, responsive srcset, lazy loading. Key metrics: FCP (< 1.8s), LCP (< 2.5s), CLS (< 0.1), INP (< 200ms).",
+          "code": "// 1. Code splitting with dynamic import\nconst Dashboard = React.lazy(() => import('./Dashboard'));\n\n// 2. Avoid layout thrashing\nconst width = container.offsetWidth; // Read once\nelements.forEach(el => {\n  el.style.width = width + 'px'; // Write in batch\n});\n\n// 3. Passive event listeners for scroll (no preventDefault)\ndocument.addEventListener('scroll', handler, { passive: true });\n\n// 4. RequestAnimationFrame for visual updates\nconst animate = () => {\n  el.style.transform = `translateX(${getPosition()}px)`;\n  requestAnimationFrame(animate);\n};",
+          "situations": [
+            {
+              "question": "Your React app has a 4MB JavaScript bundle. Users on mobile complain about slow load times. How do you cut this in half?",
+              "answer": "Step 1: Analyze — run 'npx webpack-bundle-analyzer' or 'npx source-map-explorer'. Find the largest chunks. Common culprits: moment.js (2MB — replace with day.js), lodash (imported entire lib — use lodash-es with tree shaking), chart libraries. Step 2: Route-based code splitting with React.lazy() — every route is a separate chunk. Step 3: Remove unused dependencies ('npx depcheck'). Step 4: Defer non-critical scripts with 'defer'/'async'. Step 5: Enable brotli compression on server (60% smaller than gzip). Step 6: Use next/dynamic or Vite's built-in splitting. Target: < 150KB initial JS, rest lazy-loaded."
+            },
+            {
+              "question": "Your product manager says LCP is 5.2 seconds. What's your optimization plan?",
+              "answer": "LCP (Largest Contentful Paint) is dominated by the largest image or text block. Attack plan: 1) Identify: use Chrome DevTools > Performance > LCP element. 2) If it's an image: add fetchpriority='high', use WebP format, serve from CDN, add <link rel='preload'>. 3) If it's text: ensure font is preloaded and uses font-display: swap, inline critical CSS. 4) Check if render-blocking scripts delay LCP: move scripts to end or add defer. 5) Fix TTFB (Time to First Byte) if > 600ms — server-side caching or edge rendering. 6) For SPA: switch critical page to SSR/SSG in Next.js — HTML ships with content, no JS needed for LCP."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "seniorSections": [
+    {
+      "id": "design-patterns",
+      "title": "Design Patterns",
+      "emoji": "🏛️",
+      "topics": [
+        {
+          "id": "module-pattern",
+          "title": "Module Pattern & IIFE",
+          "summary": "Encapsulation via closures — private state without classes.",
+          "explanation": "The Module Pattern uses an IIFE (Immediately Invoked Function Expression) to create a private scope. Only what's returned is public. Modern ES Modules achieve the same with import/export but the pattern remains critical for understanding closures, encapsulation, and the Revealing Module Pattern. Senior engineers recognize this as the precursor to ES6 classes and understand when a plain object with closures is simpler than a class.",
+          "code": "// Revealing Module Pattern\nconst AuthService = (() => {\n  let _token = null;   // private\n  let _user = null;    // private\n\n  function _validateToken(token) {\n    return token && token.length > 10;  // private helper\n  }\n\n  function login(credentials) {\n    // Call API, get token\n    _token = 'jwt.token.here';\n    _user = { id: 1, role: 'admin' };\n  }\n\n  function logout() {\n    _token = null;\n    _user = null;\n  }\n\n  function getUser() { return _user; }\n  function isAuthenticated() { return _validateToken(_token); }\n\n  return { login, logout, getUser, isAuthenticated }; // Public API\n})();",
+          "situations": [
+            {
+              "question": "A team member wants to convert all your module-pattern files to ES6 classes. Is this always the right call? What's your recommendation?",
+              "answer": "Not always. Evaluate: 1) If the module is stateless utility functions (math, string utils) → plain object/exports are simpler than a class. 2) If inheritance/polymorphism is needed → class syntax is cleaner. 3) If you need true private state → module pattern still wins over class private fields (#privateField) for runtime environments that don't support them. 4) Module pattern lacks prototype inheritance and 'instanceof'. 5) For singleton services (AuthService, LoggingService) → module pattern is perfectly idiomatic. My rule: use classes when you need multiple instances or inheritance; use module pattern for singletons with private state."
+            },
+            {
+              "question": "How do you implement a plugin system in JavaScript where third-party code can extend your library without modifying it?",
+              "answer": "Use the Plugin Pattern: 1) Define a plugin interface (install(app) method). 2) Your library exposes a 'use(plugin)' method that calls plugin.install(this), giving the plugin access to the library instance. 3) Plugins can add properties to a context object or extend the library's prototype. Example: Vue.js's Vue.use(VueRouter) pattern. Implementation: const plugins = []; const use = (plugin) => { plugins.push(plugin); plugin.install(app); return app; }. For type safety, define the plugin interface in TypeScript. For security: validate plugin is an object with an install function before calling it."
+            }
+          ]
+        },
+        {
+          "id": "observer-pattern",
+          "title": "Observer Pattern (EventEmitter)",
+          "summary": "Pub/Sub decoupling — components communicate without direct dependencies.",
+          "explanation": "The Observer (Pub/Sub) pattern allows objects to subscribe to events and be notified when they occur. This decouples the event source from its consumers. Foundation of: Node.js EventEmitter, React synthetic events, Redux store subscriptions, RxJS Observables. Key insight: different from a direct callback — multiple listeners can subscribe, and the publisher doesn't know who's listening.",
+          "code": "class EventEmitter {\n  #listeners = new Map();\n\n  on(event, listener) {\n    if (!this.#listeners.has(event)) {\n      this.#listeners.set(event, new Set());\n    }\n    this.#listeners.get(event).add(listener);\n    return () => this.off(event, listener); // Returns unsubscribe fn\n  }\n\n  off(event, listener) {\n    this.#listeners.get(event)?.delete(listener);\n  }\n\n  emit(event, ...args) {\n    this.#listeners.get(event)?.forEach(fn => fn(...args));\n  }\n\n  once(event, listener) {\n    const wrapper = (...args) => {\n      listener(...args);\n      this.off(event, wrapper);\n    };\n    return this.on(event, wrapper);\n  }\n}\n\n// Usage\nconst bus = new EventEmitter();\nconst unsub = bus.on('user:login', user => console.log('Logged in:', user));\nbus.emit('user:login', { id: 1 }); // 'Logged in: { id: 1 }'\nunsub(); // Clean up",
+          "situations": [
+            {
+              "question": "Your app has a growing spaghetti of callback chains where ComponentA tells ComponentB which tells ComponentC about user actions. How do you refactor this?",
+              "answer": "Introduce an event bus (global EventEmitter or a library like mitt). Components publish events ('cart:item-added') and subscribe to events they care about, without knowing each other. Steps: 1) Identify the event flow (what triggers what). 2) Define a clear event catalog with typed payloads. 3) Replace direct calls with bus.emit() and bus.on(). 4) Critical: always call unsubscribe in cleanup (useEffect return / componentWillUnmount) to avoid memory leaks. 5) For React, prefer Context + useReducer or Zustand over a raw event bus — they're more predictable and testable. Global event buses can become their own spaghetti if overused."
+            }
+          ]
+        },
+        {
+          "id": "strategy-pattern",
+          "title": "Strategy Pattern",
+          "summary": "Swap algorithms at runtime — replaces switch/if chains with polymorphism.",
+          "explanation": "The Strategy Pattern defines a family of algorithms, encapsulates each one, and makes them interchangeable. The caller selects the strategy at runtime. This eliminates large if/switch blocks and makes adding new behavior O(1) code change (add a new strategy, don't modify existing). In JS, functions are first-class — strategies are just functions stored in a map.",
+          "code": "// Sorting strategies\nconst sortStrategies = {\n  price: (a, b) => a.price - b.price,\n  name: (a, b) => a.name.localeCompare(b.name),\n  rating: (a, b) => b.rating - a.rating,\n  popularity: (a, b) => b.views - a.views,\n};\n\n// No switch statement needed\nfunction sortProducts(products, strategy) {\n  const fn = sortStrategies[strategy];\n  if (!fn) throw new Error(`Unknown sort strategy: ${strategy}`);\n  return [...products].sort(fn);\n}\n\n// Adding a new strategy requires ZERO changes to sortProducts\nsortStrategies.discount = (a, b) => b.discount - a.discount;\n\n// Payment strategies\nconst paymentStrategies = {\n  stripe: async (amount, token) => stripeSDK.charge(amount, token),\n  paypal: async (amount) => paypalSDK.createOrder(amount),\n  crypto: async (amount, wallet) => cryptoAPI.send(amount, wallet),\n};\n\nconst processPayment = async (method, ...args) => {\n  return paymentStrategies[method]?.(...args)\n    ?? Promise.reject(new Error('Unsupported payment method'));\n};",
+          "situations": [
+            {
+              "question": "Your checkout form has a 50-case switch statement for different payment providers. How do you refactor this to be maintainable?",
+              "answer": "Apply the Strategy Pattern: 1) Extract each case into its own module/function (StripeStrategy, PayPalStrategy, etc.). 2) Create a registry object mapping provider names to their strategies. 3) The checkout logic calls registry[provider].process(args) — no switch needed. 4) Adding a new payment provider = adding one entry to the registry, zero other changes. 5) Each strategy is independently testable. 6) In TypeScript: define a PaymentStrategy interface that all strategies implement — type safety guarantees. Bonus: lazy-load payment SDKs (they're large) — only import Stripe's SDK when Stripe strategy is selected."
+            }
+          ]
+        },
+        {
+          "id": "proxy-pattern",
+          "title": "Proxy & Reflect",
+          "summary": "Intercept object operations — validation, logging, reactivity (Vue 3 internals).",
+          "explanation": "ES6 Proxy wraps an object and intercepts operations: get, set, has, deleteProperty, apply (function calls), and more. Reflect provides the default behavior for each trap. Vue 3's reactivity system is built entirely on Proxy. Use cases: validation/sanitization on set, lazy initialization (virtualize expensive properties), logging/auditing, rate limiting function calls, immutable object facades.",
+          "code": "// Validation proxy\nfunction createValidatedUser(data) {\n  return new Proxy(data, {\n    set(target, prop, value, receiver) {\n      if (prop === 'age') {\n        if (typeof value !== 'number' || value < 0 || value > 150) {\n          throw new RangeError(`Invalid age: ${value}`);\n        }\n      }\n      if (prop === 'email') {\n        if (!/^[^@]+@[^@]+\\.[^@]+$/.test(value)) {\n          throw new Error(`Invalid email: ${value}`);\n        }\n      }\n      return Reflect.set(target, prop, value, receiver);\n    },\n    get(target, prop, receiver) {\n      console.log(`[Audit] Reading: ${prop}`);  // Logging\n      return Reflect.get(target, prop, receiver);\n    }\n  });\n}\n\nconst user = createValidatedUser({ name: 'Abhishek', age: 28 });\nuser.age = 30;   // OK\nuser.age = -5;   // Throws: Invalid age: -5\nuser.email = 'bad'; // Throws: Invalid email\n\n// Readonly proxy (freeze without copying):\nconst readonly = (obj) => new Proxy(obj, {\n  set: () => { throw new Error('Object is read-only'); },\n  deleteProperty: () => { throw new Error('Object is read-only'); }\n});",
+          "situations": [
+            {
+              "question": "You need to add audit logging for every write to a shared config object without modifying every place it's written. How do you do this non-invasively?",
+              "answer": "Wrap the config object with a Proxy that intercepts set/deleteProperty traps. The proxy logs (timestamp, property, old value, new value, caller stack) before delegating to Reflect.set(). Replace the config export with the proxied version — callers don't change. For stack trace capture: new Error().stack inside the trap gives you the call site. Store audit logs in a circular buffer (last N writes) to bound memory usage. This is how Vue 3 tracks dependency changes — the set trap notifies subscribers. Alternative without Proxy: use Object.defineProperty with a setter, but Proxy is more flexible and handles new property additions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory-management",
+      "title": "Memory Management & GC",
+      "emoji": "🧹",
+      "topics": [
+        {
+          "id": "garbage-collection",
+          "title": "Garbage Collection & Mark-and-Sweep",
+          "summary": "V8 GC: minor (Scavenger) + major (Mark-Sweep/Compact). Avoid holding references.",
+          "explanation": "V8 uses generational garbage collection. New space (young generation): small, collected frequently via Scavenger (copying GC). Old space (old generation): larger, collected less frequently via Mark-Sweep-Compact. Objects that survive 2+ young GC cycles are promoted to old space. The GC root set includes: global objects, stack variables, CPU registers. If an object is reachable from ANY root, it cannot be collected. Understanding this drives correct cleanup code.",
+          "code": "// Memory leak: closures retaining large objects\nfunction createHeavyProcessor() {\n  const LARGE_DATA = new Array(1000000).fill('x'); // 8MB\n  \n  return {\n    process: (item) => {\n      // LARGE_DATA is closed over — never GC'd while this object lives\n      return LARGE_DATA.includes(item);\n    }\n  };\n}\n\n// Fix: don't close over what you don't need\nconst LOOKUP_SET = new Set(heavyDataArray); // Process once\nfunction createProcessor(lookupSet) {\n  return {\n    process: (item) => lookupSet.has(item) // No unnecessary closure\n  };\n}\n\n// WeakMap — keys GC'd when no other references exist\nconst cache = new WeakMap();\nfunction processElement(el) {\n  if (cache.has(el)) return cache.get(el);\n  const result = expensiveComputation(el);\n  cache.set(el, result); // Auto-cleaned when el is GC'd\n  return result;\n}\n// Unlike Map: when el DOM node is removed, cache entry is gone too",
+          "situations": [
+            {
+              "question": "Your SPA's memory grows from 50MB to 800MB over 2 hours of normal use without page refresh. How do you diagnose and fix this?",
+              "answer": "Systematic approach: 1) Diagnose: Chrome DevTools → Memory → Heap Snapshots. Take snapshot at 50MB, use app for 30min, take another. Compare: look for 'Detached DOM Tree' nodes and objects with high retained sizes. 2) Common culprits in SPAs: a) Event listeners not removed (window.addEventListener without cleanup). b) Timers (setInterval without clearInterval on unmount). c) Closures in React components holding large datasets. d) Global arrays that grow unboundedly (logs, analytics buffers). e) Old route components kept alive with their data. 3) Fix patterns: add cleanup to every useEffect, use WeakMap for element-keyed caches, implement circular buffers for log collections, use AbortController to cancel dangling fetches, limit cache size in service workers. 4) Validate: take memory snapshots before/after fix."
+            },
+            {
+              "question": "You're using a Map to cache API responses keyed by user IDs. After users are deleted, their cached data stays in memory. How do you fix this?",
+              "answer": "If the user object is the key, switch from Map to WeakMap — entries are automatically GC'd when the key object is no longer referenced elsewhere. But WeakMap keys must be objects, not primitives (IDs). For string/number keys: 1) Implement manual eviction with a TTL: store {value, expiresAt} and evict expired entries on reads or via a periodic cleanup timer. 2) Use an LRU cache (limit to N entries, evict least-recently-used). 3) Listen to a 'user:deleted' event and explicitly delete from the Map. 4) For React: TanStack Query auto-garbage-collects unused query data after gcTime (default 5 minutes). Pattern: never let unbounded data grow in Maps — always have an eviction strategy."
+            }
+          ]
+        },
+        {
+          "id": "weakref-finalizationregistry",
+          "title": "WeakRef & FinalizationRegistry",
+          "summary": "Hold non-preventing references to objects. Run cleanup when GC collects.",
+          "explanation": "WeakRef holds a 'weak' reference to an object — if no other strong references exist, GC can collect it. Call .deref() to get the object (returns undefined if GC'd). FinalizationRegistry lets you run cleanup code when an object is GC'd. Both are for advanced memory management. Use cases: caches that don't prevent GC, tracking DOM elements that may be removed. Caution: GC timing is non-deterministic — never rely on FinalizationRegistry for critical cleanup.",
+          "code": "// WeakRef-based cache\nclass ResourceCache {\n  #cache = new Map();\n  #registry = new FinalizationRegistry((key) => {\n    console.log(`Cache entry for '${key}' was GC'd — cleaning up`);\n    this.#cache.delete(key); // Clean up Map entry\n  });\n\n  set(key, value) {\n    const ref = new WeakRef(value);\n    this.#cache.set(key, ref);\n    this.#registry.register(value, key); // Notify when GC'd\n  }\n\n  get(key) {\n    const ref = this.#cache.get(key);\n    if (!ref) return undefined;\n    const value = ref.deref(); // Could be undefined if GC'd\n    if (!value) this.#cache.delete(key); // Cleanup stale Map entry\n    return value;\n  }\n}\n\n// When to use WeakRef vs WeakMap:\n// WeakMap: when KEY is the object you want to tie the lifecycle to\n// WeakRef: when VALUE is the object you want GC to possibly collect",
+          "situations": [
+            {
+              "question": "You're building a thumbnail preview cache for a photo editor. Thumbnails are expensive to compute but should be freed when memory is tight. How do you implement this?",
+              "answer": "Use WeakRef-backed cache: 1) Compute thumbnail once, store as WeakRef. 2) On cache hit, call ref.deref() — if undefined (GC'd due to memory pressure), recompute and cache again. 3) Register FinalizationRegistry to clean up the Map entry when the thumbnail is collected. This creates a 'best-effort' cache that automatically yields memory to the OS. For even more control: the Cache API in Service Workers has explicit size limits and eviction. Alternative: implement LRU cache with explicit size limit (e.g., max 100 thumbnails in memory). Track access time, evict oldest on overflow. LRU is more deterministic than WeakRef."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generators-iterators",
+      "title": "Generators & Iterators",
+      "emoji": "🔄",
+      "topics": [
+        {
+          "id": "generator-functions",
+          "title": "Generator Functions",
+          "summary": "function* produces lazy iterables — pause/resume execution via yield.",
+          "explanation": "Generator functions (function*) return a Generator object that is both an iterator and an iterable. 'yield' pauses execution and returns a value. 'next()' resumes. Generators are lazy — they compute values only when requested (infinite sequences are possible). Key use cases: infinite sequences, lazy data pipelines, custom iterators, cooperative multitasking (async generators for streaming), implementing state machines. Two-way communication: next(value) can pass a value INTO the generator (received as yield's result).",
+          "code": "// Infinite sequence — memory safe\nfunction* naturals(start = 1) {\n  while (true) yield start++;\n}\n\nconst nums = naturals();\nconsole.log(nums.next().value); // 1\nconsole.log(nums.next().value); // 2\n\n// Lazy pipeline — process only what's needed\nfunction* map(iterable, fn) {\n  for (const item of iterable) yield fn(item);\n}\n\nfunction* filter(iterable, pred) {\n  for (const item of iterable) if (pred(item)) yield item;\n}\n\nfunction* take(iterable, n) {\n  let i = 0;\n  for (const item of iterable) {\n    if (i++ >= n) break;\n    yield item;\n  }\n}\n\n// Only computes 5 items despite working on infinite sequence:\nconst result = [...take(\n  filter(map(naturals(), n => n * n), n => n % 2 === 0),\n  5\n)]; // [4, 16, 36, 64, 100]\n\n// Async generator for streaming API:\nasync function* streamLLMResponse(prompt) {\n  const response = await fetch('/api/llm', { method: 'POST', body: prompt });\n  const reader = response.body.getReader();\n  while (true) {\n    const { done, value } = await reader.read();\n    if (done) break;\n    yield new TextDecoder().decode(value); // Yield each chunk\n  }\n}\n\n// Process stream:\nfor await (const chunk of streamLLMResponse('Hello')) {\n  process.stdout.write(chunk); // Streaming output\n}",
+          "situations": [
+            {
+              "question": "You need to process a CSV file with 10 million rows but can't load it all into memory. How do you use generators?",
+              "answer": "Use async generators to stream and process lazily: 1) async function* readLines(filePath) — yield one line at a time from a Node.js readline interface. 2) Compose with generator-based filter/map/take. 3) Each transformation step is lazy — data flows through the pipeline one row at a time, never holding more than a few rows in memory. 4) For Node.js: use fs.createReadStream + readline.createInterface as the source. Memory stays flat at ~few MB regardless of file size. Contrast with: loading entire CSV into array (10GB RAM), batch processing (complex chunking logic). Generators give you clean, composable code with O(1) memory."
+            },
+            {
+              "question": "How would you implement a state machine using generators?",
+              "answer": "A generator naturally models state machines — each yield is a state, and next(event) drives transitions. Example: traffic light — yield 'red', yield 'green', yield 'yellow', repeat. More formally: use an object mapping states to generator functions. The generator receives input via yield (const event = yield currentState) and conditionally transitions. Benefits: the state machine's logic lives in one readable function rather than scattered switch statements. For production: use XState for complex state machines — it adds tooling (visualization, type safety). Generators are great for simple sequential state machines; XState for complex ones with parallel states."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced-async",
+      "title": "Advanced Async Patterns",
+      "emoji": "🚀",
+      "topics": [
+        {
+          "id": "concurrent-patterns",
+          "title": "Concurrency Patterns",
+          "summary": "Promise combinators, rate limiting, circuit breakers, retry with backoff.",
+          "explanation": "Beyond Promise.all() there are sophisticated async patterns: 1) Rate limiting: process N at a time (p-limit). 2) Circuit breaker: stop calling a failing service, fail fast after N failures, auto-retry after timeout. 3) Retry with exponential backoff: double wait time between retries + jitter. 4) Bulkhead: isolate failure in one async operation from affecting others. 5) Timeout wrapping: fail a promise after N milliseconds. These patterns are essential for production API clients.",
+          "code": "// Retry with exponential backoff + jitter\nasync function withRetry(fn, { maxAttempts = 3, baseDelay = 1000, jitter = true } = {}) {\n  for (let attempt = 1; attempt <= maxAttempts; attempt++) {\n    try {\n      return await fn();\n    } catch (err) {\n      if (attempt === maxAttempts) throw err;\n      const delay = baseDelay * Math.pow(2, attempt - 1);\n      const jitterDelay = jitter ? delay + Math.random() * delay * 0.2 : delay;\n      await new Promise(r => setTimeout(r, jitterDelay));\n    }\n  }\n}\n\n// Circuit Breaker\nclass CircuitBreaker {\n  #failures = 0;\n  #state = 'closed'; // closed → open → half-open\n  #nextRetry = 0;\n\n  constructor(fn, { threshold = 5, timeout = 30000 } = {}) {\n    this.fn = fn;\n    this.threshold = threshold;\n    this.timeout = timeout;\n  }\n\n  async call(...args) {\n    if (this.#state === 'open') {\n      if (Date.now() < this.#nextRetry) throw new Error('Circuit open');\n      this.#state = 'half-open';\n    }\n    try {\n      const result = await this.fn(...args);\n      this.#failures = 0;\n      this.#state = 'closed';\n      return result;\n    } catch (err) {\n      this.#failures++;\n      if (this.#failures >= this.threshold) {\n        this.#state = 'open';\n        this.#nextRetry = Date.now() + this.timeout;\n      }\n      throw err;\n    }\n  }\n}\n\n// Concurrency limiter (manual p-limit implementation)\nfunction createConcurrencyLimiter(max) {\n  let running = 0;\n  const queue = [];\n  return async (fn) => {\n    if (running >= max) await new Promise(r => queue.push(r));\n    running++;\n    try { return await fn(); }\n    finally { running--; queue.shift()?.(); }\n  };\n}",
+          "situations": [
+            {
+              "question": "Your microservice calls a payment gateway that occasionally goes down. 100 simultaneous failures are retrying all at once, overwhelming recovery. How do you fix this?",
+              "answer": "Three layers: 1) Exponential backoff with jitter — each retry waits 2^attempt * baseDelay + random(0, 20%). Jitter prevents the 'thundering herd' where all 100 clients retry at the same millisecond. 2) Circuit breaker — after N failures in a row, fail immediately without calling the gateway for 30 seconds. This gives the gateway time to recover without being hammered. 3) Bulkhead — limit concurrent calls to the gateway to max 20. Additional callers queue or fail fast. Implementation: wrap your gateway client in CircuitBreaker + concurrency limiter. Monitor: track open/half-open/closed state in metrics. Alert when circuit opens — it means the dependency is down."
+            },
+            {
+              "question": "How do you implement a promise that automatically times out after 5 seconds?",
+              "answer": "Use Promise.race(): const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)); const withTimeout = (promise, ms) => Promise.race([promise, timeout(ms)]); Usage: await withTimeout(fetchUser(id), 5000). Important: the underlying promise continues running even after the race resolves — to truly cancel, pair with AbortController. For fetch: pass { signal: controller.signal } and call controller.abort() inside the timeout promise's executor. For general cancellation: implement a CancellablePromise that calls a cleanup function on abort."
+            }
+          ]
+        },
+        {
+          "id": "observable-pattern",
+          "title": "Observables & Reactive Programming",
+          "summary": "Push-based streams — lazy, cancellable, composable — the foundation of RxJS.",
+          "explanation": "An Observable is a lazy push-based data stream. Unlike Promises (single value, eager), Observables: emit multiple values over time, are lazy (nothing runs until subscribed), support cancellation (unsubscribe), and are infinitely composable with operators (map, filter, merge, debounce, etc.). Key concepts: Cold Observable (starts fresh per subscriber, like a Promise), Hot Observable (shared stream, like EventEmitter), Subject (both Observable and Observer). RxJS operators cover virtually every async pattern.",
+          "code": "// Manual Observable implementation (simplified RxJS)\nclass Observable {\n  constructor(subscribeFn) {\n    this._subscribe = subscribeFn;\n  }\n\n  subscribe(observer) {\n    return this._subscribe(observer);\n  }\n\n  map(fn) {\n    return new Observable(observer =>\n      this.subscribe({\n        next: (val) => observer.next(fn(val)),\n        error: (err) => observer.error(err),\n        complete: () => observer.complete(),\n      })\n    );\n  }\n\n  filter(pred) {\n    return new Observable(observer =>\n      this.subscribe({\n        next: (val) => pred(val) && observer.next(val),\n        error: (err) => observer.error(err),\n        complete: () => observer.complete(),\n      })\n    );\n  }\n}\n\n// RxJS: WebSocket stream with automatic reconnection\nimport { webSocket } from 'rxjs/webSocket';\nimport { retryWhen, delay, tap } from 'rxjs/operators';\n\nconst socket$ = webSocket('wss://api.myapp.com/live').pipe(\n  retryWhen(errors => errors.pipe(\n    tap(err => console.log('WS error, retrying...', err)),\n    delay(2000) // Wait 2s before reconnecting\n  ))\n);",
+          "situations": [
+            {
+              "question": "You have a real-time dashboard with WebSocket updates. Sometimes you get 100 updates per second but only need to re-render once per 100ms. How do you handle this with Observables?",
+              "answer": "Use RxJS throttleTime or debounceTime: socket$.pipe(throttleTime(100), map(normalizeUpdate), distinctUntilChanged(deepEqual)).subscribe(update => setState(update)). throttleTime(100) emits the first value in each 100ms window, discarding the rest — perfect for rate-limiting UI updates while keeping updates timely. debounceTime(100) would wait 100ms of silence before emitting — better for search inputs. Also add: 1) distinctUntilChanged — skip re-renders if data didn't change. 2) shareReplay(1) if multiple components subscribe to the same stream. 3) takeUntilDestroyed() to auto-cancel on component unmount."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "web-workers",
+      "title": "Web Workers & SharedArrayBuffer",
+      "emoji": "🧵",
+      "topics": [
+        {
+          "id": "web-worker-fundamentals",
+          "title": "Web Workers",
+          "summary": "True multi-threading in JS — run CPU-heavy code off the main thread.",
+          "explanation": "Web Workers run JavaScript in a separate thread with no access to the DOM. Communication via postMessage() (structured clone). Types: Dedicated Worker (one consumer), Shared Worker (multiple tabs share one worker), Service Worker (network proxy, push notifications, offline). Workers can use: fetch, IndexedDB, crypto, WebSockets, Canvas OffscreenCanvas. They CANNOT use: document, window, localStorage. Essential for: image processing, encryption, ML inference, heavy data parsing — anything that would block the main thread.",
+          "code": "// worker.js\nself.addEventListener('message', ({ data }) => {\n  const { type, payload } = data;\n  \n  if (type === 'SORT_LARGE_ARRAY') {\n    const sorted = payload.slice().sort((a, b) => a - b);\n    self.postMessage({ type: 'SORTED', result: sorted });\n  }\n  \n  if (type === 'ENCRYPT') {\n    // Heavy crypto — runs off main thread\n    const encrypted = encryptData(payload.data, payload.key);\n    self.postMessage({ type: 'ENCRYPTED', result: encrypted });\n  }\n});\n\n// main.js\nconst worker = new Worker(new URL('./worker.js', import.meta.url));\n\n// Promise wrapper for clean API\nfunction runInWorker(type, payload) {\n  return new Promise((resolve, reject) => {\n    const handler = ({ data }) => {\n      worker.removeEventListener('message', handler);\n      resolve(data.result);\n    };\n    worker.addEventListener('message', handler);\n    worker.addEventListener('error', reject, { once: true });\n    worker.postMessage({ type, payload });\n  });\n}\n\n// React usage\nconst sorted = await runInWorker('SORT_LARGE_ARRAY', hugeArray);",
+          "situations": [
+            {
+              "question": "Your app parses large JSON files (50MB+) and the UI freezes for 3 seconds. How do you fix this with Web Workers?",
+              "answer": "Offload JSON.parse to a worker: 1) Transfer the raw text/ArrayBuffer to the worker via postMessage (use Transferable to avoid copying: postMessage(buffer, [buffer])). 2) Worker calls JSON.parse (fast, off main thread), posts the parsed object back. 3) Main thread is free during the 3 seconds — UI stays responsive. For very large files: parse progressively using a streaming JSON parser (like clarinet) inside the worker, posting partial results. Advanced: use SharedArrayBuffer to write parsed data to shared memory — worker writes, main thread reads without copying. Requires COOP/COEP headers: Cross-Origin-Opener-Policy: same-origin, Cross-Origin-Embedder-Policy: require-corp."
+            },
+            {
+              "question": "How do you share state between the main thread and multiple Web Workers without copying data?",
+              "answer": "Use SharedArrayBuffer (SAB): 1) Allocate a SAB in the main thread. 2) Pass to workers (they share the same memory, no copy). 3) Use Atomics API for thread-safe operations: Atomics.add(), Atomics.compareExchange(), Atomics.wait()/notify() for coordination. Example use case: a ring buffer for real-time audio/video data — main thread writes, worker thread reads without memcpy overhead. Security requirements: your server must send COOP and COEP headers, otherwise SAB is disabled by browsers. For simpler data sharing: use BroadcastChannel for pub/sub between tabs/workers without shared memory semantics."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced-types",
+      "title": "TypeScript Advanced Patterns",
+      "emoji": "🔷",
+      "topics": [
+        {
+          "id": "conditional-mapped-types",
+          "title": "Conditional & Mapped Types",
+          "summary": "Type-level programming — transform, filter, and derive types from other types.",
+          "explanation": "TypeScript's type system is Turing-complete. Conditional types (T extends U ? X : Y) enable type-level branching. Mapped types ({[K in keyof T]: T[K]}) transform object types. Combining them enables powerful type utilities: Partial, Required, Pick, Exclude, Extract are all built using these primitives. Understanding these makes you able to create zero-overhead type safety for complex APIs — the types catch errors at build time.",
+          "code": "// Conditional type: extract Promise's inner type\ntype Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T;\ntype Result = Awaited<Promise<string>>; // string\ntype NestedResult = Awaited<Promise<Promise<number>>>; // number\n\n// Mapped type: make specific keys required\ntype RequireKeys<T, K extends keyof T> = T & Required<Pick<T, K>>;\ntype User = { name?: string; email?: string; age?: number };\ntype UserWithEmail = RequireKeys<User, 'email'>; // email is required, rest optional\n\n// Distributive conditional: filter union members\ntype NonNullable<T> = T extends null | undefined ? never : T;\ntype Clean = NonNullable<string | null | undefined | number>; // string | number\n\n// Template literal types\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\n// Deep Readonly\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];\n};",
+          "situations": [
+            {
+              "question": "You want to type an API client where calling client.get('/users') returns User[] and client.get('/posts') returns Post[] — based on the URL string. How do you type this?",
+              "answer": "Use conditional types with a URL-to-response mapping: type RouteMap = { '/users': User[]; '/posts': Post[]; '/profile': UserProfile }; function get<T extends keyof RouteMap>(url: T): Promise<RouteMap[T]>. TypeScript infers the return type from the literal string type of the URL argument. Extend with template literals for dynamic routes: type UserRoute = `/users/${number}`; type RouteMap = { [K in UserRoute]: User } & { '/users': User[] }. This pattern is how tRPC, Hono, and typed fetch libraries work. The types are erased at runtime — zero overhead."
+            },
+            {
+              "question": "How do you create a type-safe event emitter where emit('user:login', payload) validates that payload matches the expected type for that event?",
+              "answer": "Define an event map type: type EventMap = { 'user:login': { userId: string; timestamp: number }; 'cart:add': { productId: string; quantity: number } }; Then type the emitter: class TypedEmitter<Events extends Record<string, unknown>> { on<K extends keyof Events>(event: K, handler: (data: Events[K]) => void): void; emit<K extends keyof Events>(event: K, data: Events[K]): void; } Usage: const emitter = new TypedEmitter<EventMap>(); emitter.emit('user:login', { userId: '1', timestamp: 123 }); emitter.emit('user:login', { wrong: 'prop' }); // TypeScript error! The event name and payload are validated together."
+            }
+          ]
+        },
+        {
+          "id": "decorators-metadata",
+          "title": "Decorators & Reflect Metadata",
+          "summary": "Class/method decoration at define-time — DI containers, ORM, validation frameworks.",
+          "explanation": "Decorators are functions applied to class declarations, methods, properties, or parameters at definition time. With Reflect Metadata (reflect-metadata), decorators can attach metadata to classes that other code reads at runtime. This powers: NestJS dependency injection (@Injectable, @Controller), TypeORM (@Entity, @Column), class-validator (@IsEmail, @MinLength). Senior engineers understand decorators not just as syntax sugar but as the mechanism enabling IoC containers and schema inference.",
+          "code": "import 'reflect-metadata';\n\n// Method decorator — log execution time\nfunction LogExecutionTime(target: any, key: string, descriptor: PropertyDescriptor) {\n  const original = descriptor.value;\n  descriptor.value = async function (...args: any[]) {\n    const start = performance.now();\n    const result = await original.apply(this, args);\n    console.log(`${key} took ${performance.now() - start}ms`);\n    return result;\n  };\n  return descriptor;\n}\n\n// Property decorator — validation via metadata\nfunction IsEmail(target: any, propertyKey: string) {\n  Reflect.defineMetadata('validation:type', 'email', target, propertyKey);\n}\n\nfunction validate(obj: any): string[] {\n  const errors: string[] = [];\n  for (const key of Object.keys(obj)) {\n    const type = Reflect.getMetadata('validation:type', obj, key);\n    if (type === 'email' && !obj[key].includes('@')) {\n      errors.push(`${key} must be a valid email`);\n    }\n  }\n  return errors;\n}\n\nclass UserDTO {\n  @IsEmail name = '';\n  @IsEmail email = '';\n}\n\nconst dto = new UserDTO();\nvalidate(dto); // ['name must be a valid email', 'email must be a valid email']",
+          "situations": [
+            {
+              "question": "You're building a REST API framework. How do you use decorators to map class methods to HTTP routes (@Get('/users')) without a framework like NestJS?",
+              "answer": "Use parameter and method decorators with Reflect Metadata: 1) @Controller(basePath) stores the base path in class metadata. 2) @Get(path) / @Post(path) stores route metadata on the method. 3) A bootstrap function iterates all registered controllers, reads metadata, creates an Express router, and maps routes to methods: for each class → for each method with route metadata → router[method](path, handler). Implementation: function Get(path: string) { return (target, key, descriptor) => { Reflect.defineMetadata('route', { method: 'GET', path }, target, key); }; } This is exactly how NestJS, Routing-Controllers, and TSyringe work internally."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testing-advanced",
+      "title": "Advanced Testing Strategies",
+      "emoji": "🧪",
+      "topics": [
+        {
+          "id": "test-architecture",
+          "title": "Testing Architecture & Strategies",
+          "summary": "Test pyramid, contract testing, property-based testing, mutation testing.",
+          "explanation": "Beyond unit/integration/e2e, senior engineers know: Contract Testing (Pact) — verify API consumer and provider independently. Property-based testing (fast-check) — define invariants and let the library generate hundreds of edge-case inputs automatically. Mutation testing (Stryker) — introduce bugs and verify tests catch them (tests your tests). Visual regression testing (Playwright snapshots, Chromatic). Performance regression testing. The Testing Trophy (Kent C. Dodds): write mostly integration tests, some unit, some e2e, few snapshot tests.",
+          "code": "// Property-based testing with fast-check\nimport * as fc from 'fast-check';\n\n// Define invariant: sort output must be ordered and same length\ntest('sort: sorted array length matches input', () => {\n  fc.assert(fc.property(\n    fc.array(fc.integer()),\n    (arr) => {\n      const sorted = mySort(arr);\n      // Invariant 1: same length\n      expect(sorted).toHaveLength(arr.length);\n      // Invariant 2: each element <= next\n      for (let i = 0; i < sorted.length - 1; i++) {\n        expect(sorted[i]).toBeLessThanOrEqual(sorted[i + 1]);\n      }\n    }\n  ));\n  // fast-check generates 100 random arrays of any size/content\n});\n\n// Mutation testing config (stryker.config.ts)\nconst config = {\n  testRunner: 'jest',\n  mutate: ['src/**/*.ts'],\n  thresholds: { high: 80, low: 60, break: 50 } // Fail CI if <50% mutations caught\n};\n\n// Contract test (Pact — consumer side)\nconst interaction = {\n  uponReceiving: 'a request for user 1',\n  withRequest: { method: 'GET', path: '/users/1' },\n  willRespondWith: {\n    status: 200,\n    body: { id: 1, name: like('Abhishek') } // Flexible matchers\n  }\n};",
+          "situations": [
+            {
+              "question": "Your team writes tests after the fact and they have 90% code coverage but bugs still reach production. How do you improve test effectiveness?",
+              "answer": "Code coverage measures execution, not correctness. Strategies: 1) Mutation testing (Stryker): introduces bugs (changes + to -, === to !==) and verifies your tests fail. A test suite with 90% coverage but 40% mutation score has weak assertions. 2) Property-based testing: define invariants and auto-generate edge cases that humans miss (empty arrays, NaN, very large numbers, Unicode). 3) Contract testing: if bugs are API contract mismatches between services. 4) Shift from implementation tests to behavior tests: test what the code does, not how. Use 'Arrange-Act-Assert' over 'mock everything'. 5) Require tests to be written from failing state (TDD) — ensures tests can actually detect the bug. Run mutation testing in CI with a minimum threshold."
+            },
+            {
+              "question": "How do you test async React components that fetch data and have loading/error states?",
+              "answer": "Use React Testing Library with MSW (Mock Service Worker): 1) MSW intercepts fetch at the network level (not mocking the module) — tests use real fetch code. 2) Use waitFor() and findBy* queries that wait for async state: const heading = await screen.findByRole('heading', { name: /user profile/i }). 3) Test all states: loading (screen.getByTestId('spinner')), success (findByText(userName)), error (set MSW to return 500, findByText(/failed to load/i)). 4) Use screen.debug() to inspect DOM at any point. 5) Avoid waitFor with act() — React Testing Library handles this. Key principle: test user behavior, not internal state — don't test useState values directly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "browser-apis",
+      "title": "Browser APIs & Performance",
+      "emoji": "🌐",
+      "topics": [
+        {
+          "id": "intersection-observer",
+          "title": "IntersectionObserver",
+          "summary": "Detect element visibility efficiently — infinite scroll, lazy images, analytics.",
+          "explanation": "IntersectionObserver asynchronously observes whether a target element intersects with its ancestor or the viewport. It replaces scroll event listeners + getBoundingClientRect() loops — which force layout (expensive) on every scroll event. The callback fires off the main thread when visibility thresholds are crossed. Key options: root (parent to observe against, defaults to viewport), rootMargin (extend/shrink root bounds — use '200px' to load images 200px before they enter view), threshold (0–1, fraction visible before callback fires). Always disconnect the observer when done.",
+          "code": "// Lazy image loading\nconst imageObserver = new IntersectionObserver(\n  (entries) => {\n    entries.forEach(entry => {\n      if (!entry.isIntersecting) return;\n      const img = entry.target;\n      img.src = img.dataset.src; // Load real src\n      img.classList.add('loaded');\n      imageObserver.unobserve(img); // Stop watching once loaded\n    });\n  },\n  {\n    rootMargin: '200px 0px', // Start loading 200px before viewport\n    threshold: 0             // Trigger as soon as 1px is visible\n  }\n);\n\ndocument.querySelectorAll('img[data-src]').forEach(img => {\n  imageObserver.observe(img);\n});\n\n// Infinite scroll — load more when sentinel enters view\nconst sentinel = document.getElementById('load-more-sentinel');\nconst scrollObserver = new IntersectionObserver(async ([entry]) => {\n  if (!entry.isIntersecting) return;\n  scrollObserver.unobserve(sentinel); // Pause while loading\n  await loadNextPage();\n  scrollObserver.observe(sentinel);   // Re-enable for next trigger\n}, { threshold: 1.0 }); // Fully visible\n\nscrollObserver.observe(sentinel);\n\n// Analytics — track time element was visible\nlet visibleSince = null;\nconst analyticsObserver = new IntersectionObserver(([entry]) => {\n  if (entry.isIntersecting) {\n    visibleSince = performance.now();\n  } else if (visibleSince) {\n    const duration = performance.now() - visibleSince;\n    trackEvent('content_viewed', { duration, id: entry.target.id });\n    visibleSince = null;\n  }\n}, { threshold: 0.5 }); // 50% visible counts as 'seen'",
+          "situations": [
+            {
+              "question": "Your page has 200 images and scroll performance is janky. You're using scroll event + getBoundingClientRect() to lazy-load them. How do you fix this?",
+              "answer": "Replace entirely with IntersectionObserver. The scroll listener + getBoundingClientRect() pattern forces a layout recalculation (reflow) on every scroll event — potentially 60 times/second. IntersectionObserver runs asynchronously off the main thread and only fires when visibility actually changes. Migration: 1) Add data-src attributes to all images. 2) Set up one IntersectionObserver with rootMargin: '200px'. 3) In callback: swap data-src → src, unobserve the element. 4) Remove the scroll listener entirely. Result: no reflows, no throttling needed, cleaner code. Native browser <img loading='lazy'> is even simpler for basic cases — no JS needed."
+            },
+            {
+              "question": "You need to send an analytics event only when a user has seen an ad for at least 1 second. How do you implement this?",
+              "answer": "Use IntersectionObserver with threshold: 0.5 (IAB viewability standard: 50% visible for 1 second). When entry.isIntersecting becomes true, start a timer: const timer = setTimeout(() => trackImpression(adId), 1000). If the user scrolls away before 1 second, the observer fires again with isIntersecting: false — cancel the timer: clearTimeout(timer). This is exactly how ad viewability measurement works in production. Key: unobserve after the impression is counted to avoid double-counting. For strict IAB compliance, also check entry.intersectionRatio >= 0.5 inside the callback."
+            }
+          ]
+        },
+        {
+          "id": "mutation-observer",
+          "title": "MutationObserver",
+          "summary": "Watch DOM changes — added/removed nodes, attribute changes, text mutations.",
+          "explanation": "MutationObserver watches for changes to the DOM tree. It fires asynchronously (batched as microtasks) after a series of DOM changes, rather than synchronously on each change. Use cases: detecting when third-party code modifies the DOM, reacting to dynamic content injection (ads, chat widgets), implementing undo/redo for rich text editors, auto-saving form state, accessibility tooling. Much more efficient than polling the DOM with setInterval. Key config: childList (added/removed children), attributes, subtree (observe entire subtree), characterData (text changes).",
+          "code": "// Watch for dynamically added elements\nconst observer = new MutationObserver((mutations) => {\n  mutations.forEach(mutation => {\n    mutation.addedNodes.forEach(node => {\n      if (node.nodeType !== Node.ELEMENT_NODE) return;\n      if (node.matches('.ad-banner')) {\n        initAdTracking(node); // React to injected ads\n      }\n      // Also check subtree of added nodes\n      node.querySelectorAll?.('.lazy-component').forEach(initLazy);\n    });\n\n    mutation.removedNodes.forEach(node => {\n      if (node.nodeType === Node.ELEMENT_NODE) {\n        cleanupComponent(node); // Cleanup removed elements\n      }\n    });\n  });\n});\n\nobserver.observe(document.body, {\n  childList: true,  // Watch for added/removed children\n  subtree: true,    // Watch all descendants, not just direct children\n});\n\n// Watch attribute changes\nconst attrObserver = new MutationObserver((mutations) => {\n  mutations.forEach(({ attributeName, target, oldValue }) => {\n    if (attributeName === 'aria-expanded') {\n      handleAccordionToggle(target, oldValue);\n    }\n  });\n});\n\nattrObserver.observe(accordionEl, {\n  attributes: true,\n  attributeFilter: ['aria-expanded'], // Only watch specific attributes\n  attributeOldValue: true\n});\n\n// Always disconnect when done\nfunction cleanup() {\n  observer.disconnect();\n  attrObserver.disconnect();\n}",
+          "situations": [
+            {
+              "question": "A third-party widget injects HTML into your page and you need to initialize your analytics tracking on those elements. How do you detect the injection?",
+              "answer": "Use MutationObserver on the container where the widget injects: observe with { childList: true, subtree: true }. In the callback, check addedNodes for elements matching the widget's class/attribute. This is more reliable than a setTimeout polling loop and reacts immediately. Implementation tip: use a Set to track already-initialized elements to avoid double-init if the observer fires multiple times. Also handle the case where the widget's elements are already in the DOM when your code runs — query them first, then start observing. Disconnect the observer once the widget is fully loaded if ongoing monitoring isn't needed."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "js-engine-internals",
+      "title": "V8 Engine & Runtime Internals",
+      "emoji": "⚙️",
+      "topics": [
+        {
+          "id": "v8-optimization",
+          "title": "V8 Optimization & Hidden Classes",
+          "summary": "V8 creates hidden classes for objects — consistent shape = JIT optimization.",
+          "explanation": "V8 optimizes JavaScript using hidden classes (also called Shapes or Maps). When you create an object, V8 creates a hidden class. If you always add properties in the same order, V8 can optimize property access to a fixed offset lookup (like a C struct). If you change the shape (add properties out of order, delete properties), V8 creates new hidden classes and may deoptimize. The JIT compiler (TurboFan) inlines, optimizes, and generates native machine code for hot paths. 'Deoptimization' happens when assumptions are violated.",
+          "code": "// BAD: Different shapes — V8 creates multiple hidden classes\nfunction makePoint(x, y, is3D) {\n  const p = { x, y };\n  if (is3D) p.z = 0; // Conditionally adds property — different shapes!\n  return p;\n}\n\n// GOOD: Consistent shape — one hidden class, optimized\nfunction makePoint(x, y, z = undefined) {\n  return { x, y, z }; // Same structure always — V8 optimizes\n}\n\n// BAD: delete creates different hidden class\nconst obj = { a: 1, b: 2, c: 3 };\ndelete obj.b; // Shape change — V8 may deoptimize!\n// GOOD: set to null/undefined instead:\nobj.b = null;\n\n// Monomorphic (optimized) vs Megamorphic (deoptimized)\nfunction process(obj) {\n  return obj.value * 2; // V8 learns the shape of obj\n}\nprocess({ value: 1 });         // shape A → V8 learns\nprocess({ value: 2 });         // shape A → still optimized\nprocess({ name: 'x', value: 3 }); // shape B → polymorphic, degrades perf",
+          "situations": [
+            {
+              "question": "Your hot path function processes 100,000 objects per second but profiling shows unexpected deoptimization. How do you investigate and fix this?",
+              "answer": "Use V8 flags to trace deoptimizations: run Node.js with --trace-deopt and --trace-opt to see when V8 deoptimizes functions. In Chrome, use Performance tab → look for 'Deoptimize' events. Common causes: 1) Polymorphic call sites — the same function receives objects of different shapes. Fix: ensure all call sites pass same-shape objects. 2) Type inconsistency — sometimes passing number, sometimes string. Fix: enforce consistent types. 3) try/catch inside hot loops — move try/catch outside. 4) arguments object in non-strict mode — use rest params (...args) instead. 5) Computed property access (obj[dynamicKey]) prevents V8 from optimizing to fixed offset."
+            }
+          ]
+        },
+        {
+          "id": "compilation-pipeline",
+          "title": "JS Compilation Pipeline",
+          "summary": "Parse → AST → Bytecode (Ignition) → Native code (TurboFan). JIT compilation.",
+          "explanation": "The V8 compilation pipeline: 1) Parse: source code → AST (Abstract Syntax Tree). 2) Ignition interpreter: AST → bytecode (fast startup, lower memory). 3) Profiling: Ignition tracks 'hot' functions. 4) TurboFan JIT compiler: optimizes hot functions → native machine code (speculative optimization based on observed types). 5) Deoptimization: if assumptions break (new type observed), TurboFan deoptimizes back to Ignition. This is why warm-up matters for benchmarks — initial runs are interpreted, later runs are compiled.",
+          "code": "// Why this matters for benchmarks:\nfunction benchmarkSort() {\n  const arr = Array.from({ length: 10000 }, () => Math.random());\n  \n  // First few calls: Ignition (slow)\n  // After enough calls: TurboFan optimizes to native code\n  console.time('sort');\n  arr.slice().sort((a, b) => a - b);\n  console.timeEnd('sort');\n}\n\n// Warm up first in production benchmarks:\nfor (let i = 0; i < 100; i++) benchmarkSort(); // Allow JIT to kick in\nbenchmarkSort(); // This measurement is meaningful\n\n// Inline caching — V8 remembers call site types:\nfunction square(x) { return x * x; }\nsquare(5);   // V8: records that x is number\nsquare(10);  // V8: assumes number, generates fast number multiply\nsquare('a'); // Type change → inline cache miss → deopt penalty",
+          "situations": [
+            {
+              "question": "You're building a game that runs 60fps. Your physics loop runs fine for 10 seconds then suddenly drops to 30fps. What V8-level issue might cause this?",
+              "answer": "This 'startup cliff' is a classic JIT deoptimization pattern: 1) First 10 seconds: TurboFan optimizes the physics loop based on observed types (all numbers). 2) After 10s, some new object type or shape enters the hot path (e.g., a new entity type with extra properties) → V8 deoptimizes from TurboFan back to Ignition → 2x performance drop. Diagnosis: --trace-deopt flag or Chrome DevTools Performance timeline. Fix: 1) Ensure object shapes are consistent — pre-allocate all entity properties even if initially undefined. 2) Avoid adding/deleting properties during gameplay. 3) Use TypedArrays (Float32Array) for physics data — they're always numbers, no shape ambiguity, direct memory layout."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
