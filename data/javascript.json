@@ -135,6 +135,23 @@
           ]
         },
         {
+          "id": "abort-controller",
+          "title": "AbortController",
+          "summary": "Cancel fetch requests and async operations — prevents stale responses and memory leaks.",
+          "explanation": "AbortController provides a way to cancel one or more Web API requests. It creates a signal object that can be passed to fetch() (and other async APIs). Calling controller.abort() triggers the signal, causing any listening operation to throw an AbortError. Essential for: cancelling in-flight fetch on component unmount (React useEffect cleanup), cancelling previous search requests when user types again, implementing request timeouts, and cleaning up WebSocket connections. The AbortSignal.timeout(ms) static method creates a signal that auto-aborts after a delay.",
+          "code": "// Basic fetch cancellation\nconst controller = new AbortController();\nconst { signal } = controller;\n\nfetch('/api/data', { signal })\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => {\n    if (err.name === 'AbortError') {\n      console.log('Request cancelled');\n    } else {\n      throw err; // Re-throw real errors\n    }\n  });\n\n// Cancel after 5 seconds\nsetTimeout(() => controller.abort(), 5000);\n\n// React useEffect cleanup pattern\nuseEffect(() => {\n  const controller = new AbortController();\n\n  async function fetchUser() {\n    try {\n      const res = await fetch(`/api/users/${id}`, { signal: controller.signal });\n      const user = await res.json();\n      setUser(user);\n    } catch (err) {\n      if (err.name !== 'AbortError') setError(err.message);\n    }\n  }\n\n  fetchUser();\n  return () => controller.abort(); // Cleanup on unmount or id change\n}, [id]);\n\n// AbortSignal.timeout — built-in timeout (no manual setTimeout needed)\nconst res = await fetch('/api/data', {\n  signal: AbortSignal.timeout(5000) // Throws TimeoutError after 5s\n});\n\n// Cancel multiple requests with one controller\nconst ctrl = new AbortController();\nPromise.all([\n  fetch('/api/a', { signal: ctrl.signal }),\n  fetch('/api/b', { signal: ctrl.signal }),\n]);\nctrl.abort(); // Cancels both",
+          "situations": [
+            {
+              "question": "Your search input fires API requests on every keystroke. When a user types fast, old results overwrite newer ones. How do you fix this with AbortController?",
+              "answer": "Keep a ref to the latest AbortController and abort it before each new request: const controllerRef = useRef(null); inside the debounced handler — controllerRef.current?.abort(); controllerRef.current = new AbortController(); then pass controllerRef.current.signal to fetch(). Now when a new keystroke triggers a request, the previous in-flight request is cancelled. Catch AbortError separately and don't update state on cancel. This eliminates the race condition entirely. Libraries like TanStack Query handle this automatically via their query key system."
+            },
+            {
+              "question": "You have a long-running server-sent stream. How do you cancel it when the user navigates away?",
+              "answer": "Pass an AbortController signal to the fetch that opens the stream. In the useEffect cleanup (or router's beforeunload), call controller.abort(). The ReadableStream reader will throw an AbortError on the next .read() call, which you catch to exit the reading loop cleanly. For EventSource (SSE), there's no native signal support — wrap it: store the EventSource in a ref and call eventSource.close() in the cleanup. AbortController works natively with fetch-based streams, WebSocket-alternatives, and any API that accepts a signal."
+            }
+          ]
+        },
+        {
           "id": "async-await",
           "title": "Async/Await",
           "summary": "Syntactic sugar over Promises — async code reads like synchronous code.",
@@ -247,6 +264,43 @@
             {
               "question": "Your team is overusing ?. everywhere and it's masking real bugs in production. How do you address this code quality issue?",
               "answer": "Optional chaining overuse is a code smell — it hides invalid states instead of fixing them. Approach: 1) Add type-checking (TypeScript) — proper types prevent most cases where ?. is used defensively. 2) Validate at API boundaries — use Zod/Yup to ensure data shape matches expectation. If data is wrong, throw early with a clear error. 3) ESLint rule: 'no-unsafe-optional-chaining' catches cases where ?. is used on non-nullable types. 4) Code review principle: if you write a ?., ask 'should this value ever be null/undefined here? If no, don't use ?.'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dom-events",
+      "title": "DOM & Events",
+      "emoji": "🖱️",
+      "topics": [
+        {
+          "id": "event-delegation",
+          "title": "Event Delegation",
+          "summary": "Attach one listener to a parent instead of hundreds to children — efficient and dynamic.",
+          "explanation": "Event delegation leverages event bubbling: events fired on a child element bubble up through all ancestors. Instead of attaching a listener to every list item (100 items = 100 listeners), you attach ONE listener to the parent and check event.target to identify which child was clicked. Benefits: 1) Memory — O(1) listeners vs O(n). 2) Dynamic elements — works for items added AFTER the listener was attached. 3) Setup speed — no need to re-bind on DOM updates. The key method is event.target.closest(selector) which walks up from the clicked element to find the nearest matching ancestor, handling clicks on nested child elements correctly.",
+          "code": "// Without delegation — bad for large lists\ndocument.querySelectorAll('.todo-item').forEach(item => {\n  item.addEventListener('click', handleClick); // N listeners!\n});\n// Also breaks when new items are added dynamically\n\n// WITH delegation — one listener on parent\nconst list = document.getElementById('todo-list');\n\nlist.addEventListener('click', (event) => {\n  // closest() handles clicks on child elements (icon inside button)\n  const item = event.target.closest('.todo-item');\n  if (!item) return; // Click was outside any item\n\n  const deleteBtn = event.target.closest('[data-action=\"delete\"]');\n  const checkbox = event.target.closest('[data-action=\"toggle\"]');\n\n  if (deleteBtn) {\n    const id = deleteBtn.dataset.id;\n    deleteItem(id); // Works for dynamically added items too\n  } else if (checkbox) {\n    toggleItem(checkbox.dataset.id);\n  }\n});\n\n// Dynamically added item — no new listener needed\nlist.insertAdjacentHTML('beforeend',\n  '<li class=\"todo-item\"><button data-action=\"delete\" data-id=\"99\">X</button></li>'\n);\n// The existing listener handles it automatically\n\n// Stopping propagation — use carefully\ndocument.addEventListener('click', () => closeDropdown());\ndropdownToggle.addEventListener('click', (e) => {\n  e.stopPropagation(); // Prevent closeDropdown from firing\n  toggleDropdown();\n});",
+          "situations": [
+            {
+              "question": "You're rendering a table with 10,000 rows and attaching a click handler to each row. The page hangs on render. How do you fix this?",
+              "answer": "Replace per-row listeners with a single delegated listener on the <tbody>: tbody.addEventListener('click', e => { const row = e.target.closest('tr'); if (!row) return; handleRowClick(row.dataset.id); }). This reduces listener count from 10,000 to 1. For the rendering hang itself — also virtualize: only render the ~20 visible rows using a virtual scroll library (TanStack Virtual). Combine delegation + virtualization for truly large datasets: delegation handles the visible rows, virtualization handles the DOM count."
+            },
+            {
+              "question": "A delegated click handler isn't firing for dynamically added elements. How do you debug this?",
+              "answer": "Three common causes: 1) The listener is on an element that's ALSO dynamic — verify the parent you attached to exists at listener-registration time. 2) event.target.closest() selector is wrong — console.log(event.target) on every click to see what element is actually receiving events. 3) A child element is calling e.stopPropagation() — this prevents bubbling so the parent never sees the event. Debug: add a listener to document itself to verify bubbling reaches the top. Fix stopPropagation: if it's third-party code, use capture phase: parent.addEventListener('click', handler, true) — capture fires before stopPropagation in bubble phase."
+            }
+          ]
+        },
+        {
+          "id": "custom-events",
+          "title": "Custom Events",
+          "summary": "Dispatch and listen to your own events — decoupled communication between DOM components.",
+          "explanation": "The CustomEvent API lets you define and dispatch your own events on any DOM element. This enables decoupled communication between web components, widgets, and vanilla JS modules — no direct references needed. CustomEvent extends Event and accepts a detail property for payload. Events bubble by default if bubbles: true is set. This is the foundation of web component communication and is how native HTML elements communicate state changes (input's 'change', form's 'submit').",
+          "code": "// Dispatch a custom event with payload\nfunction addToCart(product) {\n  const event = new CustomEvent('cart:item-added', {\n    bubbles: true,       // Bubbles up the DOM tree\n    composed: true,      // Crosses shadow DOM boundaries (web components)\n    detail: { product, timestamp: Date.now() }\n  });\n  document.dispatchEvent(event);\n}\n\n// Listen anywhere in the tree\ndocument.addEventListener('cart:item-added', (event) => {\n  const { product } = event.detail;\n  updateCartUI(product);\n  updateCartCount();\n});\n\n// Scoped to a component element — better encapsulation\nconst cartWidget = document.getElementById('cart-widget');\ncartWidget.addEventListener('cart:item-added', handler);\n\n// Triggering from a button click\ndocument.getElementById('add-btn').addEventListener('click', () => {\n  addToCart({ id: 1, name: 'Widget', price: 9.99 });\n});\n\n// Cleanup — always remove listeners\nfunction cleanup() {\n  document.removeEventListener('cart:item-added', handler);\n}",
+          "situations": [
+            {
+              "question": "You have three independent widget modules that need to stay in sync but shouldn't import each other. How do you coordinate them?",
+              "answer": "Use CustomEvents on a shared event bus element (document or a dedicated bus node). Each module dispatches events for state changes and listens for events from others — no direct imports. Pattern: 1) Define an event catalog (constants file with event names and JSDoc types for detail). 2) Modules dispatch: dispatchEvent(new CustomEvent('inventory:updated', { bubbles: true, detail: { sku, qty } })). 3) Other modules listen and react. This is the same pattern as Redux (actions = events, reducers = listeners) but without the library. For TypeScript, type the detail: new CustomEvent<CartPayload>('cart:item-added', { detail }). Always removeEventListener in cleanup to avoid memory leaks."
             }
           ]
         }
@@ -532,6 +586,43 @@
             {
               "question": "How do you test async React components that fetch data and have loading/error states?",
               "answer": "Use React Testing Library with MSW (Mock Service Worker): 1) MSW intercepts fetch at the network level (not mocking the module) — tests use real fetch code. 2) Use waitFor() and findBy* queries that wait for async state: const heading = await screen.findByRole('heading', { name: /user profile/i }). 3) Test all states: loading (screen.getByTestId('spinner')), success (findByText(userName)), error (set MSW to return 500, findByText(/failed to load/i)). 4) Use screen.debug() to inspect DOM at any point. 5) Avoid waitFor with act() — React Testing Library handles this. Key principle: test user behavior, not internal state — don't test useState values directly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "browser-apis",
+      "title": "Browser APIs & Performance",
+      "emoji": "🌐",
+      "topics": [
+        {
+          "id": "intersection-observer",
+          "title": "IntersectionObserver",
+          "summary": "Detect element visibility efficiently — infinite scroll, lazy images, analytics.",
+          "explanation": "IntersectionObserver asynchronously observes whether a target element intersects with its ancestor or the viewport. It replaces scroll event listeners + getBoundingClientRect() loops — which force layout (expensive) on every scroll event. The callback fires off the main thread when visibility thresholds are crossed. Key options: root (parent to observe against, defaults to viewport), rootMargin (extend/shrink root bounds — use '200px' to load images 200px before they enter view), threshold (0–1, fraction visible before callback fires). Always disconnect the observer when done.",
+          "code": "// Lazy image loading\nconst imageObserver = new IntersectionObserver(\n  (entries) => {\n    entries.forEach(entry => {\n      if (!entry.isIntersecting) return;\n      const img = entry.target;\n      img.src = img.dataset.src; // Load real src\n      img.classList.add('loaded');\n      imageObserver.unobserve(img); // Stop watching once loaded\n    });\n  },\n  {\n    rootMargin: '200px 0px', // Start loading 200px before viewport\n    threshold: 0             // Trigger as soon as 1px is visible\n  }\n);\n\ndocument.querySelectorAll('img[data-src]').forEach(img => {\n  imageObserver.observe(img);\n});\n\n// Infinite scroll — load more when sentinel enters view\nconst sentinel = document.getElementById('load-more-sentinel');\nconst scrollObserver = new IntersectionObserver(async ([entry]) => {\n  if (!entry.isIntersecting) return;\n  scrollObserver.unobserve(sentinel); // Pause while loading\n  await loadNextPage();\n  scrollObserver.observe(sentinel);   // Re-enable for next trigger\n}, { threshold: 1.0 }); // Fully visible\n\nscrollObserver.observe(sentinel);\n\n// Analytics — track time element was visible\nlet visibleSince = null;\nconst analyticsObserver = new IntersectionObserver(([entry]) => {\n  if (entry.isIntersecting) {\n    visibleSince = performance.now();\n  } else if (visibleSince) {\n    const duration = performance.now() - visibleSince;\n    trackEvent('content_viewed', { duration, id: entry.target.id });\n    visibleSince = null;\n  }\n}, { threshold: 0.5 }); // 50% visible counts as 'seen'",
+          "situations": [
+            {
+              "question": "Your page has 200 images and scroll performance is janky. You're using scroll event + getBoundingClientRect() to lazy-load them. How do you fix this?",
+              "answer": "Replace entirely with IntersectionObserver. The scroll listener + getBoundingClientRect() pattern forces a layout recalculation (reflow) on every scroll event — potentially 60 times/second. IntersectionObserver runs asynchronously off the main thread and only fires when visibility actually changes. Migration: 1) Add data-src attributes to all images. 2) Set up one IntersectionObserver with rootMargin: '200px'. 3) In callback: swap data-src → src, unobserve the element. 4) Remove the scroll listener entirely. Result: no reflows, no throttling needed, cleaner code. Native browser <img loading='lazy'> is even simpler for basic cases — no JS needed."
+            },
+            {
+              "question": "You need to send an analytics event only when a user has seen an ad for at least 1 second. How do you implement this?",
+              "answer": "Use IntersectionObserver with threshold: 0.5 (IAB viewability standard: 50% visible for 1 second). When entry.isIntersecting becomes true, start a timer: const timer = setTimeout(() => trackImpression(adId), 1000). If the user scrolls away before 1 second, the observer fires again with isIntersecting: false — cancel the timer: clearTimeout(timer). This is exactly how ad viewability measurement works in production. Key: unobserve after the impression is counted to avoid double-counting. For strict IAB compliance, also check entry.intersectionRatio >= 0.5 inside the callback."
+            }
+          ]
+        },
+        {
+          "id": "mutation-observer",
+          "title": "MutationObserver",
+          "summary": "Watch DOM changes — added/removed nodes, attribute changes, text mutations.",
+          "explanation": "MutationObserver watches for changes to the DOM tree. It fires asynchronously (batched as microtasks) after a series of DOM changes, rather than synchronously on each change. Use cases: detecting when third-party code modifies the DOM, reacting to dynamic content injection (ads, chat widgets), implementing undo/redo for rich text editors, auto-saving form state, accessibility tooling. Much more efficient than polling the DOM with setInterval. Key config: childList (added/removed children), attributes, subtree (observe entire subtree), characterData (text changes).",
+          "code": "// Watch for dynamically added elements\nconst observer = new MutationObserver((mutations) => {\n  mutations.forEach(mutation => {\n    mutation.addedNodes.forEach(node => {\n      if (node.nodeType !== Node.ELEMENT_NODE) return;\n      if (node.matches('.ad-banner')) {\n        initAdTracking(node); // React to injected ads\n      }\n      // Also check subtree of added nodes\n      node.querySelectorAll?.('.lazy-component').forEach(initLazy);\n    });\n\n    mutation.removedNodes.forEach(node => {\n      if (node.nodeType === Node.ELEMENT_NODE) {\n        cleanupComponent(node); // Cleanup removed elements\n      }\n    });\n  });\n});\n\nobserver.observe(document.body, {\n  childList: true,  // Watch for added/removed children\n  subtree: true,    // Watch all descendants, not just direct children\n});\n\n// Watch attribute changes\nconst attrObserver = new MutationObserver((mutations) => {\n  mutations.forEach(({ attributeName, target, oldValue }) => {\n    if (attributeName === 'aria-expanded') {\n      handleAccordionToggle(target, oldValue);\n    }\n  });\n});\n\nattrObserver.observe(accordionEl, {\n  attributes: true,\n  attributeFilter: ['aria-expanded'], // Only watch specific attributes\n  attributeOldValue: true\n});\n\n// Always disconnect when done\nfunction cleanup() {\n  observer.disconnect();\n  attrObserver.disconnect();\n}",
+          "situations": [
+            {
+              "question": "A third-party widget injects HTML into your page and you need to initialize your analytics tracking on those elements. How do you detect the injection?",
+              "answer": "Use MutationObserver on the container where the widget injects: observe with { childList: true, subtree: true }. In the callback, check addedNodes for elements matching the widget's class/attribute. This is more reliable than a setTimeout polling loop and reacts immediately. Implementation tip: use a Set to track already-initialized elements to avoid double-init if the observer fires multiple times. Also handle the case where the widget's elements are already in the DOM when your code runs — query them first, then start observing. Disconnect the observer once the widget is fully loaded if ongoing monitoring isn't needed."
             }
           ]
         }

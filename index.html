@@ -1,138 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrepDocs | Master JS, React & React Native</title>
-    <meta name="description" content="A premium interview preparation guide for JavaScript, React JS, and React Native — with detailed concept explanations and code examples.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="app-shell">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon-wrap">
-                        <span class="logo-icon">⚡</span>
-                    </div>
-                    <div class="logo-text">
-                        <h1 class="logo-title">PrepDocs</h1>
-                        <span class="logo-subtitle">Interview Guide</span>
-                    </div>
-                </div>
-            </div>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to Firebase Hosting</title>
 
-            <nav class="sidebar-nav" id="sidebar-nav">
-                <div class="nav-label">Skills</div>
-                <button class="nav-item active" data-skill="javascript" id="nav-js">
-                    <span class="nav-icon js-icon">JS</span>
-                    <span class="nav-label-text">JavaScript</span>
-                    <span class="nav-arrow">›</span>
-                </button>
-                <button class="nav-item" data-skill="react" id="nav-react">
-                    <span class="nav-icon react-icon">⚛️</span>
-                    <span class="nav-label-text">React JS</span>
-                    <span class="nav-arrow">›</span>
-                </button>
-                <button class="nav-item" data-skill="react-native" id="nav-rn">
-                    <span class="nav-icon rn-icon">📱</span>
-                    <span class="nav-label-text">React Native</span>
-                    <span class="nav-arrow">›</span>
-                </button>
-                <button class="nav-item" data-skill="typescript" id="nav-ts">
-                    <span class="nav-icon ts-icon">TS</span>
-                    <span class="nav-label-text">TypeScript</span>
-                    <span class="nav-arrow">›</span>
-                </button>
-            </nav>
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/12.15.0/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/12.15.0/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/12.15.0/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
-            <div class="sidebar-footer">
-                <button id="theme-toggle" class="theme-btn">
-                    <span class="theme-icon" id="theme-icon">🌙</span>
-                    <span class="theme-text" id="theme-text">Dark Mode</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content" id="main-content">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <div class="breadcrumb">
-                        <span class="breadcrumb-home">PrepDocs</span>
-                        <span class="breadcrumb-sep">›</span>
-                        <span class="breadcrumb-current" id="breadcrumb-current">JavaScript</span>
-                    </div>
-                </div>
-                <div class="topbar-right">
-                    <div class="search-wrap">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="search-input" class="search-input" placeholder="Search topics...">
-                        <kbd class="search-kbd">⌘K</kbd>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Skill Hero -->
-            <div class="skill-hero" id="skill-hero">
-                <div class="skill-hero-bg"></div>
-                <div class="skill-hero-content">
-                    <div class="skill-badge" id="skill-badge">JS</div>
-                    <div class="skill-info">
-                        <h2 class="skill-title" id="skill-title">JavaScript</h2>
-                        <p class="skill-subtitle" id="skill-subtitle">Advanced Concepts for Interview Preparation</p>
-                    </div>
-                    <div class="skill-stats" id="skill-stats">
-                        <div class="stat-item">
-                            <span class="stat-num" id="stat-sections">0</span>
-                            <span class="stat-label">Sections</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat-item">
-                            <span class="stat-num" id="stat-topics">0</span>
-                            <span class="stat-label">Topics</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sections Container -->
-            <div class="sections-container" id="sections-container">
-                <div class="loading-state" id="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>Loading concepts...</p>
-                </div>
-            </div>
-        </main>
+    <style media="screen">
+      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
+      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+      @media (max-width: 600px) {
+        body, #message { margin-top: 0; background: white; box-shadow: none; }
+        body { border-top: 16px solid #ffa100; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message">
+      <h2>Welcome</h2>
+      <h1>Firebase Hosting Setup Complete</h1>
+      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
+      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
     </div>
+    <p id="load">Firebase SDK Loading&hellip;</p>
 
-    <!-- Code Modal -->
-    <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
-        <div class="code-modal" id="code-modal" role="dialog" aria-modal="true">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <span class="modal-tag">Code Example</span>
-                    <h3 class="modal-title" id="modal-title">Topic Name</h3>
-                </div>
-                <div class="modal-actions">
-                    <button class="modal-copy-btn" id="modal-copy-btn" title="Copy code">
-                        <span class="copy-icon">📋</span>
-                        <span class="copy-text">Copy</span>
-                    </button>
-                    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">✕</button>
-                </div>
-            </div>
-            <div class="modal-body">
-                <pre class="modal-code-block" id="modal-code-block"><code id="modal-code"></code></pre>
-            </div>
-        </div>
-    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+        // firebase.auth().onAuthStateChanged(user => { });
+        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+        // firebase.firestore().doc('/foo/bar').get().then(() => { });
+        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        // firebase.analytics(); // call to activate
+        // firebase.analytics().logEvent('tutorial_completed');
+        // firebase.performance(); // call to activate
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
 
-    <script src="app.js"></script>
-</body>
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'database', 
+            'firestore',
+            'functions',
+            'messaging', 
+            'storage', 
+            'analytics', 
+            'remoteConfig',
+            'performance',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+    </script>
+  </body>
 </html>
