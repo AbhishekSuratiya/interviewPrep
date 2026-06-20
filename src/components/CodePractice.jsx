@@ -1,6 +1,9 @@
 import { useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { codingQuestions } from '../data/codePractice';
+import { codingQuestions, reactQuestions } from '../data/codePractice';
+import ReactIDE from './ReactIDE';
+
+const allQuestions = [...codingQuestions, ...reactQuestions];
 
 const DIFFICULTY_COLORS = {
   Easy:   { bg: 'rgba(34,197,94,0.15)',  text: '#22c55e', border: 'rgba(34,197,94,0.3)'  },
@@ -11,6 +14,7 @@ const DIFFICULTY_COLORS = {
 const CATEGORY_COLORS = {
   Array:  { bg: 'rgba(96,165,250,0.12)',  text: '#60a5fa'  },
   String: { bg: 'rgba(167,139,250,0.12)', text: '#a78bfa'  },
+  React:  { bg: 'rgba(34,211,238,0.12)',  text: '#22d3ee'  },
 };
 
 function CodeEditor({ value, onChange, readOnly = false, height = 320 }) {
@@ -225,17 +229,18 @@ function QuestionCard({ q, isLight, isActive, onClick }) {
 export default function CodePractice({ isLight }) {
   const [activeId, setActiveId] = useState(1);
   const [codes, setCodes] = useState(() =>
-    Object.fromEntries(codingQuestions.map(q => [q.id, q.starterCode]))
+    Object.fromEntries(allQuestions.map(q => [q.id, q.starterCode]))
   );
   const [outputs, setOutputs] = useState({});
   const [showSolution, setShowSolution] = useState({});
   const [search, setSearch] = useState('');
   const [filterDiff, setFilterDiff] = useState('All');
   const [filterCat, setFilterCat] = useState('All');
+  const [listCollapsed, setListCollapsed] = useState(false);
 
-  const activeQ = codingQuestions.find(q => q.id === activeId);
+  const activeQ = allQuestions.find(q => q.id === activeId);
 
-  const filtered = codingQuestions.filter(q => {
+  const filtered = allQuestions.filter(q => {
     const matchSearch = !search || q.title.toLowerCase().includes(search.toLowerCase());
     const matchDiff = filterDiff === 'All' || q.difficulty === filterDiff;
     const matchCat = filterCat === 'All' || q.category === filterCat;
@@ -281,20 +286,55 @@ export default function CodePractice({ isLight }) {
 
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
-      {/* Question List Sidebar */}
-      <div style={{
-        width: 280,
-        flexShrink: 0,
-        borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-        {/* Header */}
-        <div style={{ padding: '18px 16px 12px', borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: isLight ? '#1e293b' : '#e2e8f0', marginBottom: 10 }}>
-            🧩 Problems <span style={{ color: '#60a5fa', fontWeight: 400 }}>({codingQuestions.length})</span>
-          </div>
+
+      {/* ── Question List Sidebar ── */}
+      {listCollapsed ? (
+        /* Collapsed: thin icon strip */
+        <div style={{
+          width: 40, flexShrink: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', paddingTop: 12,
+          borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+          background: isLight ? '#f8fafc' : 'rgba(255,255,255,0.02)',
+          cursor: 'pointer',
+          gap: 10,
+        }} onClick={() => setListCollapsed(false)} title="Expand problem list">
+          <button style={{
+            width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer',
+            background: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)',
+            color: isLight ? '#475569' : '#94a3b8',
+            fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>›</button>
+          <span style={{
+            writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase',
+            color: isLight ? '#94a3b8' : '#475569',
+          }}>Problems</span>
+          <span style={{ fontSize: 18 }}>🧩</span>
+        </div>
+      ) : (
+        /* Expanded question list */
+        <div style={{
+          width: 280, flexShrink: 0,
+          borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          transition: 'width 0.2s ease',
+        }}>
+          {/* Header */}
+          <div style={{ padding: '14px 14px 10px', borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: isLight ? '#1e293b' : '#e2e8f0' }}>
+                🧩 Problems
+              </span>
+              <span style={{ marginLeft: 6, fontSize: 12, color: '#60a5fa' }}>({allQuestions.length})</span>
+              {/* Collapse button */}
+              <button onClick={() => setListCollapsed(true)} title="Collapse problem list" style={{
+                marginLeft: 'auto', width: 24, height: 24, borderRadius: 6, border: 'none',
+                background: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)',
+                color: isLight ? '#475569' : '#94a3b8',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>‹</button>
+            </div>
           {/* Search */}
           <input
             type="text"
@@ -321,20 +361,18 @@ export default function CodePractice({ isLight }) {
                 border: `1px solid ${filterDiff === d ? '#60a5fa' : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
                 background: filterDiff === d ? 'rgba(96,165,250,0.15)' : 'transparent',
                 color: filterDiff === d ? '#60a5fa' : isLight ? '#64748b' : '#94a3b8',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
+                cursor: 'pointer', transition: 'all 0.15s',
               }}>{d}</button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
-            {['All','Array','String'].map(c => (
+          <div style={{ display: 'flex', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+            {['All','Array','String','React'].map(c => (
               <button key={c} onClick={() => setFilterCat(c)} style={{
                 padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                border: `1px solid ${filterCat === c ? '#a78bfa' : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                background: filterCat === c ? 'rgba(167,139,250,0.15)' : 'transparent',
-                color: filterCat === c ? '#a78bfa' : isLight ? '#64748b' : '#94a3b8',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
+                border: `1px solid ${filterCat === c ? (c === 'React' ? '#22d3ee' : '#a78bfa') : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                background: filterCat === c ? (c === 'React' ? 'rgba(34,211,238,0.15)' : 'rgba(167,139,250,0.15)') : 'transparent',
+                color: filterCat === c ? (c === 'React' ? '#22d3ee' : '#a78bfa') : isLight ? '#64748b' : '#94a3b8',
+                cursor: 'pointer', transition: 'all 0.15s',
               }}>{c}</button>
             ))}
           </div>
@@ -360,10 +398,37 @@ export default function CodePractice({ isLight }) {
             />
           ))}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Main Content */}
-      {activeQ && (
+      {activeQ && activeQ.type === 'react' ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Top bar for React questions */}
+          <div style={{
+            padding: '14px 24px', flexShrink: 0,
+            borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: isLight ? '#1e293b' : '#f1f5f9' }}>
+              {activeQ.title}
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+              color: DIFFICULTY_COLORS[activeQ.difficulty].text,
+              background: DIFFICULTY_COLORS[activeQ.difficulty].bg,
+              border: `1px solid ${DIFFICULTY_COLORS[activeQ.difficulty].border}`,
+            }}>{activeQ.difficulty}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+              color: '#22d3ee', background: 'rgba(34,211,238,0.12)',
+            }}>⚛️ React</span>
+          </div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <ReactIDE key={activeQ.id} question={activeQ} isLight={isLight} />
+          </div>
+        </div>
+      ) : activeQ && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Top bar */}
           <div style={{

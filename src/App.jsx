@@ -13,7 +13,9 @@ export default function App() {
   const isLight = theme === 'light';
 
   const [activeSkill, setActiveSkill] = useState('javascript');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isCodePractice = activeSkill === 'code-practice';
+  const sidebarW = sidebarCollapsed ? 56 : 256;
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // { title, code }
 
@@ -49,9 +51,11 @@ export default function App() {
         onSelect={handleSelectSkill}
         theme={theme}
         onThemeToggle={toggleTheme}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
       />
 
-      <div className="pl-64">
+      <div style={{ paddingLeft: sidebarW, transition: 'padding-left 0.22s cubic-bezier(0.4,0,0.2,1)' }}>
         <TopBar
           skillName={isCodePractice ? 'Code Practice' : (data?.skill || '…')}
           search={isCodePractice ? '' : search}

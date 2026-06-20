@@ -3257,3 +3257,1766 @@ console.log(longestCommonSubsequence("abc", "abc"));    // 3`,
     explanation: "Classic DP: if chars match, dp[i][j] = dp[i-1][j-1]+1; otherwise max of skipping one char from either string. O(m*n) time and space.",
   },
 ];
+
+// ─── REACT QUESTIONS ────────────────────────────────────────────────────────
+export const reactQuestions = [
+  {
+    id: 'r1',
+    title: 'Counter Component',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a Counter component with + and - buttons.
+
+Requirements:
+  • Display the current count (starts at 0)
+  • "+" button increments count
+  • "−" button decrements count
+  • Count should never go below 0
+
+Hint: Use useState hook.`,
+    starterCode: `function Counter() {
+  // Add state here
+
+  return (
+    <div style={{ textAlign: 'center', padding: 40 }}>
+      <h2 style={{ fontSize: 48, margin: '0 0 20px' }}>0</h2>
+      <button onClick={() => {}}>−</button>
+      <button onClick={() => {}}>+</button>
+    </div>
+  );
+}
+
+export default Counter;`,
+    solution: `function Counter() {
+  const [count, setCount] = React.useState(0);
+
+  return (
+    <div style={{ textAlign: 'center', padding: 40, fontFamily: 'sans-serif' }}>
+      <h2 style={{ fontSize: 48, margin: '0 0 20px', color: '#6366f1' }}>{count}</h2>
+      <button
+        onClick={() => setCount(c => Math.max(0, c - 1))}
+        style={{ padding: '10px 24px', margin: '0 8px', fontSize: 20, borderRadius: 8,
+          border: '2px solid #ef4444', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}
+      >−</button>
+      <button
+        onClick={() => setCount(c => c + 1)}
+        style={{ padding: '10px 24px', margin: '0 8px', fontSize: 20, borderRadius: 8,
+          border: '2px solid #22c55e', background: 'transparent', color: '#22c55e', cursor: 'pointer' }}
+      >+</button>
+    </div>
+  );
+}
+
+export default Counter;`,
+    explanation: 'useState(0) holds the count. The − handler uses Math.max to clamp at 0. Functional updates (c => ...) are used to avoid stale closure issues.',
+  },
+  {
+    id: 'r2',
+    title: 'Toggle Visibility',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a component that shows/hides a secret message.
+
+Requirements:
+  • A button that toggles visibility
+  • When hidden, button says "Show Secret"
+  • When visible, button says "Hide Secret"
+  • Display the message: "🎉 You found the secret!"
+
+Hint: Use useState with a boolean.`,
+    starterCode: `function Toggle() {
+  // Add state here
+
+  return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <button onClick={() => {}}>Show Secret</button>
+      {/* Conditionally render the message */}
+    </div>
+  );
+}
+
+export default Toggle;`,
+    solution: `function Toggle() {
+  const [visible, setVisible] = React.useState(false);
+
+  return (
+    <div style={{ padding: 40, textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <button
+        onClick={() => setVisible(v => !v)}
+        style={{ padding: '10px 24px', fontSize: 14, borderRadius: 8,
+          background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer' }}
+      >
+        {visible ? 'Hide Secret' : 'Show Secret'}
+      </button>
+      {visible && (
+        <div style={{ marginTop: 24, fontSize: 24, color: '#22c55e', animation: 'fadeIn 0.3s ease' }}>
+          🎉 You found the secret!
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Toggle;`,
+    explanation: 'Boolean useState drives conditional rendering. The button label and message both derive from the same state, keeping them in sync automatically.',
+  },
+  {
+    id: 'r3',
+    title: 'Todo List',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a simple Todo List app.
+
+Requirements:
+  • Text input to type a new todo
+  • "Add" button appends the todo to the list
+  • Render each todo as a list item
+  • Empty input should not add a todo
+  • Clear input after adding
+
+Hint: useState for the input value and an array of todos.`,
+    starterCode: `function TodoList() {
+  // Add state here
+
+  const addTodo = () => {
+    // Add logic here
+  };
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+      <h2>My Todos</h2>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input placeholder="Add a todo..." style={{ flex: 1, padding: 8 }} />
+        <button onClick={addTodo}>Add</button>
+      </div>
+      <ul>
+        {/* Render todos here */}
+      </ul>
+    </div>
+  );
+}
+
+export default TodoList;`,
+    solution: `function TodoList() {
+  const [input, setInput] = React.useState('');
+  const [todos, setTodos] = React.useState(['Learn React', 'Build something cool']);
+
+  const addTodo = () => {
+    if (!input.trim()) return;
+    setTodos(prev => [...prev, input.trim()]);
+    setInput('');
+  };
+
+  const handleKey = (e) => { if (e.key === 'Enter') addTodo(); };
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 16 }}>My Todos ✅</h2>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="Add a todo..."
+          style={{ flex: 1, padding: '8px 12px', borderRadius: 8,
+            border: '1px solid #e2e8f0', fontSize: 14 }}
+        />
+        <button onClick={addTodo}
+          style={{ padding: '8px 16px', background: '#6366f1', color: '#fff',
+            border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+          Add
+        </button>
+      </div>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {todos.map((t, i) => (
+          <li key={i} style={{ padding: '10px 14px', marginBottom: 6, background: '#f8fafc',
+            borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14 }}>
+            {i + 1}. {t}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default TodoList;`,
+    explanation: 'Two pieces of state: input string and todos array. Spread operator creates a new array to trigger re-render. Guard clause prevents empty entries.',
+  },
+  {
+    id: 'r4',
+    title: 'Controlled Form',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a controlled login form.
+
+Requirements:
+  • Two inputs: email and password
+  • All inputs are controlled (value from state)
+  • On submit, prevent default and show the entered email
+  • Show "Welcome, [email]!" below the form after submission
+  • Reset fields after submission
+
+Hint: useState for form fields, onSubmit handler.`,
+    starterCode: `function LoginForm() {
+  // Add state here
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle submission
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ padding: 40, maxWidth: 360, margin: '0 auto' }}>
+      <h2>Login</h2>
+      <input type="email" placeholder="Email" style={{ display: 'block', width: '100%', marginBottom: 12, padding: 8 }} />
+      <input type="password" placeholder="Password" style={{ display: 'block', width: '100%', marginBottom: 16, padding: 8 }} />
+      <button type="submit">Login</button>
+      {/* Show welcome message */}
+    </form>
+  );
+}
+
+export default LoginForm;`,
+    solution: `function LoginForm() {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [submitted, setSubmitted] = React.useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(email);
+    setEmail('');
+    setPassword('');
+  };
+
+  const inputStyle = {
+    display: 'block', width: '100%', marginBottom: 12, padding: '10px 12px',
+    borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box',
+  };
+
+  return (
+    <div style={{ padding: 40, maxWidth: 360, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 20 }}>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="email" placeholder="Email" value={email}
+          onChange={e => setEmail(e.target.value)} required style={inputStyle} />
+        <input type="password" placeholder="Password" value={password}
+          onChange={e => setPassword(e.target.value)} required style={inputStyle} />
+        <button type="submit"
+          style={{ width: '100%', padding: '10px', background: '#6366f1', color: '#fff',
+            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          Login
+        </button>
+      </form>
+      {submitted && (
+        <div style={{ marginTop: 16, padding: '12px 16px', background: '#dcfce7',
+          borderRadius: 8, color: '#166534', fontWeight: 600 }}>
+          Welcome, {submitted}! 🎉
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default LoginForm;`,
+    explanation: 'Controlled inputs bind value to state and update via onChange. e.preventDefault() stops page reload. Submission stores the email separately so it persists after the fields reset.',
+  },
+  {
+    id: 'r5',
+    title: 'Color Picker',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a color picker that changes the background.
+
+Requirements:
+  • Show a color input (type="color")
+  • Display a preview box whose background matches the selected color
+  • Show the current hex code as text
+  • Default color: #6366f1
+
+Hint: useState for the hex value, inline style for the preview box.`,
+    starterCode: `function ColorPicker() {
+  // Add state for color
+
+  return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <h2>Color Picker</h2>
+      {/* Color input */}
+      {/* Preview box */}
+      {/* Hex code display */}
+    </div>
+  );
+}
+
+export default ColorPicker;`,
+    solution: `function ColorPicker() {
+  const [color, setColor] = React.useState('#6366f1');
+
+  return (
+    <div style={{ padding: 40, textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h2 style={{ marginBottom: 24 }}>🎨 Color Picker</h2>
+      <input
+        type="color"
+        value={color}
+        onChange={e => setColor(e.target.value)}
+        style={{ width: 80, height: 80, borderRadius: '50%', border: 'none',
+          padding: 4, cursor: 'pointer', display: 'block', margin: '0 auto 24px' }}
+      />
+      <div style={{
+        width: 200, height: 200, margin: '0 auto 20px',
+        borderRadius: 20, background: color,
+        boxShadow: \`0 8px 32px \${color}88\`,
+        transition: 'background 0.2s, box-shadow 0.2s',
+      }} />
+      <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color }}>
+        {color.toUpperCase()}
+      </div>
+    </div>
+  );
+}
+
+export default ColorPicker;`,
+    explanation: 'A single useState stores the hex color string. The color input and preview box both derive from this single source of truth. Template literals inject the color into box-shadow.',
+  },
+  {
+    id: 'r6',
+    title: 'Stopwatch',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a Stopwatch with Start, Stop, and Reset.
+
+Requirements:
+  • Display elapsed time in seconds (e.g. "3.2s")
+  • Start button begins counting
+  • Stop button pauses the timer
+  • Reset button resets to 0
+  • Start/Stop should toggle (disable Start when running)
+
+Hint: useEffect with setInterval, useRef to hold the interval ID.`,
+    starterCode: `function Stopwatch() {
+  // elapsed time in ms, isRunning boolean
+  // useRef for interval id
+
+  const start = () => {};
+  const stop = () => {};
+  const reset = () => {};
+
+  return (
+    <div style={{ textAlign: 'center', padding: 50 }}>
+      <div style={{ fontSize: 64, fontFamily: 'monospace', marginBottom: 30 }}>
+        0.0s
+      </div>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
+      <button onClick={reset}>Reset</button>
+    </div>
+  );
+}
+
+export default Stopwatch;`,
+    solution: `function Stopwatch() {
+  const [elapsed, setElapsed] = React.useState(0);
+  const [running, setRunning] = React.useState(false);
+  const intervalRef = React.useRef(null);
+
+  const start = () => {
+    if (running) return;
+    setRunning(true);
+    const startTime = Date.now() - elapsed;
+    intervalRef.current = setInterval(() => {
+      setElapsed(Date.now() - startTime);
+    }, 50);
+  };
+
+  const stop = () => {
+    clearInterval(intervalRef.current);
+    setRunning(false);
+  };
+
+  const reset = () => {
+    clearInterval(intervalRef.current);
+    setRunning(false);
+    setElapsed(0);
+  };
+
+  const btnStyle = (color) => ({
+    padding: '12px 28px', margin: '0 6px', fontSize: 14, fontWeight: 700,
+    borderRadius: 10, border: 'none', cursor: 'pointer',
+    background: color, color: '#fff', opacity: 1,
+  });
+
+  return (
+    <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
+      <div style={{ fontSize: 72, fontFamily: 'monospace', fontWeight: 700,
+        color: running ? '#22c55e' : '#6366f1', marginBottom: 30 }}>
+        {(elapsed / 1000).toFixed(1)}s
+      </div>
+      <div>
+        <button onClick={start} disabled={running}
+          style={{ ...btnStyle('#22c55e'), opacity: running ? 0.4 : 1 }}>▶ Start</button>
+        <button onClick={stop} disabled={!running}
+          style={{ ...btnStyle('#f59e0b'), opacity: !running ? 0.4 : 1 }}>⏸ Stop</button>
+        <button onClick={reset} style={btnStyle('#ef4444')}>↺ Reset</button>
+      </div>
+    </div>
+  );
+}
+
+export default Stopwatch;`,
+    explanation: 'useRef holds the interval ID so it persists across renders without causing re-renders. We record startTime as Date.now() - elapsed to correctly resume from a paused state.',
+  },
+  {
+    id: 'r7',
+    title: 'Props & Components',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Create a UserCard component and render 3 cards.
+
+Requirements:
+  • UserCard accepts: name, role, avatar (emoji), and color props
+  • Display them in a styled card
+  • Render 3 different UserCard instances in a parent App component
+  • Each card should have a distinct accent color
+
+Hint: Props are just function parameters in function components.`,
+    starterCode: `function UserCard({ name, role, avatar, color }) {
+  // Render a styled card using props
+  return (
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 20, margin: 10 }}>
+      <div>{avatar}</div>
+      <div>{name}</div>
+      <div>{role}</div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', padding: 20 }}>
+      {/* Render 3 UserCard components with different props */}
+    </div>
+  );
+}
+
+export default App;`,
+    solution: `function UserCard({ name, role, avatar, color }) {
+  return (
+    <div style={{
+      border: \`2px solid \${color}44\`, borderRadius: 16, padding: 24, margin: 10,
+      background: \`\${color}11\`, textAlign: 'center', width: 160,
+      boxShadow: \`0 4px 20px \${color}22\`, transition: 'transform 0.2s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+      onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+    >
+      <div style={{ fontSize: 48, marginBottom: 8 }}>{avatar}</div>
+      <div style={{ fontWeight: 700, fontSize: 15, color: '#1e293b', marginBottom: 4 }}>{name}</div>
+      <div style={{ fontSize: 12, color, fontWeight: 600, background: \`\${color}22\`,
+        padding: '2px 10px', borderRadius: 20, display: 'inline-block' }}>{role}</div>
+    </div>
+  );
+}
+
+function App() {
+  const users = [
+    { name: 'Alice Chen',   role: 'Frontend Dev', avatar: '👩‍💻', color: '#6366f1' },
+    { name: 'Bob Smith',    role: 'Backend Dev',  avatar: '👨‍🔧', color: '#22c55e' },
+    { name: 'Carol Jones',  role: 'Designer',     avatar: '🎨',  color: '#f59e0b' },
+  ];
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 20 }}>
+      <h2 style={{ textAlign: 'center', color: '#6366f1', marginBottom: 20 }}>Team Members</h2>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+        {users.map(u => <UserCard key={u.name} {...u} />)}
+      </div>
+    </div>
+  );
+}
+
+export default App;`,
+    explanation: 'Props flow down from parent to child as read-only. Destructuring in function params is idiomatic React. Spreading an object ({...u}) is a clean way to pass all props at once.',
+  },
+  {
+    id: 'r8',
+    title: 'List Filter / Search',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a searchable fruit list.
+
+Requirements:
+  • Display a list of 8+ fruits
+  • A search input filters the list in real time (case-insensitive)
+  • Show "No results" when nothing matches
+  • Show the count of matching items
+
+Hint: .filter() the array based on the search state.`,
+    starterCode: `const FRUITS = [
+  'Apple', 'Banana', 'Cherry', 'Durian', 'Elderberry',
+  'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon',
+];
+
+function FruitSearch() {
+  // Add search state
+
+  const filtered = FRUITS; // Filter based on search
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+      <h2>Fruit Search</h2>
+      <input placeholder="Search fruits..." style={{ width: '100%', padding: 8 }} />
+      <div>{filtered.length} results</div>
+      <ul>
+        {/* Render filtered fruits */}
+      </ul>
+    </div>
+  );
+}
+
+export default FruitSearch;`,
+    solution: `const FRUITS = [
+  'Apple', 'Banana', 'Cherry', 'Durian', 'Elderberry',
+  'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon',
+];
+
+function FruitSearch() {
+  const [search, setSearch] = React.useState('');
+
+  const filtered = FRUITS.filter(f =>
+    f.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const highlight = (text) => {
+    if (!search) return text;
+    const idx = text.toLowerCase().indexOf(search.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark style={{ background: '#fef08a', borderRadius: 2 }}>{text.slice(idx, idx + search.length)}</mark>
+        {text.slice(idx + search.length)}
+      </>
+    );
+  };
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 16 }}>🍎 Fruit Search</h2>
+      <input
+        placeholder="Search fruits..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, boxSizing: 'border-box',
+          border: '1.5px solid #6366f1', fontSize: 14, marginBottom: 12, outline: 'none' }}
+      />
+      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+        {filtered.length} / {FRUITS.length} results
+      </div>
+      {filtered.length === 0
+        ? <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8' }}>No results 🍃</div>
+        : <ul style={{ listStyle: 'none', padding: 0 }}>
+            {filtered.map(f => (
+              <li key={f} style={{ padding: '10px 16px', marginBottom: 6, borderRadius: 10,
+                background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 15 }}>
+                🍑 {highlight(f)}
+              </li>
+            ))}
+          </ul>
+      }
+    </div>
+  );
+}
+
+export default FruitSearch;`,
+    explanation: 'Derived state: filtered is computed directly from the fruits array and search string — no need to store filtered results in state. React re-renders whenever search changes, recalculating the filter.',
+  },
+  {
+    id: 'r9',
+    title: 'Dark / Light Mode Toggle',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a Dark/Light mode UI with a toggle button.
+
+Requirements:
+  • Toggle between dark and light themes
+  • All UI elements (background, text, cards) should adapt
+  • Show a sun ☀️ icon in dark mode, moon 🌙 in light mode
+  • Persist-style: animate the transition with CSS transition
+
+Hint: useState for theme, conditional inline styles based on isDark.`,
+    starterCode: `function ThemeApp() {
+  // Add isDark state
+
+  const theme = {
+    bg: '#ffffff',
+    text: '#111827',
+    card: '#f3f4f6',
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: theme.bg, color: theme.text, transition: 'all 0.3s' }}>
+      <header style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0 }}>My App</h1>
+        <button onClick={() => {}}>☀️ Toggle</button>
+      </header>
+      <main style={{ padding: 24 }}>
+        <div style={{ background: theme.card, borderRadius: 12, padding: 20 }}>
+          <h2>Welcome!</h2>
+          <p>This is a themed card component.</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default ThemeApp;`,
+    solution: `function ThemeApp() {
+  const [isDark, setIsDark] = React.useState(true);
+
+  const theme = isDark
+    ? { bg: '#0f172a', text: '#e2e8f0', card: '#1e293b', border: '#334155', accent: '#6366f1' }
+    : { bg: '#f8fafc', text: '#1e293b', card: '#ffffff', border: '#e2e8f0', accent: '#6366f1' };
+
+  return (
+    <div style={{ minHeight: '100vh', background: theme.bg, color: theme.text,
+      transition: 'all 0.3s ease', fontFamily: 'sans-serif' }}>
+      <header style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between',
+        alignItems: 'center', borderBottom: \`1px solid \${theme.border}\` }}>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: theme.accent }}>⚡ MyApp</h1>
+        <button
+          onClick={() => setIsDark(d => !d)}
+          style={{ padding: '8px 16px', borderRadius: 20, border: \`1.5px solid \${theme.border}\`,
+            background: theme.card, color: theme.text, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+            transition: 'all 0.2s' }}
+        >
+          {isDark ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        </button>
+      </header>
+      <main style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+        {['Welcome!', 'Features', 'About'].map(title => (
+          <div key={title} style={{ background: theme.card, border: \`1px solid \${theme.border}\`,
+            borderRadius: 14, padding: '20px 24px', marginBottom: 16,
+            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)',
+            transition: 'all 0.3s' }}>
+            <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>{title}</h2>
+            <p style={{ margin: 0, color: isDark ? '#94a3b8' : '#64748b', fontSize: 14 }}>
+              This card adapts to the current theme automatically.
+            </p>
+          </div>
+        ))}
+      </main>
+    </div>
+  );
+}
+
+export default ThemeApp;`,
+    explanation: 'Theme object is derived from isDark — a clean pattern that avoids scattered conditional checks. CSS transitions handle the smooth animation. All colors are centralized in one place.',
+  },
+  {
+    id: 'r10',
+    title: 'useEffect & Fetch',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Fetch and display posts from an API using useEffect.
+
+Requirements:
+  • Fetch from: https://jsonplaceholder.typicode.com/posts?_limit=5
+  • Show a loading spinner while fetching
+  • Render each post's title and body
+  • Handle errors gracefully (show an error message)
+  • Only fetch once on mount
+
+Hint: useEffect with [] dependency array, useState for data/loading/error.`,
+    starterCode: `function PostList() {
+  // Add state: posts, loading, error
+
+  // useEffect to fetch posts on mount
+
+  if (false) return <div>Loading...</div>;
+  if (false) return <div>Error: ...</div>;
+
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>Latest Posts</h2>
+      {/* Map over posts */}
+    </div>
+  );
+}
+
+export default PostList;`,
+    solution: `function PostList() {
+  const [posts, setPosts] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    fetch('https://jsonplaceholder.typicode.com/posts?_limit=5')
+      .then(r => { if (!r.ok) throw new Error('Network error'); return r.json(); })
+      .then(data => { setPosts(data); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return (
+    <div style={{ textAlign: 'center', padding: 60, fontFamily: 'sans-serif' }}>
+      <div style={{ fontSize: 40, animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</div>
+      <div style={{ color: '#64748b', marginTop: 12 }}>Loading posts...</div>
+      <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: 24, textAlign: 'center', color: '#ef4444', fontFamily: 'sans-serif' }}>
+      ❌ Error: {error}
+    </div>
+  );
+
+  return (
+    <div style={{ padding: 24, maxWidth: 600, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 20 }}>📰 Latest Posts</h2>
+      {posts.map(post => (
+        <div key={post.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0',
+          borderRadius: 14, padding: '16px 20px', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 700, marginBottom: 6 }}>
+            #{post.id}
+          </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: 15, textTransform: 'capitalize' }}>{post.title}</h3>
+          <p style={{ margin: 0, fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{post.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default PostList;`,
+    explanation: 'useEffect with [] runs once after mount — the React equivalent of componentDidMount. Three state variables (data, loading, error) cover all async states. The fetch chain sets loading=false in both success and error paths.',
+  },
+//   {
+//     id: 'r11',
+//     title: 'useReducer Counter',
+//     difficulty: 'Medium',
+//     category: 'React',
+//     type: 'react',
+//     description: `Rebuild the Counter using useReducer instead of useState.
+//
+// Requirements:
+//   • Same UI: +, −, and a Reset button
+//   • Count never goes below 0
+//   • Use useReducer with an action object { type: 'INCREMENT' | 'DECREMENT' | 'RESET' }
+//   • Show the current count
+//
+// Hint: useReducer(reducer, initialState) — reducer takes (state, action) and returns new state.`,
+//     starterCode: `function reducer(state, action) {
+//   // Handle INCREMENT, DECREMENT (min 0), RESET
+//   return state;
+// }
+//
+// function Counter() {
+//   const [count, dispatch] = React.useReducer(reducer, 0);
+//
+//   return (
+//     <div style={{ textAlign: 'center', padding: 40 }}>
+//       <h2 style={{ fontSize: 48 }}>{count}</h2>
+//       <button onClick={() => dispatch({ type: 'DECREMENT' })}>−</button>
+//       <button onClick={() => dispatch({ type: 'INCREMENT' })}>+</button>
+//       <button onClick={() => dispatch({ type: 'RESET' })}>Reset</button>
+//     </div>
+//   );
+// }
+//
+// export default Counter;`,
+//     solution: `function reducer(state, action) {
+//   switch (action.type) {
+//     case 'INCREMENT': return state + 1;
+//     case 'DECREMENT': return Math.max(0, state - 1);
+//     case 'RESET':     return 0;
+//     default:          return state;
+//   }
+// }
+//
+// function Counter() {
+//   const [count, dispatch] = React.useReducer(reducer, 0);
+//
+//   const btnStyle = (color) => ({
+//     padding: '10px 24px', margin: '0 6px', fontSize: 18, fontWeight: 700,
+//     borderRadius: 10, border: \`2px solid \${color}\`, background: 'transparent',
+//     color, cursor: 'pointer',
+//   });
+//
+//   return (
+//     <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
+//       <h2 style={{ fontSize: 72, fontWeight: 800, color: '#6366f1', margin: '0 0 30px' }}>
+//         {count}
+//       </h2>
+//       <button onClick={() => dispatch({ type: 'DECREMENT' })} style={btnStyle('#ef4444')}>−</button>
+//       <button onClick={() => dispatch({ type: 'INCREMENT' })} style={btnStyle('#22c55e')}>+</button>
+//       <button onClick={() => dispatch({ type: 'RESET' })} style={btnStyle('#94a3b8')}>↺ Reset</button>
+//     </div>
+//   );
+// }
+//
+// export default Counter;`,
+//     explanation: 'useReducer is preferred when state transitions depend on the current state or when multiple actions modify the same state. The reducer is a pure function — easy to test and reason about.',
+//   },
+//   {
+//     id: 'r12',
+//     title: 'Tabs Component',
+//     difficulty: 'Easy',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a reusable Tabs component.
+//
+// Requirements:
+//   • Show 3 tabs: "Home", "Profile", "Settings"
+//   • Clicking a tab makes it active and shows its content panel
+//   • Active tab is visually highlighted
+//   • Each panel shows different content
+//
+// Hint: useState to track the active tab index or name.`,
+//     starterCode: `const TABS = [
+//   { label: 'Home',     content: 'Welcome to the Home tab! 🏠' },
+//   { label: 'Profile',  content: 'This is your Profile. 👤' },
+//   { label: 'Settings', content: 'Adjust your Settings here. ⚙️' },
+// ];
+//
+// function Tabs() {
+//   // Track active tab
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
+//       <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
+//         {TABS.map((tab, i) => (
+//           <button key={i} onClick={() => {}}>
+//             {tab.label}
+//           </button>
+//         ))}
+//       </div>
+//       <div style={{ padding: 20 }}>
+//         {/* Show active tab content */}
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default Tabs;`,
+//     solution: `const TABS = [
+//   { label: 'Home',     content: 'Welcome to the Home tab! 🏠', icon: '🏠' },
+//   { label: 'Profile',  content: 'This is your Profile. 👤', icon: '👤' },
+//   { label: 'Settings', content: 'Adjust your Settings here. ⚙️', icon: '⚙️' },
+// ];
+//
+// function Tabs() {
+//   const [active, setActive] = React.useState(0);
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
+//       <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', marginBottom: 0 }}>
+//         {TABS.map((tab, i) => (
+//           <button
+//             key={i}
+//             onClick={() => setActive(i)}
+//             style={{
+//               padding: '12px 24px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+//               border: 'none', background: 'none',
+//               color: active === i ? '#6366f1' : '#94a3b8',
+//               borderBottom: active === i ? '2px solid #6366f1' : '2px solid transparent',
+//               marginBottom: -2, transition: 'all 0.2s',
+//             }}
+//           >
+//             {tab.icon} {tab.label}
+//           </button>
+//         ))}
+//       </div>
+//       <div style={{
+//         padding: '28px 20px', background: '#f8fafc', borderRadius: '0 0 14px 14px',
+//         border: '1px solid #e2e8f0', borderTop: 'none', fontSize: 15, color: '#1e293b',
+//       }}>
+//         {TABS[active].content}
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default Tabs;`,
+//     explanation: 'A single active index drives both the highlighted tab and the displayed content. The active tab gets a bottom border via a conditional style. Index comparison (active === i) is cleaner than string matching for small tab sets.',
+//   },
+//   {
+//     id: 'r13',
+//     title: 'Accordion / FAQ',
+//     difficulty: 'Easy',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build an Accordion FAQ component.
+//
+// Requirements:
+//   • Render a list of FAQ items, each with a question and answer
+//   • Clicking a question expands/collapses its answer
+//   • Only one item can be open at a time
+//   • Show a ▼ / ▲ chevron indicator
+//
+// Hint: Store the open index in state. Set to null when closing.`,
+//     starterCode: `const FAQS = [
+//   { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
+//   { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
+//   { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
+//   { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
+// ];
+//
+// function Accordion() {
+//   // Track which item is open (null = none)
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 560, margin: '0 auto' }}>
+//       <h2>FAQ</h2>
+//       {FAQS.map((item, i) => (
+//         <div key={i} style={{ marginBottom: 8, border: '1px solid #e2e8f0', borderRadius: 10 }}>
+//           <button onClick={() => {}} style={{ width: '100%', textAlign: 'left', padding: 16 }}>
+//             {item.q}
+//           </button>
+//           {/* Conditionally show answer */}
+//         </div>
+//       ))}
+//     </div>
+//   );
+// }
+//
+// export default Accordion;`,
+//     solution: `const FAQS = [
+//   { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
+//   { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
+//   { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
+//   { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
+// ];
+//
+// function Accordion() {
+//   const [openIdx, setOpenIdx] = React.useState(null);
+//
+//   const toggle = (i) => setOpenIdx(prev => prev === i ? null : i);
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 560, margin: '0 auto', fontFamily: 'sans-serif' }}>
+//       <h2 style={{ color: '#6366f1', marginBottom: 20 }}>❓ FAQ</h2>
+//       {FAQS.map((item, i) => {
+//         const isOpen = openIdx === i;
+//         return (
+//           <div key={i} style={{
+//             marginBottom: 10, border: \`1.5px solid \${isOpen ? '#6366f1' : '#e2e8f0'}\`,
+//             borderRadius: 12, overflow: 'hidden', transition: 'border 0.2s',
+//           }}>
+//             <button
+//               onClick={() => toggle(i)}
+//               style={{
+//                 width: '100%', textAlign: 'left', padding: '16px 20px',
+//                 background: isOpen ? '#eef2ff' : '#fff', border: 'none',
+//                 fontWeight: 600, fontSize: 14, cursor: 'pointer', color: '#1e293b',
+//                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+//               }}
+//             >
+//               {item.q}
+//               <span style={{ color: '#6366f1', fontSize: 12 }}>{isOpen ? '▲' : '▼'}</span>
+//             </button>
+//             {isOpen && (
+//               <div style={{ padding: '14px 20px 16px', background: '#f8fafc',
+//                 fontSize: 14, color: '#475569', lineHeight: 1.7, borderTop: '1px solid #e2e8f0' }}>
+//                 {item.a}
+//               </div>
+//             )}
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// }
+//
+// export default Accordion;`,
+//     explanation: 'Storing the open index (not a boolean per item) enforces the single-open constraint automatically — toggling to the same index closes it, clicking a different one opens it and implicitly closes the previous.',
+//   },
+//   {
+//     id: 'r14',
+//     title: 'Custom Hook – useLocalStorage',
+//     difficulty: 'Medium',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a custom useLocalStorage hook and use it in a Notes app.
+//
+// Requirements:
+//   • useLocalStorage(key, initialValue) behaves like useState but persists to localStorage
+//   • Changes survive a page refresh (test by refreshing the preview)
+//   • Build a simple Note app: textarea + save button using this hook
+//   • Show "Saved!" confirmation for 2 seconds after saving
+//
+// Hint: Initialize state from localStorage.getItem, call localStorage.setItem on updates.`,
+//     starterCode: `function useLocalStorage(key, initialValue) {
+//   // Return [storedValue, setValue] — synced with localStorage
+//   const [value, setValue] = React.useState(initialValue);
+//   return [value, setValue];
+// }
+//
+// function Notes() {
+//   const [note, setNote] = useLocalStorage('my-note', '');
+//   const [saved, setSaved] = React.useState(false);
+//
+//   const save = () => {
+//     // Show saved confirmation
+//   };
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
+//       <h2>📝 My Note</h2>
+//       <textarea value={note} onChange={e => setNote(e.target.value)}
+//         style={{ width: '100%', height: 150, padding: 10 }} />
+//       <button onClick={save}>Save</button>
+//       {saved && <span> ✅ Saved!</span>}
+//     </div>
+//   );
+// }
+//
+// export default Notes;`,
+//     solution: `function useLocalStorage(key, initialValue) {
+//   const [value, setValue] = React.useState(() => {
+//     try {
+//       const item = localStorage.getItem(key);
+//       return item !== null ? JSON.parse(item) : initialValue;
+//     } catch {
+//       return initialValue;
+//     }
+//   });
+//
+//   const setStoredValue = (newValue) => {
+//     setValue(newValue);
+//     try {
+//       localStorage.setItem(key, JSON.stringify(newValue));
+//     } catch (e) {
+//       console.error(e);
+//     }
+//   };
+//
+//   return [value, setStoredValue];
+// }
+//
+// function Notes() {
+//   const [note, setNote] = useLocalStorage('my-note', '');
+//   const [saved, setSaved] = React.useState(false);
+//
+//   const save = () => {
+//     setSaved(true);
+//     setTimeout(() => setSaved(false), 2000);
+//   };
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
+//       <h2 style={{ color: '#6366f1', marginBottom: 16 }}>📝 My Note</h2>
+//       <textarea
+//         value={note}
+//         onChange={e => setNote(e.target.value)}
+//         placeholder="Write something..."
+//         style={{ width: '100%', height: 160, padding: '12px 14px', borderRadius: 10, boxSizing: 'border-box',
+//           border: '1.5px solid #e2e8f0', fontSize: 14, resize: 'vertical', outline: 'none',
+//           fontFamily: 'sans-serif', lineHeight: 1.6 }}
+//       />
+//       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+//         <button onClick={save}
+//           style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
+//             borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+//           💾 Save
+//         </button>
+//         {saved && (
+//           <span style={{ color: '#22c55e', fontWeight: 600, fontSize: 14 }}>✅ Saved!</span>
+//         )}
+//       </div>
+//       <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
+//         {note.length} characters — persists across refreshes
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default Notes;`,
+//     explanation: 'The lazy initializer function in useState (passing a function, not a value) runs only on mount — perfect for reading localStorage without re-reading on every render. JSON.stringify/parse handles all serializable types. Wrapping in try/catch handles private browsing where localStorage may throw.',
+//   },
+//   {
+//     id: 'r15',
+//     title: 'Debounced Search',
+//     difficulty: 'Medium',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a search input that debounces API calls by 400ms.
+//
+// Requirements:
+//   • Input updates immediately (controlled)
+//   • The "API call" (simulated) fires only 400ms after the user stops typing
+//   • Show "Searching..." while debounce is pending
+//   • Display a list of filtered results from a local dataset
+//   • Show how many times the search actually fired
+//
+// Hint: useEffect + setTimeout + clearTimeout.`,
+//     starterCode: `const USERS = [
+//   'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
+//   'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
+// ];
+//
+// function DebounceSearch() {
+//   const [query, setQuery] = React.useState('');
+//   const [results, setResults] = React.useState(USERS);
+//   const [searching, setSearching] = React.useState(false);
+//
+//   // Add debounce logic with useEffect
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+//       <h2>Debounced Search</h2>
+//       <input value={query} onChange={e => setQuery(e.target.value)}
+//         placeholder="Search users..." style={{ width: '100%', padding: 8 }} />
+//       {searching && <div>Searching...</div>}
+//       <ul>{results.map(r => <li key={r}>{r}</li>)}</ul>
+//     </div>
+//   );
+// }
+//
+// export default DebounceSearch;`,
+//     solution: `const USERS = [
+//   'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
+//   'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
+// ];
+//
+// function DebounceSearch() {
+//   const [query, setQuery] = React.useState('');
+//   const [results, setResults] = React.useState(USERS);
+//   const [searching, setSearching] = React.useState(false);
+//   const [fireCount, setFireCount] = React.useState(0);
+//
+//   React.useEffect(() => {
+//     setSearching(true);
+//     const timer = setTimeout(() => {
+//       const filtered = USERS.filter(u =>
+//         u.toLowerCase().includes(query.toLowerCase())
+//       );
+//       setResults(filtered);
+//       setSearching(false);
+//       setFireCount(c => c + 1);
+//     }, 400);
+//
+//     return () => clearTimeout(timer);
+//   }, [query]);
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto', fontFamily: 'sans-serif' }}>
+//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⚡ Debounced Search</h2>
+//       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
+//         Search fired {fireCount} times
+//       </div>
+//       <input
+//         value={query}
+//         onChange={e => setQuery(e.target.value)}
+//         placeholder="Search users..."
+//         style={{ width: '100%', padding: '10px 14px', borderRadius: 10, boxSizing: 'border-box',
+//           border: '1.5px solid #6366f1', fontSize: 14, outline: 'none', marginBottom: 8 }}
+//       />
+//       {searching
+//         ? <div style={{ color: '#94a3b8', fontSize: 13, padding: '8px 0' }}>🔍 Searching...</div>
+//         : <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>{results.length} results</div>
+//       }
+//       <ul style={{ listStyle: 'none', padding: 0 }}>
+//         {results.map(r => (
+//           <li key={r} style={{ padding: '10px 14px', marginBottom: 6, borderRadius: 8,
+//             background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 14 }}>
+//             👤 {r}
+//           </li>
+//         ))}
+//         {results.length === 0 && (
+//           <li style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>No users found</li>
+//         )}
+//       </ul>
+//     </div>
+//   );
+// }
+//
+// export default DebounceSearch;`,
+//     explanation: 'The cleanup function returned from useEffect clears the previous timer when query changes — ensuring the search only fires once the user pauses. This prevents unnecessary re-renders and simulated network calls. The fire count demonstrates that without debouncing, every keystroke would trigger a call.',
+//   },
+//   {
+//     id: 'r16',
+//     title: 'Shopping Cart – useReducer',
+//     difficulty: 'Hard',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a Shopping Cart using useReducer.
+//
+// Requirements:
+//   • Display a product list (at least 4 products with name + price)
+//   • "Add to Cart" button on each product
+//   • Cart panel shows items, quantities, and total
+//   • Increment / decrement quantity in cart
+//   • Remove item from cart
+//   • Cart total updates automatically
+//
+// Hint: useReducer with actions: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT.`,
+//     starterCode: `const PRODUCTS = [
+//   { id: 1, name: 'React Course',    price: 29 },
+//   { id: 2, name: 'TypeScript Book', price: 19 },
+//   { id: 3, name: 'VS Code Theme',   price: 9  },
+//   { id: 4, name: 'CLI Tool',        price: 14 },
+// ];
+//
+// function cartReducer(state, action) {
+//   // Handle: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT
+//   return state;
+// }
+//
+// function ShoppingCart() {
+//   const [cart, dispatch] = React.useReducer(cartReducer, []);
+//
+//   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+//
+//   return (
+//     <div style={{ display: 'flex', gap: 20, padding: 20 }}>
+//       <div style={{ flex: 1 }}>
+//         <h2>Products</h2>
+//         {PRODUCTS.map(p => (
+//           <div key={p.id} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+//             <div>{p.name} — ${p.price}</div>
+//             <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}>Add to Cart</button>
+//           </div>
+//         ))}
+//       </div>
+//       <div style={{ width: 280 }}>
+//         <h2>Cart ({cart.length})</h2>
+//         {/* Render cart items */}
+//         <div>Total: ${total}</div>
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default ShoppingCart;`,
+//     solution: `const PRODUCTS = [
+//   { id: 1, name: 'React Course',    price: 29, emoji: '⚛️' },
+//   { id: 2, name: 'TypeScript Book', price: 19, emoji: '📘' },
+//   { id: 3, name: 'VS Code Theme',   price: 9,  emoji: '🎨' },
+//   { id: 4, name: 'CLI Tool',        price: 14, emoji: '🛠️' },
+// ];
+//
+// function cartReducer(state, action) {
+//   switch (action.type) {
+//     case 'ADD_ITEM': {
+//       const existing = state.find(i => i.id === action.payload.id);
+//       if (existing) return state.map(i => i.id === existing.id ? { ...i, qty: i.qty + 1 } : i);
+//       return [...state, { ...action.payload, qty: 1 }];
+//     }
+//     case 'REMOVE_ITEM':
+//       return state.filter(i => i.id !== action.payload);
+//     case 'INCREMENT':
+//       return state.map(i => i.id === action.payload ? { ...i, qty: i.qty + 1 } : i);
+//     case 'DECREMENT':
+//       return state.map(i => i.id === action.payload
+//         ? { ...i, qty: Math.max(1, i.qty - 1) } : i);
+//     default: return state;
+//   }
+// }
+//
+// function ShoppingCart() {
+//   const [cart, dispatch] = React.useReducer(cartReducer, []);
+//   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+//   const inCart = (id) => cart.find(i => i.id === id);
+//
+//   const cardStyle = { border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 10 };
+//
+//   return (
+//     <div style={{ display: 'flex', gap: 20, padding: 20, fontFamily: 'sans-serif', maxWidth: 680, margin: '0 auto' }}>
+//       <div style={{ flex: 1 }}>
+//         <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛍️ Products</h2>
+//         {PRODUCTS.map(p => (
+//           <div key={p.id} style={{ ...cardStyle, background: inCart(p.id) ? '#eef2ff' : '#fff' }}>
+//             <div style={{ fontWeight: 600, marginBottom: 6 }}>{p.emoji} {p.name}</div>
+//             <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 700, marginBottom: 10 }}>\${p.price}</div>
+//             <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}
+//               style={{ padding: '6px 14px', background: '#6366f1', color: '#fff',
+//                 border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+//               {inCart(p.id) ? '+ Add More' : 'Add to Cart'}
+//             </button>
+//           </div>
+//         ))}
+//       </div>
+//       <div style={{ width: 240 }}>
+//         <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛒 Cart ({cart.reduce((s,i) => s+i.qty,0)})</h2>
+//         {cart.length === 0
+//           ? <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: 20 }}>Cart is empty</div>
+//           : cart.map(item => (
+//             <div key={item.id} style={{ ...cardStyle, background: '#f8fafc' }}>
+//               <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{item.emoji} {item.name}</div>
+//               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+//                 <button onClick={() => dispatch({ type: 'DECREMENT', payload: item.id })}
+//                   style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
+//                     background: '#fff', cursor: 'pointer', fontWeight: 700 }}>−</button>
+//                 <span style={{ fontWeight: 700 }}>{item.qty}</span>
+//                 <button onClick={() => dispatch({ type: 'INCREMENT', payload: item.id })}
+//                   style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
+//                     background: '#fff', cursor: 'pointer', fontWeight: 700 }}>+</button>
+//                 <span style={{ marginLeft: 'auto', fontSize: 12, color: '#6366f1', fontWeight: 700 }}>
+//                   \${item.price * item.qty}
+//                 </span>
+//               </div>
+//               <button onClick={() => dispatch({ type: 'REMOVE_ITEM', payload: item.id })}
+//                 style={{ marginTop: 8, fontSize: 11, color: '#ef4444', background: 'none',
+//                   border: 'none', cursor: 'pointer', padding: 0 }}>✕ Remove</button>
+//             </div>
+//           ))
+//         }
+//         {cart.length > 0 && (
+//           <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: 12, marginTop: 4,
+//             fontWeight: 700, fontSize: 16, color: '#1e293b', display: 'flex', justifyContent: 'space-between' }}>
+//             <span>Total</span>
+//             <span style={{ color: '#6366f1' }}>\${total}</span>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default ShoppingCart;`,
+//     explanation: 'useReducer shines here because cart operations (add/remove/increment/decrement) are all related state transitions on the same data. The ADD_ITEM action handles both "first add" and "add duplicate" in one place. Spreading items (...i) ensures immutability so React detects changes.',
+//   },
+//   {
+//     id: 'r17',
+//     title: 'Pagination',
+//     difficulty: 'Medium',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a paginated list component.
+//
+// Requirements:
+//   • Display a list of 50 items (generate: "Item 1" … "Item 50")
+//   • Show 8 items per page
+//   • Previous / Next buttons to navigate pages
+//   • Show current page and total pages (e.g. "Page 2 of 7")
+//   • Disable Prev on page 1, disable Next on the last page
+//
+// Hint: Derive current page items with .slice(). No external libraries needed.`,
+//     starterCode: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
+// const PAGE_SIZE = 8;
+//
+// function Pagination() {
+//   const [page, setPage] = React.useState(1);
+//
+//   const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
+//   const pageItems = ITEMS.slice(/* calculate start/end */);
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+//       <h2>Paginated List</h2>
+//       <ul>
+//         {pageItems.map(item => <li key={item}>{item}</li>)}
+//       </ul>
+//       <div>
+//         <button onClick={() => setPage(p => p - 1)} disabled={page === 1}>Prev</button>
+//         <span> Page {page} of {totalPages} </span>
+//         <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>Next</button>
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default Pagination;`,
+//     solution: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
+// const PAGE_SIZE = 8;
+//
+// function Pagination() {
+//   const [page, setPage] = React.useState(1);
+//
+//   const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
+//   const start = (page - 1) * PAGE_SIZE;
+//   const pageItems = ITEMS.slice(start, start + PAGE_SIZE);
+//
+//   const btnStyle = (disabled) => ({
+//     padding: '8px 18px', fontWeight: 700, fontSize: 13, borderRadius: 8,
+//     border: '1.5px solid #6366f1', background: disabled ? '#f1f5f9' : '#6366f1',
+//     color: disabled ? '#94a3b8' : '#fff', cursor: disabled ? 'not-allowed' : 'pointer',
+//   });
+//
+//   return (
+//     <div style={{ padding: 30, maxWidth: 380, margin: '0 auto', fontFamily: 'sans-serif' }}>
+//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>📄 Paginated List</h2>
+//       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
+//         Showing {start + 1}–{Math.min(start + PAGE_SIZE, ITEMS.length)} of {ITEMS.length} items
+//       </div>
+//       <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
+//         {pageItems.map((item, i) => (
+//           <li key={item} style={{
+//             padding: '10px 16px', marginBottom: 6, borderRadius: 8,
+//             background: i % 2 === 0 ? '#f8fafc' : '#eef2ff',
+//             border: '1px solid #e2e8f0', fontSize: 14, fontWeight: 500,
+//           }}>
+//             {item}
+//           </li>
+//         ))}
+//       </ul>
+//       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+//         <button onClick={() => setPage(p => p - 1)} disabled={page === 1} style={btnStyle(page === 1)}>
+//           ← Prev
+//         </button>
+//         <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', flex: 1, textAlign: 'center' }}>
+//           Page {page} of {totalPages}
+//         </span>
+//         <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages} style={btnStyle(page === totalPages)}>
+//           Next →
+//         </button>
+//       </div>
+//       <div style={{ display: 'flex', gap: 4, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+//         {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+//           <button key={p} onClick={() => setPage(p)}
+//             style={{ width: 32, height: 32, borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700,
+//               cursor: 'pointer', background: p === page ? '#6366f1' : '#f1f5f9', color: p === page ? '#fff' : '#64748b' }}>
+//             {p}
+//           </button>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+//
+// export default Pagination;`,
+//     explanation: 'The page index is the only state needed — all other values (start, pageItems, totalPages) are derived from it. Resetting to page 1 when data changes (not needed here) is a common gotcha. The slice bounds use PAGE_SIZE as both stride and limit.',
+//   },
+//   {
+//     id: 'r18',
+//     title: 'Modal / Dialog',
+//     difficulty: 'Medium',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a reusable Modal component.
+//
+// Requirements:
+//   • A button to open the modal
+//   • Modal overlays the page with a backdrop
+//   • Modal has a title, content, and Close button
+//   • Clicking the backdrop also closes the modal
+//   • Press Escape key to close
+//   • Animate in with a fade/scale effect
+//
+// Hint: useEffect to listen for Escape key, stopPropagation to prevent backdrop click from closing when clicking inside modal.`,
+//     starterCode: `function Modal({ isOpen, onClose, title, children }) {
+//   // Close on Escape key
+//
+//   if (!isOpen) return null;
+//
+//   return (
+//     <div onClick={onClose}
+//       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+//       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 12, padding: 24, minWidth: 320 }}>
+//         <h2>{title}</h2>
+//         {children}
+//         <button onClick={onClose}>Close</button>
+//       </div>
+//     </div>
+//   );
+// }
+//
+// function App() {
+//   const [open, setOpen] = React.useState(false);
+//
+//   return (
+//     <div style={{ padding: 40, textAlign: 'center' }}>
+//       <button onClick={() => setOpen(true)}>Open Modal</button>
+//       <Modal isOpen={open} onClose={() => setOpen(false)} title="Hello!">
+//         <p>This is the modal content.</p>
+//       </Modal>
+//     </div>
+//   );
+// }
+//
+// export default App;`,
+//     solution: `function Modal({ isOpen, onClose, title, children }) {
+//   React.useEffect(() => {
+//     if (!isOpen) return;
+//     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+//     document.addEventListener('keydown', handleKey);
+//     return () => document.removeEventListener('keydown', handleKey);
+//   }, [isOpen, onClose]);
+//
+//   if (!isOpen) return null;
+//
+//   return (
+//     <div
+//       onClick={onClose}
+//       style={{
+//         position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+//         display: 'flex', alignItems: 'center', justifyContent: 'center',
+//         zIndex: 1000, animation: 'fadeIn 0.15s ease',
+//       }}
+//     >
+//       <style>{'@keyframes fadeIn { from { opacity:0 } to { opacity:1 } } @keyframes scaleIn { from { transform:scale(0.92); opacity:0 } to { transform:scale(1); opacity:1 } }'}</style>
+//       <div
+//         onClick={e => e.stopPropagation()}
+//         style={{
+//           background: '#fff', borderRadius: 18, padding: '28px 32px', minWidth: 360, maxWidth: '90vw',
+//           boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'scaleIn 0.15s ease',
+//           fontFamily: 'sans-serif',
+//         }}
+//       >
+//         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+//           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{title}</h2>
+//           <button
+//             onClick={onClose}
+//             style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f1f5f9',
+//               cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+//           >✕</button>
+//         </div>
+//         <div style={{ color: '#475569', lineHeight: 1.7, marginBottom: 24 }}>{children}</div>
+//         <button
+//           onClick={onClose}
+//           style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
+//             borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+//         >
+//           Got it
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
+//
+// function App() {
+//   const [open, setOpen] = React.useState(false);
+//
+//   return (
+//     <div style={{ padding: 60, textAlign: 'center', fontFamily: 'sans-serif' }}>
+//       <h1 style={{ color: '#6366f1', marginBottom: 24 }}>Modal Demo</h1>
+//       <button
+//         onClick={() => setOpen(true)}
+//         style={{ padding: '12px 28px', background: '#6366f1', color: '#fff', border: 'none',
+//           borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+//       >
+//         Open Modal
+//       </button>
+//       <Modal isOpen={open} onClose={() => setOpen(false)} title="🎉 Welcome!">
+//         <p>This modal closes on backdrop click, the ✕ button, or pressing Escape.</p>
+//         <p>It animates in with a scale + fade effect using CSS keyframes.</p>
+//       </Modal>
+//     </div>
+//   );
+// }
+//
+// export default App;`,
+//     explanation: 'The Escape key listener is registered in useEffect and cleaned up when the modal closes — prevents stale listeners from stacking up. stopPropagation on the inner div prevents the backdrop click handler from firing. The component is fully controlled: the parent owns isOpen state.',
+//   },
+//   {
+//     id: 'r19',
+//     title: 'Star Rating Component',
+//     difficulty: 'Easy',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build an interactive Star Rating component.
+//
+// Requirements:
+//   • Display 5 stars
+//   • Hovering over a star highlights it and all stars before it
+//   • Clicking a star sets the permanent rating
+//   • Show the numeric rating below (e.g. "4 / 5")
+//   • Allow resetting to no rating
+//
+// Hint: Two pieces of state — hovered and selected. Display depends on hovered ?? selected.`,
+//     starterCode: `function StarRating() {
+//   const [selected, setSelected] = React.useState(0);
+//   const [hovered, setHovered] = React.useState(0);
+//
+//   const display = hovered || selected;
+//
+//   return (
+//     <div style={{ textAlign: 'center', padding: 40 }}>
+//       <h2>Rate Us!</h2>
+//       <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+//         {[1, 2, 3, 4, 5].map(star => (
+//           <span
+//             key={star}
+//             onClick={() => setSelected(star)}
+//             onMouseEnter={() => setHovered(star)}
+//             onMouseLeave={() => setHovered(0)}
+//             style={{ fontSize: 40, cursor: 'pointer', color: star <= display ? '#f59e0b' : '#e2e8f0' }}
+//           >
+//             ★
+//           </span>
+//         ))}
+//       </div>
+//       <div>{selected ? \`\${selected} / 5\` : 'No rating yet'}</div>
+//     </div>
+//   );
+// }
+//
+// export default StarRating;`,
+//     solution: `function StarRating({ max = 5 }) {
+//   const [selected, setSelected] = React.useState(0);
+//   const [hovered, setHovered] = React.useState(0);
+//
+//   const display = hovered || selected;
+//
+//   const labels = ['', 'Terrible', 'Poor', 'Okay', 'Good', 'Excellent!'];
+//
+//   return (
+//     <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
+//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⭐ Rate Your Experience</h2>
+//       <div style={{ color: '#94a3b8', fontSize: 13, marginBottom: 28 }}>Click a star to rate</div>
+//       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
+//         {Array.from({ length: max }, (_, i) => i + 1).map(star => (
+//           <span
+//             key={star}
+//             onClick={() => setSelected(prev => prev === star ? 0 : star)}
+//             onMouseEnter={() => setHovered(star)}
+//             onMouseLeave={() => setHovered(0)}
+//             style={{
+//               fontSize: 48, cursor: 'pointer', transition: 'transform 0.1s, color 0.1s',
+//               color: star <= display ? '#f59e0b' : '#e2e8f0',
+//               transform: star === display ? 'scale(1.2)' : 'scale(1)',
+//               display: 'inline-block',
+//             }}
+//           >
+//             ★
+//           </span>
+//         ))}
+//       </div>
+//       <div style={{ height: 28, fontSize: 18, fontWeight: 700,
+//         color: selected ? '#f59e0b' : '#94a3b8', transition: 'color 0.2s' }}>
+//         {selected ? \`\${labels[selected]} (\${selected}/\${max})\` : 'No rating yet'}
+//       </div>
+//       {selected > 0 && (
+//         <button onClick={() => setSelected(0)}
+//           style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', background: 'none',
+//             border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+//           Clear rating
+//         </button>
+//       )}
+//     </div>
+//   );
+// }
+//
+// export default StarRating;`,
+//     explanation: 'Two state values: hovered (ephemeral, resets on mouse leave) and selected (permanent, set on click). The expression hovered || selected picks hover preview if active, otherwise falls back to the clicked rating. Clicking the same star twice resets it — a nice UX touch.',
+//   },
+//   {
+//     id: 'r20',
+//     title: 'useContext – Theme Provider',
+//     difficulty: 'Hard',
+//     category: 'React',
+//     type: 'react',
+//     description: `Build a theme system using React Context.
+//
+// Requirements:
+//   • Create a ThemeContext with createContext
+//   • ThemeProvider wraps the app and provides { theme, toggleTheme }
+//   • Any nested component can call useContext(ThemeContext) to read/change the theme
+//   • Build a Header and Card component that both consume the theme
+//   • Toggle button in Header changes theme for all components at once
+//
+// Hint: createContext → Provider → useContext. No prop drilling needed.`,
+//     starterCode: `const ThemeContext = React.createContext(null);
+//
+// function ThemeProvider({ children }) {
+//   const [isDark, setIsDark] = React.useState(false);
+//   // Provide { isDark, toggleTheme } via ThemeContext.Provider
+//   return children;
+// }
+//
+// function useTheme() {
+//   return React.useContext(ThemeContext);
+// }
+//
+// function Header() {
+//   // Consume theme, show toggle button
+//   return <header>Header</header>;
+// }
+//
+// function Card({ title, body }) {
+//   // Consume theme for styling
+//   return <div>{title}: {body}</div>;
+// }
+//
+// function App() {
+//   return (
+//     <ThemeProvider>
+//       <Header />
+//       <Card title="Card 1" body="Context keeps components in sync." />
+//       <Card title="Card 2" body="No prop drilling required." />
+//     </ThemeProvider>
+//   );
+// }
+//
+// export default App;`,
+//     solution: `const ThemeContext = React.createContext(null);
+//
+// function ThemeProvider({ children }) {
+//   const [isDark, setIsDark] = React.useState(false);
+//   const toggleTheme = () => setIsDark(d => !d);
+//   return (
+//     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+//       {children}
+//     </ThemeContext.Provider>
+//   );
+// }
+//
+// function useTheme() {
+//   const ctx = React.useContext(ThemeContext);
+//   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+//   return ctx;
+// }
+//
+// function Header() {
+//   const { isDark, toggleTheme } = useTheme();
+//   const t = isDark
+//     ? { bg: '#1e293b', text: '#e2e8f0', border: '#334155' }
+//     : { bg: '#6366f1', text: '#fff', border: '#4f46e5' };
+//
+//   return (
+//     <header style={{ background: t.bg, padding: '14px 24px', display: 'flex',
+//       justifyContent: 'space-between', alignItems: 'center', borderBottom: \`1px solid \${t.border}\` }}>
+//       <span style={{ color: t.text, fontWeight: 700, fontSize: 16 }}>⚡ Context App</span>
+//       <button onClick={toggleTheme}
+//         style={{ padding: '8px 18px', borderRadius: 20, border: \`1.5px solid \${t.border}\`,
+//           background: 'transparent', color: t.text, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+//         {isDark ? '☀️ Light' : '🌙 Dark'}
+//       </button>
+//     </header>
+//   );
+// }
+//
+// function Card({ title, body }) {
+//   const { isDark } = useTheme();
+//   const t = isDark
+//     ? { bg: '#1e293b', text: '#e2e8f0', sub: '#94a3b8', border: '#334155' }
+//     : { bg: '#fff', text: '#1e293b', sub: '#64748b', border: '#e2e8f0' };
+//
+//   return (
+//     <div style={{ background: t.bg, border: \`1px solid \${t.border}\`, borderRadius: 14,
+//       padding: '20px 24px', marginBottom: 12, transition: 'all 0.3s' }}>
+//       <h3 style={{ margin: '0 0 8px', color: '#6366f1', fontSize: 15 }}>{title}</h3>
+//       <p style={{ margin: 0, color: t.sub, fontSize: 13, lineHeight: 1.7 }}>{body}</p>
+//     </div>
+//   );
+// }
+//
+// function App() {
+//   return (
+//     <ThemeProvider>
+//       <div style={{ fontFamily: 'sans-serif', minHeight: '100vh' }}>
+//         <Header />
+//         <main style={{ padding: 24, maxWidth: 520, margin: '0 auto' }}>
+//           <Card title="What is Context?" body="React Context provides a way to share values between components without passing props through every level of the tree." />
+//           <Card title="When to use it?" body="Great for global state like themes, locale, or auth — data that many components at different levels need." />
+//           <Card title="No Prop Drilling" body="Both Header and Card read from the same context. The toggle in Header updates all consumers simultaneously." />
+//         </main>
+//       </div>
+//     </ThemeProvider>
+//   );
+// }
+//
+// export default App;`,
+//     explanation: 'createContext creates the context object. Provider wraps the tree and supplies the value. Any descendant can call useContext to subscribe — React re-renders them when the context value changes. The custom useTheme hook encapsulates the useContext call and adds a guard for misuse outside the provider.',
+//   },
+];
