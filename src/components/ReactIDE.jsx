@@ -80,7 +80,7 @@ function buildSandbox(userCode) {
 </html>`;
 }
 
-function ReactEditor({ value, onChange, readOnly = false }) {
+function ReactEditor({ value, onChange, readOnly = false, editorRef }) {
   const containerRef = useRef(null);
   const [editorHeight, setEditorHeight] = useState(400);
 
@@ -176,6 +176,9 @@ declare function forwardRef<T, P = {}>(render: (props: P, ref: any) => any): any
   }
 
   function handleMount(editor, monaco) {
+    // Expose the editor instance to the parent via editorRef
+    if (editorRef) editorRef.current = editor;
+
     const model = editor.getModel();
     if (model) {
       const clearMarkers = () => {
@@ -334,6 +337,7 @@ export default function ReactIDE({ question, isLight }) {
   const [hasRun, setHasRun] = useState(false);
   const consoleRef = useRef(null);
   const containerRef = useRef(null);
+  const editorRef = useRef(null); // holds the Monaco editor instance
 
   const [descCollapsed,    setDescCollapsed]    = useState(false);
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
@@ -372,6 +376,35 @@ export default function ReactIDE({ question, isLight }) {
     setHasRun(true);
     setSandboxSrc(buildSandbox(code));
   }, [code]);
+
+  // Cmd+S / Ctrl+S → format + run
+  useEffect(() => {
+    const handleSave = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        // 1. Format the document via Monaco's built-in formatter
+        if (editorRef.current) {
+          editorRef.current
+            .getAction('editor.action.formatDocument')
+            ?.run()
+            .then(() => {
+              // 2. After formatting, grab the latest value and run
+              const formatted = editorRef.current.getValue();
+              setCode(formatted);
+              setConsoleLogs([]);
+              setActiveTab('preview');
+              setHasRun(true);
+              setSandboxSrc(buildSandbox(formatted));
+            });
+        } else {
+          // Fallback: just run without formatting
+          runCode();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleSave);
+    return () => window.removeEventListener('keydown', handleSave);
+  }, [runCode]);
 
   const reset = () => {
     setCode(question.starterCode);
@@ -562,7 +595,7 @@ export default function ReactIDE({ question, isLight }) {
 
         {/* Monaco editor */}
         <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-          <ReactEditor key={`editor-${question.id}`} value={code} onChange={setCode} />
+          <ReactEditor key={`editor-${question.id}`} value={code} onChange={setCode} editorRef={editorRef} />
         </div>
 
         {/* Solution panel */}
@@ -659,7 +692,7 @@ export default function ReactIDE({ question, isLight }) {
                 flexDirection: 'column', gap: 10, color: '#475569' }}>
                 <div style={{ fontSize: 52 }}>⚛️</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: isLight ? '#94a3b8' : '#475569' }}>
-                  Click ▶ Run to preview
+                  Click ▶ Run or press <kbd style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '1px 5px', fontSize: 11 }}>⌘S</kbd> to preview
                 </div>
                 <div style={{ fontSize: 11, color: '#64748b' }}>Your React component renders here</div>
               </div>
