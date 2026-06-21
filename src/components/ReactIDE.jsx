@@ -513,21 +513,6 @@ export default function ReactIDE({ question, isLight }) {
         flex: 1, minWidth: MIN_WIDTH, display: 'flex', flexDirection: 'column', position: 'relative',
         borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
       }}>
-        {!descCollapsed && (
-          <button
-            onClick={() => setDescCollapsed(true)}
-            title="Collapse description"
-            style={{
-              position: 'absolute', top: '50%', left: -8, transform: 'translateY(-50%)',
-              zIndex: 20, width: 16, height: 36, borderRadius: 4,
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: isLight ? '#e2e8f0' : '#1e1e2e',
-              color: isLight ? '#475569' : '#94a3b8',
-              fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-            }}
-          >‹</button>
-        )}
         {descCollapsed && (
           <button
             onClick={() => setDescCollapsed(false)}
