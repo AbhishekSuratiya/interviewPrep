@@ -3262,6 +3262,7 @@ console.log(longestCommonSubsequence("abc", "abc"));    // 3`,
 export const reactQuestions = [
   {
     id: 'r1',
+    estimatedTime: '3–5 min',
     title: 'Counter Component',
     difficulty: 'Easy',
     category: 'React',
@@ -3313,6 +3314,7 @@ export default Counter;`,
   },
   {
     id: 'r2',
+    estimatedTime: '2–4 min',
     title: 'Toggle Visibility',
     difficulty: 'Easy',
     category: 'React',
@@ -3364,6 +3366,7 @@ export default Toggle;`,
   },
   {
     id: 'r3',
+    estimatedTime: '5–8 min',
     title: 'Todo List',
     difficulty: 'Easy',
     category: 'React',
@@ -3447,6 +3450,7 @@ export default TodoList;`,
   },
   {
     id: 'r4',
+    estimatedTime: '4–6 min',
     title: 'Controlled Form',
     difficulty: 'Easy',
     category: 'React',
@@ -3527,6 +3531,7 @@ export default LoginForm;`,
   },
   {
     id: 'r5',
+    estimatedTime: '3–5 min',
     title: 'Color Picker',
     difficulty: 'Easy',
     category: 'React',
@@ -3585,6 +3590,7 @@ export default ColorPicker;`,
   },
   {
     id: 'r6',
+    estimatedTime: '8–12 min',
     title: 'Stopwatch',
     difficulty: 'Medium',
     category: 'React',
@@ -3673,6 +3679,7 @@ export default Stopwatch;`,
   },
   {
     id: 'r7',
+    estimatedTime: '3–5 min',
     title: 'Props & Components',
     difficulty: 'Easy',
     category: 'React',
@@ -3746,6 +3753,7 @@ export default App;`,
   },
   {
     id: 'r8',
+    estimatedTime: '5–8 min',
     title: 'List Filter / Search',
     difficulty: 'Medium',
     category: 'React',
@@ -3840,6 +3848,7 @@ export default FruitSearch;`,
   },
   {
     id: 'r9',
+    estimatedTime: '5–8 min',
     title: 'Dark / Light Mode Toggle',
     difficulty: 'Medium',
     category: 'React',
@@ -3923,6 +3932,7 @@ export default ThemeApp;`,
   },
   {
     id: 'r10',
+    estimatedTime: '8–12 min',
     title: 'useEffect & Fetch',
     difficulty: 'Medium',
     category: 'React',
@@ -4000,1023 +4010,2984 @@ export default PostList;`,
 export default PostList;`,
     explanation: 'useEffect with [] runs once after mount — the React equivalent of componentDidMount. Three state variables (data, loading, error) cover all async states. The fetch chain sets loading=false in both success and error paths.',
   },
-//   {
-//     id: 'r11',
-//     title: 'useReducer Counter',
-//     difficulty: 'Medium',
-//     category: 'React',
-//     type: 'react',
-//     description: `Rebuild the Counter using useReducer instead of useState.
-//
-// Requirements:
-//   • Same UI: +, −, and a Reset button
-//   • Count never goes below 0
-//   • Use useReducer with an action object { type: 'INCREMENT' | 'DECREMENT' | 'RESET' }
-//   • Show the current count
-//
-// Hint: useReducer(reducer, initialState) — reducer takes (state, action) and returns new state.`,
-//     starterCode: `function reducer(state, action) {
-//   // Handle INCREMENT, DECREMENT (min 0), RESET
-//   return state;
-// }
-//
-// function Counter() {
-//   const [count, dispatch] = React.useReducer(reducer, 0);
-//
-//   return (
-//     <div style={{ textAlign: 'center', padding: 40 }}>
-//       <h2 style={{ fontSize: 48 }}>{count}</h2>
-//       <button onClick={() => dispatch({ type: 'DECREMENT' })}>−</button>
-//       <button onClick={() => dispatch({ type: 'INCREMENT' })}>+</button>
-//       <button onClick={() => dispatch({ type: 'RESET' })}>Reset</button>
-//     </div>
-//   );
-// }
-//
-// export default Counter;`,
-//     solution: `function reducer(state, action) {
-//   switch (action.type) {
-//     case 'INCREMENT': return state + 1;
-//     case 'DECREMENT': return Math.max(0, state - 1);
-//     case 'RESET':     return 0;
-//     default:          return state;
-//   }
-// }
-//
-// function Counter() {
-//   const [count, dispatch] = React.useReducer(reducer, 0);
-//
-//   const btnStyle = (color) => ({
-//     padding: '10px 24px', margin: '0 6px', fontSize: 18, fontWeight: 700,
-//     borderRadius: 10, border: \`2px solid \${color}\`, background: 'transparent',
-//     color, cursor: 'pointer',
-//   });
-//
-//   return (
-//     <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
-//       <h2 style={{ fontSize: 72, fontWeight: 800, color: '#6366f1', margin: '0 0 30px' }}>
-//         {count}
-//       </h2>
-//       <button onClick={() => dispatch({ type: 'DECREMENT' })} style={btnStyle('#ef4444')}>−</button>
-//       <button onClick={() => dispatch({ type: 'INCREMENT' })} style={btnStyle('#22c55e')}>+</button>
-//       <button onClick={() => dispatch({ type: 'RESET' })} style={btnStyle('#94a3b8')}>↺ Reset</button>
-//     </div>
-//   );
-// }
-//
-// export default Counter;`,
-//     explanation: 'useReducer is preferred when state transitions depend on the current state or when multiple actions modify the same state. The reducer is a pure function — easy to test and reason about.',
-//   },
-//   {
-//     id: 'r12',
-//     title: 'Tabs Component',
-//     difficulty: 'Easy',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a reusable Tabs component.
-//
-// Requirements:
-//   • Show 3 tabs: "Home", "Profile", "Settings"
-//   • Clicking a tab makes it active and shows its content panel
-//   • Active tab is visually highlighted
-//   • Each panel shows different content
-//
-// Hint: useState to track the active tab index or name.`,
-//     starterCode: `const TABS = [
-//   { label: 'Home',     content: 'Welcome to the Home tab! 🏠' },
-//   { label: 'Profile',  content: 'This is your Profile. 👤' },
-//   { label: 'Settings', content: 'Adjust your Settings here. ⚙️' },
-// ];
-//
-// function Tabs() {
-//   // Track active tab
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
-//       <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
-//         {TABS.map((tab, i) => (
-//           <button key={i} onClick={() => {}}>
-//             {tab.label}
-//           </button>
-//         ))}
-//       </div>
-//       <div style={{ padding: 20 }}>
-//         {/* Show active tab content */}
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Tabs;`,
-//     solution: `const TABS = [
-//   { label: 'Home',     content: 'Welcome to the Home tab! 🏠', icon: '🏠' },
-//   { label: 'Profile',  content: 'This is your Profile. 👤', icon: '👤' },
-//   { label: 'Settings', content: 'Adjust your Settings here. ⚙️', icon: '⚙️' },
-// ];
-//
-// function Tabs() {
-//   const [active, setActive] = React.useState(0);
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
-//       <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', marginBottom: 0 }}>
-//         {TABS.map((tab, i) => (
-//           <button
-//             key={i}
-//             onClick={() => setActive(i)}
-//             style={{
-//               padding: '12px 24px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-//               border: 'none', background: 'none',
-//               color: active === i ? '#6366f1' : '#94a3b8',
-//               borderBottom: active === i ? '2px solid #6366f1' : '2px solid transparent',
-//               marginBottom: -2, transition: 'all 0.2s',
-//             }}
-//           >
-//             {tab.icon} {tab.label}
-//           </button>
-//         ))}
-//       </div>
-//       <div style={{
-//         padding: '28px 20px', background: '#f8fafc', borderRadius: '0 0 14px 14px',
-//         border: '1px solid #e2e8f0', borderTop: 'none', fontSize: 15, color: '#1e293b',
-//       }}>
-//         {TABS[active].content}
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Tabs;`,
-//     explanation: 'A single active index drives both the highlighted tab and the displayed content. The active tab gets a bottom border via a conditional style. Index comparison (active === i) is cleaner than string matching for small tab sets.',
-//   },
-//   {
-//     id: 'r13',
-//     title: 'Accordion / FAQ',
-//     difficulty: 'Easy',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build an Accordion FAQ component.
-//
-// Requirements:
-//   • Render a list of FAQ items, each with a question and answer
-//   • Clicking a question expands/collapses its answer
-//   • Only one item can be open at a time
-//   • Show a ▼ / ▲ chevron indicator
-//
-// Hint: Store the open index in state. Set to null when closing.`,
-//     starterCode: `const FAQS = [
-//   { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
-//   { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
-//   { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
-//   { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
-// ];
-//
-// function Accordion() {
-//   // Track which item is open (null = none)
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 560, margin: '0 auto' }}>
-//       <h2>FAQ</h2>
-//       {FAQS.map((item, i) => (
-//         <div key={i} style={{ marginBottom: 8, border: '1px solid #e2e8f0', borderRadius: 10 }}>
-//           <button onClick={() => {}} style={{ width: '100%', textAlign: 'left', padding: 16 }}>
-//             {item.q}
-//           </button>
-//           {/* Conditionally show answer */}
-//         </div>
-//       ))}
-//     </div>
-//   );
-// }
-//
-// export default Accordion;`,
-//     solution: `const FAQS = [
-//   { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
-//   { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
-//   { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
-//   { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
-// ];
-//
-// function Accordion() {
-//   const [openIdx, setOpenIdx] = React.useState(null);
-//
-//   const toggle = (i) => setOpenIdx(prev => prev === i ? null : i);
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 560, margin: '0 auto', fontFamily: 'sans-serif' }}>
-//       <h2 style={{ color: '#6366f1', marginBottom: 20 }}>❓ FAQ</h2>
-//       {FAQS.map((item, i) => {
-//         const isOpen = openIdx === i;
-//         return (
-//           <div key={i} style={{
-//             marginBottom: 10, border: \`1.5px solid \${isOpen ? '#6366f1' : '#e2e8f0'}\`,
-//             borderRadius: 12, overflow: 'hidden', transition: 'border 0.2s',
-//           }}>
-//             <button
-//               onClick={() => toggle(i)}
-//               style={{
-//                 width: '100%', textAlign: 'left', padding: '16px 20px',
-//                 background: isOpen ? '#eef2ff' : '#fff', border: 'none',
-//                 fontWeight: 600, fontSize: 14, cursor: 'pointer', color: '#1e293b',
-//                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-//               }}
-//             >
-//               {item.q}
-//               <span style={{ color: '#6366f1', fontSize: 12 }}>{isOpen ? '▲' : '▼'}</span>
-//             </button>
-//             {isOpen && (
-//               <div style={{ padding: '14px 20px 16px', background: '#f8fafc',
-//                 fontSize: 14, color: '#475569', lineHeight: 1.7, borderTop: '1px solid #e2e8f0' }}>
-//                 {item.a}
-//               </div>
-//             )}
-//           </div>
-//         );
-//       })}
-//     </div>
-//   );
-// }
-//
-// export default Accordion;`,
-//     explanation: 'Storing the open index (not a boolean per item) enforces the single-open constraint automatically — toggling to the same index closes it, clicking a different one opens it and implicitly closes the previous.',
-//   },
-//   {
-//     id: 'r14',
-//     title: 'Custom Hook – useLocalStorage',
-//     difficulty: 'Medium',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a custom useLocalStorage hook and use it in a Notes app.
-//
-// Requirements:
-//   • useLocalStorage(key, initialValue) behaves like useState but persists to localStorage
-//   • Changes survive a page refresh (test by refreshing the preview)
-//   • Build a simple Note app: textarea + save button using this hook
-//   • Show "Saved!" confirmation for 2 seconds after saving
-//
-// Hint: Initialize state from localStorage.getItem, call localStorage.setItem on updates.`,
-//     starterCode: `function useLocalStorage(key, initialValue) {
-//   // Return [storedValue, setValue] — synced with localStorage
-//   const [value, setValue] = React.useState(initialValue);
-//   return [value, setValue];
-// }
-//
-// function Notes() {
-//   const [note, setNote] = useLocalStorage('my-note', '');
-//   const [saved, setSaved] = React.useState(false);
-//
-//   const save = () => {
-//     // Show saved confirmation
-//   };
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
-//       <h2>📝 My Note</h2>
-//       <textarea value={note} onChange={e => setNote(e.target.value)}
-//         style={{ width: '100%', height: 150, padding: 10 }} />
-//       <button onClick={save}>Save</button>
-//       {saved && <span> ✅ Saved!</span>}
-//     </div>
-//   );
-// }
-//
-// export default Notes;`,
-//     solution: `function useLocalStorage(key, initialValue) {
-//   const [value, setValue] = React.useState(() => {
-//     try {
-//       const item = localStorage.getItem(key);
-//       return item !== null ? JSON.parse(item) : initialValue;
-//     } catch {
-//       return initialValue;
-//     }
-//   });
-//
-//   const setStoredValue = (newValue) => {
-//     setValue(newValue);
-//     try {
-//       localStorage.setItem(key, JSON.stringify(newValue));
-//     } catch (e) {
-//       console.error(e);
-//     }
-//   };
-//
-//   return [value, setStoredValue];
-// }
-//
-// function Notes() {
-//   const [note, setNote] = useLocalStorage('my-note', '');
-//   const [saved, setSaved] = React.useState(false);
-//
-//   const save = () => {
-//     setSaved(true);
-//     setTimeout(() => setSaved(false), 2000);
-//   };
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
-//       <h2 style={{ color: '#6366f1', marginBottom: 16 }}>📝 My Note</h2>
-//       <textarea
-//         value={note}
-//         onChange={e => setNote(e.target.value)}
-//         placeholder="Write something..."
-//         style={{ width: '100%', height: 160, padding: '12px 14px', borderRadius: 10, boxSizing: 'border-box',
-//           border: '1.5px solid #e2e8f0', fontSize: 14, resize: 'vertical', outline: 'none',
-//           fontFamily: 'sans-serif', lineHeight: 1.6 }}
-//       />
-//       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-//         <button onClick={save}
-//           style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
-//             borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-//           💾 Save
-//         </button>
-//         {saved && (
-//           <span style={{ color: '#22c55e', fontWeight: 600, fontSize: 14 }}>✅ Saved!</span>
-//         )}
-//       </div>
-//       <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
-//         {note.length} characters — persists across refreshes
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Notes;`,
-//     explanation: 'The lazy initializer function in useState (passing a function, not a value) runs only on mount — perfect for reading localStorage without re-reading on every render. JSON.stringify/parse handles all serializable types. Wrapping in try/catch handles private browsing where localStorage may throw.',
-//   },
-//   {
-//     id: 'r15',
-//     title: 'Debounced Search',
-//     difficulty: 'Medium',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a search input that debounces API calls by 400ms.
-//
-// Requirements:
-//   • Input updates immediately (controlled)
-//   • The "API call" (simulated) fires only 400ms after the user stops typing
-//   • Show "Searching..." while debounce is pending
-//   • Display a list of filtered results from a local dataset
-//   • Show how many times the search actually fired
-//
-// Hint: useEffect + setTimeout + clearTimeout.`,
-//     starterCode: `const USERS = [
-//   'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
-//   'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
-// ];
-//
-// function DebounceSearch() {
-//   const [query, setQuery] = React.useState('');
-//   const [results, setResults] = React.useState(USERS);
-//   const [searching, setSearching] = React.useState(false);
-//
-//   // Add debounce logic with useEffect
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
-//       <h2>Debounced Search</h2>
-//       <input value={query} onChange={e => setQuery(e.target.value)}
-//         placeholder="Search users..." style={{ width: '100%', padding: 8 }} />
-//       {searching && <div>Searching...</div>}
-//       <ul>{results.map(r => <li key={r}>{r}</li>)}</ul>
-//     </div>
-//   );
-// }
-//
-// export default DebounceSearch;`,
-//     solution: `const USERS = [
-//   'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
-//   'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
-// ];
-//
-// function DebounceSearch() {
-//   const [query, setQuery] = React.useState('');
-//   const [results, setResults] = React.useState(USERS);
-//   const [searching, setSearching] = React.useState(false);
-//   const [fireCount, setFireCount] = React.useState(0);
-//
-//   React.useEffect(() => {
-//     setSearching(true);
-//     const timer = setTimeout(() => {
-//       const filtered = USERS.filter(u =>
-//         u.toLowerCase().includes(query.toLowerCase())
-//       );
-//       setResults(filtered);
-//       setSearching(false);
-//       setFireCount(c => c + 1);
-//     }, 400);
-//
-//     return () => clearTimeout(timer);
-//   }, [query]);
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto', fontFamily: 'sans-serif' }}>
-//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⚡ Debounced Search</h2>
-//       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
-//         Search fired {fireCount} times
-//       </div>
-//       <input
-//         value={query}
-//         onChange={e => setQuery(e.target.value)}
-//         placeholder="Search users..."
-//         style={{ width: '100%', padding: '10px 14px', borderRadius: 10, boxSizing: 'border-box',
-//           border: '1.5px solid #6366f1', fontSize: 14, outline: 'none', marginBottom: 8 }}
-//       />
-//       {searching
-//         ? <div style={{ color: '#94a3b8', fontSize: 13, padding: '8px 0' }}>🔍 Searching...</div>
-//         : <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>{results.length} results</div>
-//       }
-//       <ul style={{ listStyle: 'none', padding: 0 }}>
-//         {results.map(r => (
-//           <li key={r} style={{ padding: '10px 14px', marginBottom: 6, borderRadius: 8,
-//             background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 14 }}>
-//             👤 {r}
-//           </li>
-//         ))}
-//         {results.length === 0 && (
-//           <li style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>No users found</li>
-//         )}
-//       </ul>
-//     </div>
-//   );
-// }
-//
-// export default DebounceSearch;`,
-//     explanation: 'The cleanup function returned from useEffect clears the previous timer when query changes — ensuring the search only fires once the user pauses. This prevents unnecessary re-renders and simulated network calls. The fire count demonstrates that without debouncing, every keystroke would trigger a call.',
-//   },
-//   {
-//     id: 'r16',
-//     title: 'Shopping Cart – useReducer',
-//     difficulty: 'Hard',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a Shopping Cart using useReducer.
-//
-// Requirements:
-//   • Display a product list (at least 4 products with name + price)
-//   • "Add to Cart" button on each product
-//   • Cart panel shows items, quantities, and total
-//   • Increment / decrement quantity in cart
-//   • Remove item from cart
-//   • Cart total updates automatically
-//
-// Hint: useReducer with actions: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT.`,
-//     starterCode: `const PRODUCTS = [
-//   { id: 1, name: 'React Course',    price: 29 },
-//   { id: 2, name: 'TypeScript Book', price: 19 },
-//   { id: 3, name: 'VS Code Theme',   price: 9  },
-//   { id: 4, name: 'CLI Tool',        price: 14 },
-// ];
-//
-// function cartReducer(state, action) {
-//   // Handle: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT
-//   return state;
-// }
-//
-// function ShoppingCart() {
-//   const [cart, dispatch] = React.useReducer(cartReducer, []);
-//
-//   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-//
-//   return (
-//     <div style={{ display: 'flex', gap: 20, padding: 20 }}>
-//       <div style={{ flex: 1 }}>
-//         <h2>Products</h2>
-//         {PRODUCTS.map(p => (
-//           <div key={p.id} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-//             <div>{p.name} — ${p.price}</div>
-//             <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}>Add to Cart</button>
-//           </div>
-//         ))}
-//       </div>
-//       <div style={{ width: 280 }}>
-//         <h2>Cart ({cart.length})</h2>
-//         {/* Render cart items */}
-//         <div>Total: ${total}</div>
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default ShoppingCart;`,
-//     solution: `const PRODUCTS = [
-//   { id: 1, name: 'React Course',    price: 29, emoji: '⚛️' },
-//   { id: 2, name: 'TypeScript Book', price: 19, emoji: '📘' },
-//   { id: 3, name: 'VS Code Theme',   price: 9,  emoji: '🎨' },
-//   { id: 4, name: 'CLI Tool',        price: 14, emoji: '🛠️' },
-// ];
-//
-// function cartReducer(state, action) {
-//   switch (action.type) {
-//     case 'ADD_ITEM': {
-//       const existing = state.find(i => i.id === action.payload.id);
-//       if (existing) return state.map(i => i.id === existing.id ? { ...i, qty: i.qty + 1 } : i);
-//       return [...state, { ...action.payload, qty: 1 }];
-//     }
-//     case 'REMOVE_ITEM':
-//       return state.filter(i => i.id !== action.payload);
-//     case 'INCREMENT':
-//       return state.map(i => i.id === action.payload ? { ...i, qty: i.qty + 1 } : i);
-//     case 'DECREMENT':
-//       return state.map(i => i.id === action.payload
-//         ? { ...i, qty: Math.max(1, i.qty - 1) } : i);
-//     default: return state;
-//   }
-// }
-//
-// function ShoppingCart() {
-//   const [cart, dispatch] = React.useReducer(cartReducer, []);
-//   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-//   const inCart = (id) => cart.find(i => i.id === id);
-//
-//   const cardStyle = { border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 10 };
-//
-//   return (
-//     <div style={{ display: 'flex', gap: 20, padding: 20, fontFamily: 'sans-serif', maxWidth: 680, margin: '0 auto' }}>
-//       <div style={{ flex: 1 }}>
-//         <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛍️ Products</h2>
-//         {PRODUCTS.map(p => (
-//           <div key={p.id} style={{ ...cardStyle, background: inCart(p.id) ? '#eef2ff' : '#fff' }}>
-//             <div style={{ fontWeight: 600, marginBottom: 6 }}>{p.emoji} {p.name}</div>
-//             <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 700, marginBottom: 10 }}>\${p.price}</div>
-//             <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}
-//               style={{ padding: '6px 14px', background: '#6366f1', color: '#fff',
-//                 border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
-//               {inCart(p.id) ? '+ Add More' : 'Add to Cart'}
-//             </button>
-//           </div>
-//         ))}
-//       </div>
-//       <div style={{ width: 240 }}>
-//         <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛒 Cart ({cart.reduce((s,i) => s+i.qty,0)})</h2>
-//         {cart.length === 0
-//           ? <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: 20 }}>Cart is empty</div>
-//           : cart.map(item => (
-//             <div key={item.id} style={{ ...cardStyle, background: '#f8fafc' }}>
-//               <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{item.emoji} {item.name}</div>
-//               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-//                 <button onClick={() => dispatch({ type: 'DECREMENT', payload: item.id })}
-//                   style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
-//                     background: '#fff', cursor: 'pointer', fontWeight: 700 }}>−</button>
-//                 <span style={{ fontWeight: 700 }}>{item.qty}</span>
-//                 <button onClick={() => dispatch({ type: 'INCREMENT', payload: item.id })}
-//                   style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
-//                     background: '#fff', cursor: 'pointer', fontWeight: 700 }}>+</button>
-//                 <span style={{ marginLeft: 'auto', fontSize: 12, color: '#6366f1', fontWeight: 700 }}>
-//                   \${item.price * item.qty}
-//                 </span>
-//               </div>
-//               <button onClick={() => dispatch({ type: 'REMOVE_ITEM', payload: item.id })}
-//                 style={{ marginTop: 8, fontSize: 11, color: '#ef4444', background: 'none',
-//                   border: 'none', cursor: 'pointer', padding: 0 }}>✕ Remove</button>
-//             </div>
-//           ))
-//         }
-//         {cart.length > 0 && (
-//           <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: 12, marginTop: 4,
-//             fontWeight: 700, fontSize: 16, color: '#1e293b', display: 'flex', justifyContent: 'space-between' }}>
-//             <span>Total</span>
-//             <span style={{ color: '#6366f1' }}>\${total}</span>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default ShoppingCart;`,
-//     explanation: 'useReducer shines here because cart operations (add/remove/increment/decrement) are all related state transitions on the same data. The ADD_ITEM action handles both "first add" and "add duplicate" in one place. Spreading items (...i) ensures immutability so React detects changes.',
-//   },
-//   {
-//     id: 'r17',
-//     title: 'Pagination',
-//     difficulty: 'Medium',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a paginated list component.
-//
-// Requirements:
-//   • Display a list of 50 items (generate: "Item 1" … "Item 50")
-//   • Show 8 items per page
-//   • Previous / Next buttons to navigate pages
-//   • Show current page and total pages (e.g. "Page 2 of 7")
-//   • Disable Prev on page 1, disable Next on the last page
-//
-// Hint: Derive current page items with .slice(). No external libraries needed.`,
-//     starterCode: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
-// const PAGE_SIZE = 8;
-//
-// function Pagination() {
-//   const [page, setPage] = React.useState(1);
-//
-//   const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
-//   const pageItems = ITEMS.slice(/* calculate start/end */);
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
-//       <h2>Paginated List</h2>
-//       <ul>
-//         {pageItems.map(item => <li key={item}>{item}</li>)}
-//       </ul>
-//       <div>
-//         <button onClick={() => setPage(p => p - 1)} disabled={page === 1}>Prev</button>
-//         <span> Page {page} of {totalPages} </span>
-//         <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>Next</button>
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Pagination;`,
-//     solution: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
-// const PAGE_SIZE = 8;
-//
-// function Pagination() {
-//   const [page, setPage] = React.useState(1);
-//
-//   const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
-//   const start = (page - 1) * PAGE_SIZE;
-//   const pageItems = ITEMS.slice(start, start + PAGE_SIZE);
-//
-//   const btnStyle = (disabled) => ({
-//     padding: '8px 18px', fontWeight: 700, fontSize: 13, borderRadius: 8,
-//     border: '1.5px solid #6366f1', background: disabled ? '#f1f5f9' : '#6366f1',
-//     color: disabled ? '#94a3b8' : '#fff', cursor: disabled ? 'not-allowed' : 'pointer',
-//   });
-//
-//   return (
-//     <div style={{ padding: 30, maxWidth: 380, margin: '0 auto', fontFamily: 'sans-serif' }}>
-//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>📄 Paginated List</h2>
-//       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
-//         Showing {start + 1}–{Math.min(start + PAGE_SIZE, ITEMS.length)} of {ITEMS.length} items
-//       </div>
-//       <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
-//         {pageItems.map((item, i) => (
-//           <li key={item} style={{
-//             padding: '10px 16px', marginBottom: 6, borderRadius: 8,
-//             background: i % 2 === 0 ? '#f8fafc' : '#eef2ff',
-//             border: '1px solid #e2e8f0', fontSize: 14, fontWeight: 500,
-//           }}>
-//             {item}
-//           </li>
-//         ))}
-//       </ul>
-//       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-//         <button onClick={() => setPage(p => p - 1)} disabled={page === 1} style={btnStyle(page === 1)}>
-//           ← Prev
-//         </button>
-//         <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', flex: 1, textAlign: 'center' }}>
-//           Page {page} of {totalPages}
-//         </span>
-//         <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages} style={btnStyle(page === totalPages)}>
-//           Next →
-//         </button>
-//       </div>
-//       <div style={{ display: 'flex', gap: 4, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-//         {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-//           <button key={p} onClick={() => setPage(p)}
-//             style={{ width: 32, height: 32, borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700,
-//               cursor: 'pointer', background: p === page ? '#6366f1' : '#f1f5f9', color: p === page ? '#fff' : '#64748b' }}>
-//             {p}
-//           </button>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-//
-// export default Pagination;`,
-//     explanation: 'The page index is the only state needed — all other values (start, pageItems, totalPages) are derived from it. Resetting to page 1 when data changes (not needed here) is a common gotcha. The slice bounds use PAGE_SIZE as both stride and limit.',
-//   },
-//   {
-//     id: 'r18',
-//     title: 'Modal / Dialog',
-//     difficulty: 'Medium',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a reusable Modal component.
-//
-// Requirements:
-//   • A button to open the modal
-//   • Modal overlays the page with a backdrop
-//   • Modal has a title, content, and Close button
-//   • Clicking the backdrop also closes the modal
-//   • Press Escape key to close
-//   • Animate in with a fade/scale effect
-//
-// Hint: useEffect to listen for Escape key, stopPropagation to prevent backdrop click from closing when clicking inside modal.`,
-//     starterCode: `function Modal({ isOpen, onClose, title, children }) {
-//   // Close on Escape key
-//
-//   if (!isOpen) return null;
-//
-//   return (
-//     <div onClick={onClose}
-//       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-//       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 12, padding: 24, minWidth: 320 }}>
-//         <h2>{title}</h2>
-//         {children}
-//         <button onClick={onClose}>Close</button>
-//       </div>
-//     </div>
-//   );
-// }
-//
-// function App() {
-//   const [open, setOpen] = React.useState(false);
-//
-//   return (
-//     <div style={{ padding: 40, textAlign: 'center' }}>
-//       <button onClick={() => setOpen(true)}>Open Modal</button>
-//       <Modal isOpen={open} onClose={() => setOpen(false)} title="Hello!">
-//         <p>This is the modal content.</p>
-//       </Modal>
-//     </div>
-//   );
-// }
-//
-// export default App;`,
-//     solution: `function Modal({ isOpen, onClose, title, children }) {
-//   React.useEffect(() => {
-//     if (!isOpen) return;
-//     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
-//     document.addEventListener('keydown', handleKey);
-//     return () => document.removeEventListener('keydown', handleKey);
-//   }, [isOpen, onClose]);
-//
-//   if (!isOpen) return null;
-//
-//   return (
-//     <div
-//       onClick={onClose}
-//       style={{
-//         position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
-//         display: 'flex', alignItems: 'center', justifyContent: 'center',
-//         zIndex: 1000, animation: 'fadeIn 0.15s ease',
-//       }}
-//     >
-//       <style>{'@keyframes fadeIn { from { opacity:0 } to { opacity:1 } } @keyframes scaleIn { from { transform:scale(0.92); opacity:0 } to { transform:scale(1); opacity:1 } }'}</style>
-//       <div
-//         onClick={e => e.stopPropagation()}
-//         style={{
-//           background: '#fff', borderRadius: 18, padding: '28px 32px', minWidth: 360, maxWidth: '90vw',
-//           boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'scaleIn 0.15s ease',
-//           fontFamily: 'sans-serif',
-//         }}
-//       >
-//         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-//           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{title}</h2>
-//           <button
-//             onClick={onClose}
-//             style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f1f5f9',
-//               cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-//           >✕</button>
-//         </div>
-//         <div style={{ color: '#475569', lineHeight: 1.7, marginBottom: 24 }}>{children}</div>
-//         <button
-//           onClick={onClose}
-//           style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
-//             borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
-//         >
-//           Got it
-//         </button>
-//       </div>
-//     </div>
-//   );
-// }
-//
-// function App() {
-//   const [open, setOpen] = React.useState(false);
-//
-//   return (
-//     <div style={{ padding: 60, textAlign: 'center', fontFamily: 'sans-serif' }}>
-//       <h1 style={{ color: '#6366f1', marginBottom: 24 }}>Modal Demo</h1>
-//       <button
-//         onClick={() => setOpen(true)}
-//         style={{ padding: '12px 28px', background: '#6366f1', color: '#fff', border: 'none',
-//           borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-//       >
-//         Open Modal
-//       </button>
-//       <Modal isOpen={open} onClose={() => setOpen(false)} title="🎉 Welcome!">
-//         <p>This modal closes on backdrop click, the ✕ button, or pressing Escape.</p>
-//         <p>It animates in with a scale + fade effect using CSS keyframes.</p>
-//       </Modal>
-//     </div>
-//   );
-// }
-//
-// export default App;`,
-//     explanation: 'The Escape key listener is registered in useEffect and cleaned up when the modal closes — prevents stale listeners from stacking up. stopPropagation on the inner div prevents the backdrop click handler from firing. The component is fully controlled: the parent owns isOpen state.',
-//   },
-//   {
-//     id: 'r19',
-//     title: 'Star Rating Component',
-//     difficulty: 'Easy',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build an interactive Star Rating component.
-//
-// Requirements:
-//   • Display 5 stars
-//   • Hovering over a star highlights it and all stars before it
-//   • Clicking a star sets the permanent rating
-//   • Show the numeric rating below (e.g. "4 / 5")
-//   • Allow resetting to no rating
-//
-// Hint: Two pieces of state — hovered and selected. Display depends on hovered ?? selected.`,
-//     starterCode: `function StarRating() {
-//   const [selected, setSelected] = React.useState(0);
-//   const [hovered, setHovered] = React.useState(0);
-//
-//   const display = hovered || selected;
-//
-//   return (
-//     <div style={{ textAlign: 'center', padding: 40 }}>
-//       <h2>Rate Us!</h2>
-//       <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-//         {[1, 2, 3, 4, 5].map(star => (
-//           <span
-//             key={star}
-//             onClick={() => setSelected(star)}
-//             onMouseEnter={() => setHovered(star)}
-//             onMouseLeave={() => setHovered(0)}
-//             style={{ fontSize: 40, cursor: 'pointer', color: star <= display ? '#f59e0b' : '#e2e8f0' }}
-//           >
-//             ★
-//           </span>
-//         ))}
-//       </div>
-//       <div>{selected ? \`\${selected} / 5\` : 'No rating yet'}</div>
-//     </div>
-//   );
-// }
-//
-// export default StarRating;`,
-//     solution: `function StarRating({ max = 5 }) {
-//   const [selected, setSelected] = React.useState(0);
-//   const [hovered, setHovered] = React.useState(0);
-//
-//   const display = hovered || selected;
-//
-//   const labels = ['', 'Terrible', 'Poor', 'Okay', 'Good', 'Excellent!'];
-//
-//   return (
-//     <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
-//       <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⭐ Rate Your Experience</h2>
-//       <div style={{ color: '#94a3b8', fontSize: 13, marginBottom: 28 }}>Click a star to rate</div>
-//       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
-//         {Array.from({ length: max }, (_, i) => i + 1).map(star => (
-//           <span
-//             key={star}
-//             onClick={() => setSelected(prev => prev === star ? 0 : star)}
-//             onMouseEnter={() => setHovered(star)}
-//             onMouseLeave={() => setHovered(0)}
-//             style={{
-//               fontSize: 48, cursor: 'pointer', transition: 'transform 0.1s, color 0.1s',
-//               color: star <= display ? '#f59e0b' : '#e2e8f0',
-//               transform: star === display ? 'scale(1.2)' : 'scale(1)',
-//               display: 'inline-block',
-//             }}
-//           >
-//             ★
-//           </span>
-//         ))}
-//       </div>
-//       <div style={{ height: 28, fontSize: 18, fontWeight: 700,
-//         color: selected ? '#f59e0b' : '#94a3b8', transition: 'color 0.2s' }}>
-//         {selected ? \`\${labels[selected]} (\${selected}/\${max})\` : 'No rating yet'}
-//       </div>
-//       {selected > 0 && (
-//         <button onClick={() => setSelected(0)}
-//           style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', background: 'none',
-//             border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-//           Clear rating
-//         </button>
-//       )}
-//     </div>
-//   );
-// }
-//
-// export default StarRating;`,
-//     explanation: 'Two state values: hovered (ephemeral, resets on mouse leave) and selected (permanent, set on click). The expression hovered || selected picks hover preview if active, otherwise falls back to the clicked rating. Clicking the same star twice resets it — a nice UX touch.',
-//   },
-//   {
-//     id: 'r20',
-//     title: 'useContext – Theme Provider',
-//     difficulty: 'Hard',
-//     category: 'React',
-//     type: 'react',
-//     description: `Build a theme system using React Context.
-//
-// Requirements:
-//   • Create a ThemeContext with createContext
-//   • ThemeProvider wraps the app and provides { theme, toggleTheme }
-//   • Any nested component can call useContext(ThemeContext) to read/change the theme
-//   • Build a Header and Card component that both consume the theme
-//   • Toggle button in Header changes theme for all components at once
-//
-// Hint: createContext → Provider → useContext. No prop drilling needed.`,
-//     starterCode: `const ThemeContext = React.createContext(null);
-//
-// function ThemeProvider({ children }) {
-//   const [isDark, setIsDark] = React.useState(false);
-//   // Provide { isDark, toggleTheme } via ThemeContext.Provider
-//   return children;
-// }
-//
-// function useTheme() {
-//   return React.useContext(ThemeContext);
-// }
-//
-// function Header() {
-//   // Consume theme, show toggle button
-//   return <header>Header</header>;
-// }
-//
-// function Card({ title, body }) {
-//   // Consume theme for styling
-//   return <div>{title}: {body}</div>;
-// }
-//
-// function App() {
-//   return (
-//     <ThemeProvider>
-//       <Header />
-//       <Card title="Card 1" body="Context keeps components in sync." />
-//       <Card title="Card 2" body="No prop drilling required." />
-//     </ThemeProvider>
-//   );
-// }
-//
-// export default App;`,
-//     solution: `const ThemeContext = React.createContext(null);
-//
-// function ThemeProvider({ children }) {
-//   const [isDark, setIsDark] = React.useState(false);
-//   const toggleTheme = () => setIsDark(d => !d);
-//   return (
-//     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-//       {children}
-//     </ThemeContext.Provider>
-//   );
-// }
-//
-// function useTheme() {
-//   const ctx = React.useContext(ThemeContext);
-//   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
-//   return ctx;
-// }
-//
-// function Header() {
-//   const { isDark, toggleTheme } = useTheme();
-//   const t = isDark
-//     ? { bg: '#1e293b', text: '#e2e8f0', border: '#334155' }
-//     : { bg: '#6366f1', text: '#fff', border: '#4f46e5' };
-//
-//   return (
-//     <header style={{ background: t.bg, padding: '14px 24px', display: 'flex',
-//       justifyContent: 'space-between', alignItems: 'center', borderBottom: \`1px solid \${t.border}\` }}>
-//       <span style={{ color: t.text, fontWeight: 700, fontSize: 16 }}>⚡ Context App</span>
-//       <button onClick={toggleTheme}
-//         style={{ padding: '8px 18px', borderRadius: 20, border: \`1.5px solid \${t.border}\`,
-//           background: 'transparent', color: t.text, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-//         {isDark ? '☀️ Light' : '🌙 Dark'}
-//       </button>
-//     </header>
-//   );
-// }
-//
-// function Card({ title, body }) {
-//   const { isDark } = useTheme();
-//   const t = isDark
-//     ? { bg: '#1e293b', text: '#e2e8f0', sub: '#94a3b8', border: '#334155' }
-//     : { bg: '#fff', text: '#1e293b', sub: '#64748b', border: '#e2e8f0' };
-//
-//   return (
-//     <div style={{ background: t.bg, border: \`1px solid \${t.border}\`, borderRadius: 14,
-//       padding: '20px 24px', marginBottom: 12, transition: 'all 0.3s' }}>
-//       <h3 style={{ margin: '0 0 8px', color: '#6366f1', fontSize: 15 }}>{title}</h3>
-//       <p style={{ margin: 0, color: t.sub, fontSize: 13, lineHeight: 1.7 }}>{body}</p>
-//     </div>
-//   );
-// }
-//
-// function App() {
-//   return (
-//     <ThemeProvider>
-//       <div style={{ fontFamily: 'sans-serif', minHeight: '100vh' }}>
-//         <Header />
-//         <main style={{ padding: 24, maxWidth: 520, margin: '0 auto' }}>
-//           <Card title="What is Context?" body="React Context provides a way to share values between components without passing props through every level of the tree." />
-//           <Card title="When to use it?" body="Great for global state like themes, locale, or auth — data that many components at different levels need." />
-//           <Card title="No Prop Drilling" body="Both Header and Card read from the same context. The toggle in Header updates all consumers simultaneously." />
-//         </main>
-//       </div>
-//     </ThemeProvider>
-//   );
-// }
-//
-// export default App;`,
-//     explanation: 'createContext creates the context object. Provider wraps the tree and supplies the value. Any descendant can call useContext to subscribe — React re-renders them when the context value changes. The custom useTheme hook encapsulates the useContext call and adds a guard for misuse outside the provider.',
-//   },
+  {
+    id: 'r11',
+    estimatedTime: '5–8 min',
+    title: 'useReducer Counter',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Rebuild the Counter using useReducer instead of useState.
+
+Requirements:
+  • Same UI: +, −, and a Reset button
+  • Count never goes below 0
+  • Use useReducer with an action object { type: 'INCREMENT' | 'DECREMENT' | 'RESET' }
+  • Show the current count
+
+Hint: useReducer(reducer, initialState) — reducer takes (state, action) and returns new state.`,
+    starterCode: `function reducer(state, action) {
+  // Handle INCREMENT, DECREMENT (min 0), RESET
+  return state;
+}
+
+function Counter() {
+  const [count, dispatch] = React.useReducer(reducer, 0);
+
+  return (
+    <div style={{ textAlign: 'center', padding: 40 }}>
+      <h2 style={{ fontSize: 48 }}>{count}</h2>
+      <button onClick={() => dispatch({ type: 'DECREMENT' })}>−</button>
+      <button onClick={() => dispatch({ type: 'INCREMENT' })}>+</button>
+      <button onClick={() => dispatch({ type: 'RESET' })}>Reset</button>
+    </div>
+  );
+}
+
+export default Counter;`,
+    solution: `function reducer(state, action) {
+  switch (action.type) {
+    case 'INCREMENT': return state + 1;
+    case 'DECREMENT': return Math.max(0, state - 1);
+    case 'RESET':     return 0;
+    default:          return state;
+  }
+}
+
+function Counter() {
+  const [count, dispatch] = React.useReducer(reducer, 0);
+
+  const btnStyle = (color) => ({
+    padding: '10px 24px', margin: '0 6px', fontSize: 18, fontWeight: 700,
+    borderRadius: 10, border: \`2px solid \${color}\`, background: 'transparent',
+    color, cursor: 'pointer',
+  });
+
+  return (
+    <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
+      <h2 style={{ fontSize: 72, fontWeight: 800, color: '#6366f1', margin: '0 0 30px' }}>
+        {count}
+      </h2>
+      <button onClick={() => dispatch({ type: 'DECREMENT' })} style={btnStyle('#ef4444')}>−</button>
+      <button onClick={() => dispatch({ type: 'INCREMENT' })} style={btnStyle('#22c55e')}>+</button>
+      <button onClick={() => dispatch({ type: 'RESET' })} style={btnStyle('#94a3b8')}>↺ Reset</button>
+    </div>
+  );
+}
+
+export default Counter;`,
+    explanation: 'useReducer is preferred when state transitions depend on the current state or when multiple actions modify the same state. The reducer is a pure function — easy to test and reason about.',
+  },
+  {
+    id: 'r12',
+    estimatedTime: '4–6 min',
+    title: 'Tabs Component',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build a reusable Tabs component.
+
+Requirements:
+  • Show 3 tabs: "Home", "Profile", "Settings"
+  • Clicking a tab makes it active and shows its content panel
+  • Active tab is visually highlighted
+  • Each panel shows different content
+
+Hint: useState to track the active tab index or name.`,
+    starterCode: `const TABS = [
+  { label: 'Home',     content: 'Welcome to the Home tab! 🏠' },
+  { label: 'Profile',  content: 'This is your Profile. 👤' },
+  { label: 'Settings', content: 'Adjust your Settings here. ⚙️' },
+];
+
+function Tabs() {
+  // Track active tab
+
+  return (
+    <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
+      <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0' }}>
+        {TABS.map((tab, i) => (
+          <button key={i} onClick={() => {}}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: 20 }}>
+        {/* Show active tab content */}
+      </div>
+    </div>
+  );
+}
+
+export default Tabs;`,
+    solution: `const TABS = [
+  { label: 'Home',     content: 'Welcome to the Home tab! 🏠', icon: '🏠' },
+  { label: 'Profile',  content: 'This is your Profile. 👤', icon: '👤' },
+  { label: 'Settings', content: 'Adjust your Settings here. ⚙️', icon: '⚙️' },
+];
+
+function Tabs() {
+  const [active, setActive] = React.useState(0);
+
+  return (
+    <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', borderBottom: '2px solid #e2e8f0', marginBottom: 0 }}>
+        {TABS.map((tab, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            style={{
+              padding: '12px 24px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+              border: 'none', background: 'none',
+              color: active === i ? '#6366f1' : '#94a3b8',
+              borderBottom: active === i ? '2px solid #6366f1' : '2px solid transparent',
+              marginBottom: -2, transition: 'all 0.2s',
+            }}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
+      <div style={{
+        padding: '28px 20px', background: '#f8fafc', borderRadius: '0 0 14px 14px',
+        border: '1px solid #e2e8f0', borderTop: 'none', fontSize: 15, color: '#1e293b',
+      }}>
+        {TABS[active].content}
+      </div>
+    </div>
+  );
+}
+
+export default Tabs;`,
+    explanation: 'A single active index drives both the highlighted tab and the displayed content. The active tab gets a bottom border via a conditional style. Index comparison (active === i) is cleaner than string matching for small tab sets.',
+  },
+  {
+    id: 'r13',
+    estimatedTime: '5–8 min',
+    title: 'Accordion / FAQ',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build an Accordion FAQ component.
+
+Requirements:
+  • Render a list of FAQ items, each with a question and answer
+  • Clicking a question expands/collapses its answer
+  • Only one item can be open at a time
+  • Show a ▼ / ▲ chevron indicator
+
+Hint: Store the open index in state. Set to null when closing.`,
+    starterCode: `const FAQS = [
+  { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
+  { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
+  { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
+  { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
+];
+
+function Accordion() {
+  // Track which item is open (null = none)
+
+  return (
+    <div style={{ padding: 30, maxWidth: 560, margin: '0 auto' }}>
+      <h2>FAQ</h2>
+      {FAQS.map((item, i) => (
+        <div key={i} style={{ marginBottom: 8, border: '1px solid #e2e8f0', borderRadius: 10 }}>
+          <button onClick={() => {}} style={{ width: '100%', textAlign: 'left', padding: 16 }}>
+            {item.q}
+          </button>
+          {/* Conditionally show answer */}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default Accordion;`,
+    solution: `const FAQS = [
+  { q: 'What is React?',           a: 'A JavaScript library for building user interfaces.' },
+  { q: 'What is useState?',        a: 'A Hook that lets you add state to function components.' },
+  { q: 'What is useEffect?',       a: 'A Hook for performing side effects in components.' },
+  { q: 'What are React keys?',     a: 'Keys help React identify which list items have changed.' },
+];
+
+function Accordion() {
+  const [openIdx, setOpenIdx] = React.useState(null);
+
+  const toggle = (i) => setOpenIdx(prev => prev === i ? null : i);
+
+  return (
+    <div style={{ padding: 30, maxWidth: 560, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 20 }}>❓ FAQ</h2>
+      {FAQS.map((item, i) => {
+        const isOpen = openIdx === i;
+        return (
+          <div key={i} style={{
+            marginBottom: 10, border: \`1.5px solid \${isOpen ? '#6366f1' : '#e2e8f0'}\`,
+            borderRadius: 12, overflow: 'hidden', transition: 'border 0.2s',
+          }}>
+            <button
+              onClick={() => toggle(i)}
+              style={{
+                width: '100%', textAlign: 'left', padding: '16px 20px',
+                background: isOpen ? '#eef2ff' : '#fff', border: 'none',
+                fontWeight: 600, fontSize: 14, cursor: 'pointer', color: '#1e293b',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}
+            >
+              {item.q}
+              <span style={{ color: '#6366f1', fontSize: 12 }}>{isOpen ? '▲' : '▼'}</span>
+            </button>
+            {isOpen && (
+              <div style={{ padding: '14px 20px 16px', background: '#f8fafc',
+                fontSize: 14, color: '#475569', lineHeight: 1.7, borderTop: '1px solid #e2e8f0' }}>
+                {item.a}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default Accordion;`,
+    explanation: 'Storing the open index (not a boolean per item) enforces the single-open constraint automatically — toggling to the same index closes it, clicking a different one opens it and implicitly closes the previous.',
+  },
+  {
+    id: 'r14',
+    estimatedTime: '8–12 min',
+    title: 'Custom Hook – useLocalStorage',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a custom useLocalStorage hook and use it in a Notes app.
+
+Requirements:
+  • useLocalStorage(key, initialValue) behaves like useState but persists to localStorage
+  • Changes survive a page refresh (test by refreshing the preview)
+  • Build a simple Note app: textarea + save button using this hook
+  • Show "Saved!" confirmation for 2 seconds after saving
+
+Hint: Initialize state from localStorage.getItem, call localStorage.setItem on updates.`,
+    starterCode: `function useLocalStorage(key, initialValue) {
+  // Return [storedValue, setValue] — synced with localStorage
+  const [value, setValue] = React.useState(initialValue);
+  return [value, setValue];
+}
+
+function Notes() {
+  const [note, setNote] = useLocalStorage('my-note', '');
+  const [saved, setSaved] = React.useState(false);
+
+  const save = () => {
+    // Show saved confirmation
+  };
+
+  return (
+    <div style={{ padding: 30, maxWidth: 500, margin: '0 auto' }}>
+      <h2>📝 My Note</h2>
+      <textarea value={note} onChange={e => setNote(e.target.value)}
+        style={{ width: '100%', height: 150, padding: 10 }} />
+      <button onClick={save}>Save</button>
+      {saved && <span> ✅ Saved!</span>}
+    </div>
+  );
+}
+
+export default Notes;`,
+    solution: `function useLocalStorage(key, initialValue) {
+  const [value, setValue] = React.useState(() => {
+    try {
+      const item = localStorage.getItem(key);
+      return item !== null ? JSON.parse(item) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  const setStoredValue = (newValue) => {
+    setValue(newValue);
+    try {
+      localStorage.setItem(key, JSON.stringify(newValue));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return [value, setStoredValue];
+}
+
+function Notes() {
+  const [note, setNote] = useLocalStorage('my-note', '');
+  const [saved, setSaved] = React.useState(false);
+
+  const save = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div style={{ padding: 30, maxWidth: 500, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 16 }}>📝 My Note</h2>
+      <textarea
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        placeholder="Write something..."
+        style={{ width: '100%', height: 160, padding: '12px 14px', borderRadius: 10, boxSizing: 'border-box',
+          border: '1.5px solid #e2e8f0', fontSize: 14, resize: 'vertical', outline: 'none',
+          fontFamily: 'sans-serif', lineHeight: 1.6 }}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+        <button onClick={save}
+          style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
+            borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          💾 Save
+        </button>
+        {saved && (
+          <span style={{ color: '#22c55e', fontWeight: 600, fontSize: 14 }}>✅ Saved!</span>
+        )}
+      </div>
+      <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
+        {note.length} characters — persists across refreshes
+      </div>
+    </div>
+  );
+}
+
+export default Notes;`,
+    explanation: 'The lazy initializer function in useState (passing a function, not a value) runs only on mount — perfect for reading localStorage without re-reading on every render. JSON.stringify/parse handles all serializable types. Wrapping in try/catch handles private browsing where localStorage may throw.',
+  },
+  {
+    id: 'r15',
+    estimatedTime: '8–12 min',
+    title: 'Debounced Search',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a search input that debounces API calls by 400ms.
+
+Requirements:
+  • Input updates immediately (controlled)
+  • The "API call" (simulated) fires only 400ms after the user stops typing
+  • Show "Searching..." while debounce is pending
+  • Display a list of filtered results from a local dataset
+  • Show how many times the search actually fired
+
+Hint: useEffect + setTimeout + clearTimeout.`,
+    starterCode: `const USERS = [
+  'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
+  'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
+];
+
+function DebounceSearch() {
+  const [query, setQuery] = React.useState('');
+  const [results, setResults] = React.useState(USERS);
+  const [searching, setSearching] = React.useState(false);
+
+  // Add debounce logic with useEffect
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+      <h2>Debounced Search</h2>
+      <input value={query} onChange={e => setQuery(e.target.value)}
+        placeholder="Search users..." style={{ width: '100%', padding: 8 }} />
+      {searching && <div>Searching...</div>}
+      <ul>{results.map(r => <li key={r}>{r}</li>)}</ul>
+    </div>
+  );
+}
+
+export default DebounceSearch;`,
+    solution: `const USERS = [
+  'Alice Johnson', 'Bob Smith', 'Carol White', 'Dave Brown',
+  'Eve Davis', 'Frank Miller', 'Grace Wilson', 'Hank Moore',
+];
+
+function DebounceSearch() {
+  const [query, setQuery] = React.useState('');
+  const [results, setResults] = React.useState(USERS);
+  const [searching, setSearching] = React.useState(false);
+  const [fireCount, setFireCount] = React.useState(0);
+
+  React.useEffect(() => {
+    setSearching(true);
+    const timer = setTimeout(() => {
+      const filtered = USERS.filter(u =>
+        u.toLowerCase().includes(query.toLowerCase())
+      );
+      setResults(filtered);
+      setSearching(false);
+      setFireCount(c => c + 1);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⚡ Debounced Search</h2>
+      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
+        Search fired {fireCount} times
+      </div>
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Search users..."
+        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, boxSizing: 'border-box',
+          border: '1.5px solid #6366f1', fontSize: 14, outline: 'none', marginBottom: 8 }}
+      />
+      {searching
+        ? <div style={{ color: '#94a3b8', fontSize: 13, padding: '8px 0' }}>🔍 Searching...</div>
+        : <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>{results.length} results</div>
+      }
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {results.map(r => (
+          <li key={r} style={{ padding: '10px 14px', marginBottom: 6, borderRadius: 8,
+            background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 14 }}>
+            👤 {r}
+          </li>
+        ))}
+        {results.length === 0 && (
+          <li style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>No users found</li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+export default DebounceSearch;`,
+    explanation: 'The cleanup function returned from useEffect clears the previous timer when query changes — ensuring the search only fires once the user pauses. This prevents unnecessary re-renders and simulated network calls. The fire count demonstrates that without debouncing, every keystroke would trigger a call.',
+  },
+  {
+    id: 'r16',
+    estimatedTime: '15–20 min',
+    title: 'Shopping Cart – useReducer',
+    difficulty: 'Hard',
+    category: 'React',
+    type: 'react',
+    description: `Build a Shopping Cart using useReducer.
+
+Requirements:
+  • Display a product list (at least 4 products with name + price)
+  • "Add to Cart" button on each product
+  • Cart panel shows items, quantities, and total
+  • Increment / decrement quantity in cart
+  • Remove item from cart
+  • Cart total updates automatically
+
+Hint: useReducer with actions: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT.`,
+    starterCode: `const PRODUCTS = [
+  { id: 1, name: 'React Course',    price: 29 },
+  { id: 2, name: 'TypeScript Book', price: 19 },
+  { id: 3, name: 'VS Code Theme',   price: 9  },
+  { id: 4, name: 'CLI Tool',        price: 14 },
+];
+
+function cartReducer(state, action) {
+  // Handle: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT
+  return state;
+}
+
+function ShoppingCart() {
+  const [cart, dispatch] = React.useReducer(cartReducer, []);
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  return (
+    <div style={{ display: 'flex', gap: 20, padding: 20 }}>
+      <div style={{ flex: 1 }}>
+        <h2>Products</h2>
+        {PRODUCTS.map(p => (
+          <div key={p.id} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+            <div>{p.name} — \${p.price}</div>
+            <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}>Add to Cart</button>
+          </div>
+        ))}
+      </div>
+      <div style={{ width: 280 }}>
+        <h2>Cart ({cart.length})</h2>
+        {/* Render cart items */}
+        <div>Total: \${total}</div>
+      </div>
+    </div>
+  );
+}
+
+export default ShoppingCart;`,
+    solution: `const PRODUCTS = [
+  { id: 1, name: 'React Course',    price: 29, emoji: '⚛️' },
+  { id: 2, name: 'TypeScript Book', price: 19, emoji: '📘' },
+  { id: 3, name: 'VS Code Theme',   price: 9,  emoji: '🎨' },
+  { id: 4, name: 'CLI Tool',        price: 14, emoji: '🛠️' },
+];
+
+function cartReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_ITEM': {
+      const existing = state.find(i => i.id === action.payload.id);
+      if (existing) return state.map(i => i.id === existing.id ? { ...i, qty: i.qty + 1 } : i);
+      return [...state, { ...action.payload, qty: 1 }];
+    }
+    case 'REMOVE_ITEM':
+      return state.filter(i => i.id !== action.payload);
+    case 'INCREMENT':
+      return state.map(i => i.id === action.payload ? { ...i, qty: i.qty + 1 } : i);
+    case 'DECREMENT':
+      return state.map(i => i.id === action.payload
+        ? { ...i, qty: Math.max(1, i.qty - 1) } : i);
+    default: return state;
+  }
+}
+
+function ShoppingCart() {
+  const [cart, dispatch] = React.useReducer(cartReducer, []);
+  const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const inCart = (id) => cart.find(i => i.id === id);
+
+  const cardStyle = { border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 10 };
+
+  return (
+    <div style={{ display: 'flex', gap: 20, padding: 20, fontFamily: 'sans-serif', maxWidth: 680, margin: '0 auto' }}>
+      <div style={{ flex: 1 }}>
+        <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛍️ Products</h2>
+        {PRODUCTS.map(p => (
+          <div key={p.id} style={{ ...cardStyle, background: inCart(p.id) ? '#eef2ff' : '#fff' }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>{p.emoji} {p.name}</div>
+            <div style={{ fontSize: 13, color: '#6366f1', fontWeight: 700, marginBottom: 10 }}>\${p.price}</div>
+            <button onClick={() => dispatch({ type: 'ADD_ITEM', payload: p })}
+              style={{ padding: '6px 14px', background: '#6366f1', color: '#fff',
+                border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+              {inCart(p.id) ? '+ Add More' : 'Add to Cart'}
+            </button>
+          </div>
+        ))}
+      </div>
+      <div style={{ width: 240 }}>
+        <h2 style={{ color: '#6366f1', marginBottom: 14 }}>🛒 Cart ({cart.reduce((s,i) => s+i.qty,0)})</h2>
+        {cart.length === 0
+          ? <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: 20 }}>Cart is empty</div>
+          : cart.map(item => (
+            <div key={item.id} style={{ ...cardStyle, background: '#f8fafc' }}>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{item.emoji} {item.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={() => dispatch({ type: 'DECREMENT', payload: item.id })}
+                  style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
+                    background: '#fff', cursor: 'pointer', fontWeight: 700 }}>−</button>
+                <span style={{ fontWeight: 700 }}>{item.qty}</span>
+                <button onClick={() => dispatch({ type: 'INCREMENT', payload: item.id })}
+                  style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid #e2e8f0',
+                    background: '#fff', cursor: 'pointer', fontWeight: 700 }}>+</button>
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#6366f1', fontWeight: 700 }}>
+                  \${item.price * item.qty}
+                </span>
+              </div>
+              <button onClick={() => dispatch({ type: 'REMOVE_ITEM', payload: item.id })}
+                style={{ marginTop: 8, fontSize: 11, color: '#ef4444', background: 'none',
+                  border: 'none', cursor: 'pointer', padding: 0 }}>✕ Remove</button>
+            </div>
+          ))
+        }
+        {cart.length > 0 && (
+          <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: 12, marginTop: 4,
+            fontWeight: 700, fontSize: 16, color: '#1e293b', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Total</span>
+            <span style={{ color: '#6366f1' }}>\${total}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default ShoppingCart;`,
+    explanation: 'useReducer shines here because cart operations (add/remove/increment/decrement) are all related state transitions on the same data. The ADD_ITEM action handles both "first add" and "add duplicate" in one place. Spreading items (...i) ensures immutability so React detects changes.',
+  },
+  {
+    id: 'r17',
+    estimatedTime: '8–12 min',
+    title: 'Pagination',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a paginated list component.
+
+Requirements:
+  • Display a list of 50 items (generate: "Item 1" … "Item 50")
+  • Show 8 items per page
+  • Previous / Next buttons to navigate pages
+  • Show current page and total pages (e.g. "Page 2 of 7")
+  • Disable Prev on page 1, disable Next on the last page
+
+Hint: Derive current page items with .slice(). No external libraries needed.`,
+    starterCode: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
+const PAGE_SIZE = 8;
+
+function Pagination() {
+  const [page, setPage] = React.useState(1);
+
+  const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
+  const pageItems = ITEMS.slice(/* calculate start/end */);
+
+  return (
+    <div style={{ padding: 30, maxWidth: 400, margin: '0 auto' }}>
+      <h2>Paginated List</h2>
+      <ul>
+        {pageItems.map(item => <li key={item}>{item}</li>)}
+      </ul>
+      <div>
+        <button onClick={() => setPage(p => p - 1)} disabled={page === 1}>Prev</button>
+        <span> Page {page} of {totalPages} </span>
+        <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>Next</button>
+      </div>
+    </div>
+  );
+}
+
+export default Pagination;`,
+    solution: `const ITEMS = Array.from({ length: 50 }, (_, i) => \`Item \${i + 1}\`);
+const PAGE_SIZE = 8;
+
+function Pagination() {
+  const [page, setPage] = React.useState(1);
+
+  const totalPages = Math.ceil(ITEMS.length / PAGE_SIZE);
+  const start = (page - 1) * PAGE_SIZE;
+  const pageItems = ITEMS.slice(start, start + PAGE_SIZE);
+
+  const btnStyle = (disabled) => ({
+    padding: '8px 18px', fontWeight: 700, fontSize: 13, borderRadius: 8,
+    border: '1.5px solid #6366f1', background: disabled ? '#f1f5f9' : '#6366f1',
+    color: disabled ? '#94a3b8' : '#fff', cursor: disabled ? 'not-allowed' : 'pointer',
+  });
+
+  return (
+    <div style={{ padding: 30, maxWidth: 380, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 4 }}>📄 Paginated List</h2>
+      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>
+        Showing {start + 1}–{Math.min(start + PAGE_SIZE, ITEMS.length)} of {ITEMS.length} items
+      </div>
+      <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
+        {pageItems.map((item, i) => (
+          <li key={item} style={{
+            padding: '10px 16px', marginBottom: 6, borderRadius: 8,
+            background: i % 2 === 0 ? '#f8fafc' : '#eef2ff',
+            border: '1px solid #e2e8f0', fontSize: 14, fontWeight: 500,
+          }}>
+            {item}
+          </li>
+        ))}
+      </ul>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={() => setPage(p => p - 1)} disabled={page === 1} style={btnStyle(page === 1)}>
+          ← Prev
+        </button>
+        <span style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', flex: 1, textAlign: 'center' }}>
+          Page {page} of {totalPages}
+        </span>
+        <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages} style={btnStyle(page === totalPages)}>
+          Next →
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: 4, marginTop: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+          <button key={p} onClick={() => setPage(p)}
+            style={{ width: 32, height: 32, borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', background: p === page ? '#6366f1' : '#f1f5f9', color: p === page ? '#fff' : '#64748b' }}>
+            {p}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Pagination;`,
+    explanation: 'The page index is the only state needed — all other values (start, pageItems, totalPages) are derived from it. Resetting to page 1 when data changes (not needed here) is a common gotcha. The slice bounds use PAGE_SIZE as both stride and limit.',
+  },
+  {
+    id: 'r18',
+    estimatedTime: '10–15 min',
+    title: 'Modal / Dialog',
+    difficulty: 'Medium',
+    category: 'React',
+    type: 'react',
+    description: `Build a reusable Modal component.
+
+Requirements:
+  • A button to open the modal
+  • Modal overlays the page with a backdrop
+  • Modal has a title, content, and Close button
+  • Clicking the backdrop also closes the modal
+  • Press Escape key to close
+  • Animate in with a fade/scale effect
+
+Hint: useEffect to listen for Escape key, stopPropagation to prevent backdrop click from closing when clicking inside modal.`,
+    starterCode: `function Modal({ isOpen, onClose, title, children }) {
+  // Close on Escape key
+
+  if (!isOpen) return null;
+
+  return (
+    <div onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 12, padding: 24, minWidth: 320 }}>
+        <h2>{title}</h2>
+        {children}
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <button onClick={() => setOpen(true)}>Open Modal</button>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Hello!">
+        <p>This is the modal content.</p>
+      </Modal>
+    </div>
+  );
+}
+
+export default App;`,
+    solution: `function Modal({ isOpen, onClose, title, children }) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, animation: 'fadeIn 0.15s ease',
+      }}
+    >
+      <style>{'@keyframes fadeIn { from { opacity:0 } to { opacity:1 } } @keyframes scaleIn { from { transform:scale(0.92); opacity:0 } to { transform:scale(1); opacity:1 } }'}</style>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#fff', borderRadius: 18, padding: '28px 32px', minWidth: 360, maxWidth: '90vw',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)', animation: 'scaleIn 0.15s ease',
+          fontFamily: 'sans-serif',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{title}</h2>
+          <button
+            onClick={onClose}
+            style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f1f5f9',
+              cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >✕</button>
+        </div>
+        <div style={{ color: '#475569', lineHeight: 1.7, marginBottom: 24 }}>{children}</div>
+        <button
+          onClick={onClose}
+          style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none',
+            borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div style={{ padding: 60, textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h1 style={{ color: '#6366f1', marginBottom: 24 }}>Modal Demo</h1>
+      <button
+        onClick={() => setOpen(true)}
+        style={{ padding: '12px 28px', background: '#6366f1', color: '#fff', border: 'none',
+          borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+      >
+        Open Modal
+      </button>
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="🎉 Welcome!">
+        <p>This modal closes on backdrop click, the ✕ button, or pressing Escape.</p>
+        <p>It animates in with a scale + fade effect using CSS keyframes.</p>
+      </Modal>
+    </div>
+  );
+}
+
+export default App;`,
+    explanation: 'The Escape key listener is registered in useEffect and cleaned up when the modal closes — prevents stale listeners from stacking up. stopPropagation on the inner div prevents the backdrop click handler from firing. The component is fully controlled: the parent owns isOpen state.',
+  },
+  {
+    id: 'r19',
+    estimatedTime: '4–6 min',
+    title: 'Star Rating Component',
+    difficulty: 'Easy',
+    category: 'React',
+    type: 'react',
+    description: `Build an interactive Star Rating component.
+
+Requirements:
+  • Display 5 stars
+  • Hovering over a star highlights it and all stars before it
+  • Clicking a star sets the permanent rating
+  • Show the numeric rating below (e.g. "4 / 5")
+  • Allow resetting to no rating
+
+Hint: Two pieces of state — hovered and selected. Display depends on hovered ?? selected.`,
+    starterCode: `function StarRating() {
+  const [selected, setSelected] = React.useState(0);
+  const [hovered, setHovered] = React.useState(0);
+
+  const display = hovered || selected;
+
+  return (
+    <div style={{ textAlign: 'center', padding: 40 }}>
+      <h2>Rate Us!</h2>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+        {[1, 2, 3, 4, 5].map(star => (
+          <span
+            key={star}
+            onClick={() => setSelected(star)}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            style={{ fontSize: 40, cursor: 'pointer', color: star <= display ? '#f59e0b' : '#e2e8f0' }}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+      <div>{selected ? \`\${selected} / 5\` : 'No rating yet'}</div>
+    </div>
+  );
+}
+
+export default StarRating;`,
+    solution: `function StarRating({ max = 5 }) {
+  const [selected, setSelected] = React.useState(0);
+  const [hovered, setHovered] = React.useState(0);
+
+  const display = hovered || selected;
+
+  const labels = ['', 'Terrible', 'Poor', 'Okay', 'Good', 'Excellent!'];
+
+  return (
+    <div style={{ textAlign: 'center', padding: 50, fontFamily: 'sans-serif' }}>
+      <h2 style={{ color: '#6366f1', marginBottom: 4 }}>⭐ Rate Your Experience</h2>
+      <div style={{ color: '#94a3b8', fontSize: 13, marginBottom: 28 }}>Click a star to rate</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
+        {Array.from({ length: max }, (_, i) => i + 1).map(star => (
+          <span
+            key={star}
+            onClick={() => setSelected(prev => prev === star ? 0 : star)}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            style={{
+              fontSize: 48, cursor: 'pointer', transition: 'transform 0.1s, color 0.1s',
+              color: star <= display ? '#f59e0b' : '#e2e8f0',
+              transform: star === display ? 'scale(1.2)' : 'scale(1)',
+              display: 'inline-block',
+            }}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+      <div style={{ height: 28, fontSize: 18, fontWeight: 700,
+        color: selected ? '#f59e0b' : '#94a3b8', transition: 'color 0.2s' }}>
+        {selected ? \`\${labels[selected]} (\${selected}/\${max})\` : 'No rating yet'}
+      </div>
+      {selected > 0 && (
+        <button onClick={() => setSelected(0)}
+          style={{ marginTop: 12, fontSize: 12, color: '#94a3b8', background: 'none',
+            border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+          Clear rating
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default StarRating;`,
+    explanation: 'Two state values: hovered (ephemeral, resets on mouse leave) and selected (permanent, set on click). The expression hovered || selected picks hover preview if active, otherwise falls back to the clicked rating. Clicking the same star twice resets it — a nice UX touch.',
+  },
+  {
+    id: 'r20',
+    estimatedTime: '15–20 min',
+    title: 'useContext – Theme Provider',
+    difficulty: 'Hard',
+    category: 'React',
+    type: 'react',
+    description: `Build a theme system using React Context.
+
+Requirements:
+  • Create a ThemeContext with createContext
+  • ThemeProvider wraps the app and provides { theme, toggleTheme }
+  • Any nested component can call useContext(ThemeContext) to read/change the theme
+  • Build a Header and Card component that both consume the theme
+  • Toggle button in Header changes theme for all components at once
+
+Hint: createContext → Provider → useContext. No prop drilling needed.`,
+    starterCode: `const ThemeContext = React.createContext(null);
+
+function ThemeProvider({ children }) {
+  const [isDark, setIsDark] = React.useState(false);
+  // Provide { isDark, toggleTheme } via ThemeContext.Provider
+  return children;
+}
+
+function useTheme() {
+  return React.useContext(ThemeContext);
+}
+
+function Header() {
+  // Consume theme, show toggle button
+  return <header>Header</header>;
+}
+
+function Card({ title, body }) {
+  // Consume theme for styling
+  return <div>{title}: {body}</div>;
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <Header />
+      <Card title="Card 1" body="Context keeps components in sync." />
+      <Card title="Card 2" body="No prop drilling required." />
+    </ThemeProvider>
+  );
+}
+
+export default App;`,
+    solution: `const ThemeContext = React.createContext(null);
+
+function ThemeProvider({ children }) {
+  const [isDark, setIsDark] = React.useState(false);
+  const toggleTheme = () => setIsDark(d => !d);
+  return (
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+function useTheme() {
+  const ctx = React.useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
+}
+
+function Header() {
+  const { isDark, toggleTheme } = useTheme();
+  const t = isDark
+    ? { bg: '#1e293b', text: '#e2e8f0', border: '#334155' }
+    : { bg: '#6366f1', text: '#fff', border: '#4f46e5' };
+
+  return (
+    <header style={{ background: t.bg, padding: '14px 24px', display: 'flex',
+      justifyContent: 'space-between', alignItems: 'center', borderBottom: \`1px solid \${t.border}\` }}>
+      <span style={{ color: t.text, fontWeight: 700, fontSize: 16 }}>⚡ Context App</span>
+      <button onClick={toggleTheme}
+        style={{ padding: '8px 18px', borderRadius: 20, border: \`1.5px solid \${t.border}\`,
+          background: 'transparent', color: t.text, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+        {isDark ? '☀️ Light' : '🌙 Dark'}
+      </button>
+    </header>
+  );
+}
+
+function Card({ title, body }) {
+  const { isDark } = useTheme();
+  const t = isDark
+    ? { bg: '#1e293b', text: '#e2e8f0', sub: '#94a3b8', border: '#334155' }
+    : { bg: '#fff', text: '#1e293b', sub: '#64748b', border: '#e2e8f0' };
+
+  return (
+    <div style={{ background: t.bg, border: \`1px solid \${t.border}\`, borderRadius: 14,
+      padding: '20px 24px', marginBottom: 12, transition: 'all 0.3s' }}>
+      <h3 style={{ margin: '0 0 8px', color: '#6366f1', fontSize: 15 }}>{title}</h3>
+      <p style={{ margin: 0, color: t.sub, fontSize: 13, lineHeight: 1.7 }}>{body}</p>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <div style={{ fontFamily: 'sans-serif', minHeight: '100vh' }}>
+        <Header />
+        <main style={{ padding: 24, maxWidth: 520, margin: '0 auto' }}>
+          <Card title="What is Context?" body="React Context provides a way to share values between components without passing props through every level of the tree." />
+          <Card title="When to use it?" body="Great for global state like themes, locale, or auth — data that many components at different levels need." />
+          <Card title="No Prop Drilling" body="Both Header and Card read from the same context. The toggle in Header updates all consumers simultaneously." />
+        </main>
+      </div>
+    </ThemeProvider>
+  );
+}
+
+export default App;`,
+    explanation: 'createContext creates the context object. Provider wraps the tree and supplies the value. Any descendant can call useContext to subscribe — React re-renders them when the context value changes. The custom useTheme hook encapsulates the useContext call and adds a guard for misuse outside the provider.',
+  },
+
+  // ─── REACT QUESTIONS (r21–r40) ────────────────────────────────────────────
+  {
+    id: 'r21',
+    estimatedTime: '3–5 min',
+    type: 'react',
+    title: 'Character Counter',
+    difficulty: 'Easy',
+    category: 'React',
+    description: `Build a textarea with a live character counter below it.
+
+Requirements:
+• Show current character count as the user types
+• Show max limit of 200 characters
+• Turn the counter red when limit is exceeded
+• Disable or warn when over the limit`,
+    starterCode: `function CharacterCounter() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 480 }}>
+      <h2>Character Counter</h2>
+      {/* textarea and counter here */}
+    </div>
+  );
+}
+
+export default CharacterCounter;`,
+    solution: `function CharacterCounter() {
+  const [text, setText] = useState('');
+  const MAX = 200;
+  const remaining = MAX - text.length;
+  const isOver = remaining < 0;
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 480 }}>
+      <h2>Character Counter</h2>
+      <textarea
+        value={text}
+        onChange={e => setText(e.target.value)}
+        rows={5}
+        style={{
+          width: '100%', padding: 10, fontSize: 14, boxSizing: 'border-box',
+          border: \`2px solid \${isOver ? '#ef4444' : '#d1d5db'}\`, borderRadius: 8, resize: 'vertical',
+        }}
+        placeholder="Start typing..."
+      />
+      <div style={{ marginTop: 6, textAlign: 'right', fontSize: 13,
+        color: isOver ? '#ef4444' : remaining < 20 ? '#f59e0b' : '#6b7280', fontWeight: isOver ? 700 : 400 }}>
+        {isOver ? \`\${Math.abs(remaining)} over limit\` : \`\${remaining} / \${MAX} remaining\`}
+      </div>
+    </div>
+  );
+}
+
+export default CharacterCounter;`,
+    explanation: 'useState tracks the textarea value. Remaining chars = MAX - text.length. Conditional styling flips to red when remaining < 0. No useEffect needed — everything derives from the single state value.',
+  },
+  {
+    id: 'r22',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Image Carousel',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build an image carousel that cycles through a list of slides.
+
+Requirements:
+• Show one slide at a time with Prev / Next buttons
+• Wrap around (next on last → first, prev on first → last)
+• Show dot indicators below — clicking a dot jumps to that slide
+• Show the current slide number (e.g. "2 / 5")`,
+    starterCode: `const SLIDES = [
+  { id: 1, color: '#6366f1', label: 'Slide 1 – Indigo' },
+  { id: 2, color: '#ec4899', label: 'Slide 2 – Pink' },
+  { id: 3, color: '#14b8a6', label: 'Slide 3 – Teal' },
+  { id: 4, color: '#f59e0b', label: 'Slide 4 – Amber' },
+  { id: 5, color: '#22c55e', label: 'Slide 5 – Green' },
+];
+
+function Carousel() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 500, margin: '0 auto' }}>
+      <h2>Image Carousel</h2>
+      {/* carousel here */}
+    </div>
+  );
+}
+
+export default Carousel;`,
+    solution: `const SLIDES = [
+  { id: 1, color: '#6366f1', label: 'Slide 1 – Indigo' },
+  { id: 2, color: '#ec4899', label: 'Slide 2 – Pink' },
+  { id: 3, color: '#14b8a6', label: 'Slide 3 – Teal' },
+  { id: 4, color: '#f59e0b', label: 'Slide 4 – Amber' },
+  { id: 5, color: '#22c55e', label: 'Slide 5 – Green' },
+];
+
+function Carousel() {
+  const [index, setIndex] = useState(0);
+  const prev = () => setIndex(i => (i - 1 + SLIDES.length) % SLIDES.length);
+  const next = () => setIndex(i => (i + 1) % SLIDES.length);
+  const slide = SLIDES[index];
+
+  const btn = (onClick, label) => (
+    <button onClick={onClick} style={{
+      padding: '8px 20px', fontSize: 18, cursor: 'pointer',
+      borderRadius: 8, border: '1px solid #d1d5db', background: '#fff',
+    }}>{label}</button>
+  );
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 500, margin: '0 auto' }}>
+      <h2>Image Carousel</h2>
+      <div style={{
+        height: 200, background: slide.color, borderRadius: 12,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 16,
+      }}>{slide.label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {btn(prev, '‹')}
+        <span style={{ fontSize: 13, color: '#6b7280' }}>{index + 1} / {SLIDES.length}</span>
+        {btn(next, '›')}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+        {SLIDES.map((_, i) => (
+          <button key={i} onClick={() => setIndex(i)} style={{
+            width: 10, height: 10, borderRadius: '50%', border: 'none', cursor: 'pointer',
+            background: i === index ? '#6366f1' : '#d1d5db', padding: 0,
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Carousel;`,
+    explanation: 'Single index state drives everything. Modular arithmetic (% length) handles wrap-around. Dot indicators are just buttons that call setIndex directly. No side effects needed.',
+  },
+  {
+    id: 'r23',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Password Strength Meter',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a password input that shows a strength indicator.
+
+Requirements:
+• Input type="password" with a show/hide toggle
+• Strength levels: Weak / Fair / Strong / Very Strong
+• Visual bar that fills based on strength (red → orange → yellow → green)
+• Criteria: length ≥ 8, has uppercase, has number, has special char`,
+    starterCode: `function PasswordStrength() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 400 }}>
+      <h2>Password Strength</h2>
+      {/* input and meter here */}
+    </div>
+  );
+}
+
+export default PasswordStrength;`,
+    solution: `function getStrength(pwd) {
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  return score;
+}
+
+const LEVELS = [
+  { label: 'Weak',        color: '#ef4444' },
+  { label: 'Fair',        color: '#f97316' },
+  { label: 'Strong',      color: '#eab308' },
+  { label: 'Very Strong', color: '#22c55e' },
+];
+
+function PasswordStrength() {
+  const [pwd, setPwd] = useState('');
+  const [show, setShow] = useState(false);
+  const score = getStrength(pwd);
+  const level = pwd ? LEVELS[score - 1] || LEVELS[0] : null;
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 400 }}>
+      <h2>Password Strength</h2>
+      <div style={{ position: 'relative' }}>
+        <input
+          type={show ? 'text' : 'password'}
+          value={pwd}
+          onChange={e => setPwd(e.target.value)}
+          placeholder="Enter password"
+          style={{ width: '100%', padding: '10px 40px 10px 12px', fontSize: 15,
+            border: '1px solid #d1d5db', borderRadius: 8, boxSizing: 'border-box' }}
+        />
+        <button onClick={() => setShow(s => !s)} style={{
+          position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+          border: 'none', background: 'none', cursor: 'pointer', fontSize: 16,
+        }}>{show ? '🙈' : '👁'}</button>
+      </div>
+      {pwd && (
+        <>
+          <div style={{ display: 'flex', gap: 4, marginTop: 12 }}>
+            {[1,2,3,4].map(n => (
+              <div key={n} style={{
+                flex: 1, height: 6, borderRadius: 3,
+                background: n <= score ? level.color : '#e5e7eb',
+                transition: 'background 0.3s',
+              }} />
+            ))}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 13, color: level.color, fontWeight: 600 }}>
+            {level.label}
+          </div>
+          <ul style={{ marginTop: 10, fontSize: 12, color: '#6b7280', paddingLeft: 18 }}>
+            {[
+              [pwd.length >= 8, 'At least 8 characters'],
+              [/[A-Z]/.test(pwd), 'Uppercase letter'],
+              [/[0-9]/.test(pwd), 'Number'],
+              [/[^A-Za-z0-9]/.test(pwd), 'Special character'],
+            ].map(([ok, text]) => (
+              <li key={text} style={{ color: ok ? '#22c55e' : '#9ca3af' }}>
+                {ok ? '✓' : '○'} {text}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default PasswordStrength;`,
+    explanation: 'getStrength runs four regex checks and returns a score 0-4. The bar renders 4 segments coloring only up to score. All derived from two state values: pwd and show.',
+  },
+  {
+    id: 'r24',
+    estimatedTime: '15–20 min',
+    type: 'react',
+    title: 'Drag-and-Drop Kanban',
+    difficulty: 'Hard',
+    category: 'React',
+    description: `Build a simple Kanban board with three columns.
+
+Requirements:
+• Three columns: Todo / In Progress / Done
+• Cards can be dragged between columns using HTML5 drag-and-drop
+• Each column shows its card count
+• Add new card button in each column`,
+    starterCode: `const INITIAL = {
+  todo:       [{ id: 1, text: 'Design UI' }, { id: 2, text: 'Write tests' }],
+  inProgress: [{ id: 3, text: 'Build API' }],
+  done:       [{ id: 4, text: 'Setup repo' }],
+};
+
+function Kanban() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Kanban Board</h2>
+      {/* columns here */}
+    </div>
+  );
+}
+
+export default Kanban;`,
+    solution: `const INITIAL = {
+  todo:       [{ id: 1, text: 'Design UI' }, { id: 2, text: 'Write tests' }],
+  inProgress: [{ id: 3, text: 'Build API' }],
+  done:       [{ id: 4, text: 'Setup repo' }],
+};
+const COLS = { todo: 'Todo', inProgress: 'In Progress', done: 'Done' };
+let nextId = 5;
+
+function Kanban() {
+  const [board, setBoard] = useState(INITIAL);
+  const dragging = React.useRef(null);
+
+  const onDragStart = (colKey, cardId) => { dragging.current = { colKey, cardId }; };
+  const onDrop = (targetCol) => {
+    if (!dragging.current) return;
+    const { colKey, cardId } = dragging.current;
+    if (colKey === targetCol) return;
+    setBoard(prev => {
+      const card = prev[colKey].find(c => c.id === cardId);
+      return {
+        ...prev,
+        [colKey]: prev[colKey].filter(c => c.id !== cardId),
+        [targetCol]: [...prev[targetCol], card],
+      };
+    });
+    dragging.current = null;
+  };
+  const addCard = (colKey) => {
+    const text = prompt('Card text:');
+    if (!text) return;
+    setBoard(prev => ({ ...prev, [colKey]: [...prev[colKey], { id: nextId++, text }] }));
+  };
+
+  const colColors = { todo: '#6366f1', inProgress: '#f59e0b', done: '#22c55e' };
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Kanban Board</h2>
+      <div style={{ display: 'flex', gap: 16 }}>
+        {Object.entries(COLS).map(([key, label]) => (
+          <div key={key}
+            onDragOver={e => e.preventDefault()}
+            onDrop={() => onDrop(key)}
+            style={{
+              flex: 1, background: '#f8fafc', borderRadius: 12, padding: 12,
+              border: '2px dashed #e2e8f0', minHeight: 300,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
+              <span style={{ fontWeight: 700, color: colColors[key] }}>{label}</span>
+              <span style={{
+                background: colColors[key], color: '#fff', borderRadius: 999,
+                padding: '1px 8px', fontSize: 12,
+              }}>{board[key].length}</span>
+            </div>
+            {board[key].map(card => (
+              <div key={card.id} draggable
+                onDragStart={() => onDragStart(key, card.id)}
+                style={{
+                  background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8,
+                  padding: '10px 12px', marginBottom: 8, cursor: 'grab', fontSize: 14,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}>
+                {card.text}
+              </div>
+            ))}
+            <button onClick={() => addCard(key)} style={{
+              width: '100%', marginTop: 4, padding: '7px 0', borderRadius: 8, border: '1px dashed #cbd5e1',
+              background: 'transparent', cursor: 'pointer', color: '#94a3b8', fontSize: 13,
+            }}>+ Add card</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Kanban;`,
+    explanation: 'Board state is an object keyed by column. HTML5 drag events (draggable, onDragStart, onDragOver, onDrop) track which card is moving via a ref. On drop, spread the old board removing the card from its source column and appending it to the target.',
+  },
+  {
+    id: 'r25',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Countdown Timer',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a countdown timer with start, pause, and reset controls.
+
+Requirements:
+• Input to set starting seconds (default 60)
+• Start / Pause / Reset buttons
+• Displays time as MM:SS
+• Shows "Time's up!" when it reaches 0
+• useEffect for the interval — clean it up properly`,
+    starterCode: `function CountdownTimer() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, textAlign: 'center' }}>
+      <h2>Countdown Timer</h2>
+      {/* timer UI here */}
+    </div>
+  );
+}
+
+export default CountdownTimer;`,
+    solution: `function CountdownTimer() {
+  const [initial, setInitial] = useState(60);
+  const [time, setTime] = useState(60);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    if (!running || time <= 0) return;
+    const id = setInterval(() => setTime(t => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [running, time]);
+
+  useEffect(() => { if (time === 0) setRunning(false); }, [time]);
+
+  const fmt = (s) => \`\${String(Math.floor(s / 60)).padStart(2, '0')}:\${String(s % 60).padStart(2, '0')}\`;
+
+  const reset = () => { setRunning(false); setTime(initial); };
+
+  const pct = (time / initial) * 100;
+  const color = pct > 50 ? '#22c55e' : pct > 20 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, textAlign: 'center', maxWidth: 320, margin: '0 auto' }}>
+      <h2>Countdown Timer</h2>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ fontSize: 13, color: '#6b7280' }}>Starting seconds: </label>
+        <input type="number" min={1} value={initial}
+          onChange={e => { const v = Math.max(1, Number(e.target.value)); setInitial(v); setTime(v); setRunning(false); }}
+          style={{ width: 60, padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 14 }}
+        />
+      </div>
+      <div style={{ fontSize: 72, fontWeight: 800, color, letterSpacing: 2, margin: '16px 0' }}>
+        {time === 0 ? "🎉" : fmt(time)}
+      </div>
+      {time === 0 && <p style={{ color: '#ef4444', fontWeight: 700, fontSize: 18 }}>Time's up!</p>}
+      <div style={{ height: 8, background: '#e5e7eb', borderRadius: 99, margin: '16px 0', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: \`\${pct}%\`, background: color, transition: 'width 1s linear, background 0.5s' }} />
+      </div>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+        <button onClick={() => setRunning(r => !r)} disabled={time === 0}
+          style={{ padding: '8px 24px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: running ? '#f59e0b' : '#22c55e', color: '#fff', fontWeight: 700, fontSize: 15 }}>
+          {running ? 'Pause' : 'Start'}
+        </button>
+        <button onClick={reset} style={{ padding: '8px 24px', borderRadius: 8, border: '1px solid #d1d5db',
+          cursor: 'pointer', background: '#fff', fontWeight: 700, fontSize: 15 }}>
+          Reset
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default CountdownTimer;`,
+    explanation: 'useEffect with [running, time] deps starts/clears the interval. The cleanup function (return clearInterval) prevents memory leaks. A second useEffect watches for time hitting 0. Progress bar width derives directly from time/initial.',
+  },
+  {
+    id: 'r26',
+    estimatedTime: '10–15 min',
+    type: 'react',
+    title: 'Multi-Step Form Wizard',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a 3-step form wizard with navigation and a summary step.
+
+Requirements:
+• Step 1: Name & Email
+• Step 2: Password (with confirm)
+• Step 3: Review & Submit
+• Next/Back buttons with step indicators
+• Validate each step before allowing Next`,
+    starterCode: `function FormWizard() {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [errors, setErrors] = useState({});
+
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420, margin: '0 auto' }}>
+      <h2>Sign Up</h2>
+      {/* wizard here */}
+    </div>
+  );
+}
+
+export default FormWizard;`,
+    solution: `function Field({ label, ...props }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: '#374151' }}>{label}</label>
+      <input {...props} style={{ width: '100%', padding: '9px 12px', borderRadius: 8,
+        border: \`1px solid \${props['data-err'] ? '#ef4444' : '#d1d5db'}\`, fontSize: 14, boxSizing: 'border-box' }} />
+      {props['data-err'] && <span style={{ color: '#ef4444', fontSize: 12 }}>{props['data-err']}</span>}
+    </div>
+  );
+}
+
+function FormWizard() {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const validate = () => {
+    const e = {};
+    if (step === 1) {
+      if (!form.name.trim()) e.name = 'Name is required';
+      if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) e.email = 'Valid email required';
+    }
+    if (step === 2) {
+      if (form.password.length < 6) e.password = 'Min 6 characters';
+      if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const next = () => { if (validate()) setStep(s => s + 1); };
+  const back = () => { setErrors({}); setStep(s => s - 1); };
+
+  if (submitted) return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ fontSize: 52 }}>🎉</div>
+      <h2>Account Created!</h2>
+      <p style={{ color: '#6b7280' }}>Welcome, {form.name}!</p>
+    </div>
+  );
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420, margin: '0 auto' }}>
+      <h2>Sign Up</h2>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        {[1,2,3].map(n => (
+          <div key={n} style={{ flex: 1, height: 6, borderRadius: 3,
+            background: n <= step ? '#6366f1' : '#e5e7eb' }} />
+        ))}
+      </div>
+      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 20 }}>Step {step} of 3</div>
+
+      {step === 1 && (
+        <>
+          <Field label="Full Name" value={form.name} onChange={set('name')} placeholder="Jane Doe" data-err={errors.name} />
+          <Field label="Email" type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" data-err={errors.email} />
+        </>
+      )}
+      {step === 2 && (
+        <>
+          <Field label="Password" type="password" value={form.password} onChange={set('password')} placeholder="Min 6 chars" data-err={errors.password} />
+          <Field label="Confirm Password" type="password" value={form.confirm} onChange={set('confirm')} placeholder="Repeat password" data-err={errors.confirm} />
+        </>
+      )}
+      {step === 3 && (
+        <div style={{ background: '#f8fafc', borderRadius: 10, padding: 16, border: '1px solid #e2e8f0' }}>
+          <h3 style={{ margin: '0 0 12px' }}>Review</h3>
+          {[['Name', form.name], ['Email', form.email], ['Password', '••••••']].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0',
+              borderBottom: '1px solid #e2e8f0', fontSize: 14 }}>
+              <span style={{ color: '#6b7280' }}>{k}</span><span style={{ fontWeight: 600 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+        {step > 1 && <button onClick={back} style={{ flex: 1, padding: 10, borderRadius: 8,
+          border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Back</button>}
+        {step < 3
+          ? <button onClick={next} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none',
+              background: '#6366f1', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Next</button>
+          : <button onClick={() => setSubmitted(true)} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none',
+              background: '#22c55e', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Submit</button>
+        }
+      </div>
+    </div>
+  );
+}
+
+export default FormWizard;`,
+    explanation: "Step state drives which fields render. validate() checks only the current step's fields and populates errors. Progress bar fills based on current step. Submitted flag swaps the whole UI to a success screen.",
+  },
+  {
+    id: 'r27',
+    estimatedTime: '10–15 min',
+    type: 'react',
+    title: 'Infinite Scroll List',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Simulate infinite scroll — load more items as the user scrolls to the bottom.
+
+Requirements:
+• Start with 20 items, load 20 more when near the bottom
+• Show a loading spinner while "fetching"
+• Use an IntersectionObserver (or onScroll) to detect the sentinel element
+• Show total item count`,
+    starterCode: `function makeItems(start, count) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: start + i,
+    text: \`Item #\${start + i + 1}\`,
+  }));
+}
+
+function InfiniteScroll() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 400, margin: '0 auto' }}>
+      <h2>Infinite Scroll</h2>
+      {/* list here */}
+    </div>
+  );
+}
+
+export default InfiniteScroll;`,
+    solution: `function makeItems(start, count) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: start + i,
+    text: \`Item #\${start + i + 1}\`,
+  }));
+}
+
+function InfiniteScroll() {
+  const [items, setItems] = useState(() => makeItems(0, 20));
+  const [loading, setLoading] = useState(false);
+  const sentinelRef = useRef(null);
+
+  const loadMore = useCallback(() => {
+    if (loading) return;
+    setLoading(true);
+    setTimeout(() => {
+      setItems(prev => [...prev, ...makeItems(prev.length, 20)]);
+      setLoading(false);
+    }, 800);
+  }, [loading]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) loadMore();
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loadMore]);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 400, margin: '0 auto' }}>
+      <h2>Infinite Scroll <span style={{ fontSize: 14, color: '#6b7280' }}>({items.length} items)</span></h2>
+      <div style={{ height: 400, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 10 }}>
+        {items.map(item => (
+          <div key={item.id} style={{
+            padding: '12px 16px', borderBottom: '1px solid #f1f5f9',
+            fontSize: 14, color: '#374151',
+          }}>{item.text}</div>
+        ))}
+        <div ref={sentinelRef} style={{ padding: 16, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+          {loading ? '⏳ Loading more...' : '↓ Scroll for more'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default InfiniteScroll;`,
+    explanation: 'IntersectionObserver watches a sentinel div at the bottom of the list. When it enters the viewport, loadMore triggers. The observer is re-created when loadMore changes (wrapped in useCallback). setTimeout simulates network latency.',
+  },
+  {
+    id: 'r28',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Custom Hook – useFetch',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a reusable useFetch hook and demonstrate it fetching public data.
+
+Requirements:
+• useFetch(url) returns { data, loading, error }
+• Re-fetches when URL changes
+• Handles errors gracefully
+• Cancels in-flight requests on cleanup (AbortController)
+• Demo: fetch a list of users from https://jsonplaceholder.typicode.com/users`,
+    starterCode: `function useFetch(url) {
+  // Your hook implementation here
+}
+
+function UserList() {
+  const { data, loading, error } = useFetch('https://jsonplaceholder.typicode.com/users');
+
+  // render users here
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 480 }}>
+      <h2>Users</h2>
+    </div>
+  );
+}
+
+export default UserList;`,
+    solution: `function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!url) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+
+    fetch(url, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(\`HTTP \${r.status}\`); return r.json(); })
+      .then(d => { setData(d); setLoading(false); })
+      .catch(e => { if (e.name !== 'AbortError') { setError(e.message); setLoading(false); } });
+
+    return () => controller.abort();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+function UserList() {
+  const { data: users, loading, error } = useFetch('https://jsonplaceholder.typicode.com/users');
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 480 }}>
+      <h2>Users</h2>
+      {loading && <p style={{ color: '#6b7280' }}>⏳ Loading...</p>}
+      {error && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
+      {users && users.map(u => (
+        <div key={u.id} style={{
+          padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 10,
+          marginBottom: 10, background: '#f8fafc',
+        }}>
+          <div style={{ fontWeight: 700 }}>{u.name}</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>{u.email} · {u.company.name}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default UserList;`,
+    explanation: 'AbortController cancels the fetch if the component unmounts or url changes before the request finishes — prevents setState on unmounted components. The guard e.name !== "AbortError" stops abort errors from being shown as real errors.',
+  },
+  {
+    id: 'r29',
+    estimatedTime: '12–18 min',
+    type: 'react',
+    title: 'Autocomplete / Typeahead',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build an autocomplete input that filters suggestions as you type.
+
+Requirements:
+• Input filters a list of country names
+• Show dropdown of matching results (max 8)
+• Keyboard navigation: Arrow keys move selection, Enter confirms, Escape closes
+• Click a suggestion to select it
+• Show selected value below`,
+    starterCode: `const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Argentina','Australia','Austria','Bangladesh',
+  'Belgium','Brazil','Canada','Chile','China','Colombia','Denmark','Egypt',
+  'Finland','France','Germany','Ghana','Greece','Hungary','India','Indonesia',
+  'Iran','Iraq','Ireland','Israel','Italy','Japan','Jordan','Kenya','Malaysia',
+  'Mexico','Morocco','Netherlands','New Zealand','Nigeria','Norway','Pakistan',
+  'Peru','Philippines','Poland','Portugal','Romania','Russia','Saudi Arabia',
+  'South Africa','South Korea','Spain','Sweden','Switzerland','Thailand','Turkey',
+  'Ukraine','United Kingdom','United States','Vietnam',
+];
+
+function Autocomplete() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 380 }}>
+      <h2>Country Search</h2>
+      {/* input + dropdown here */}
+    </div>
+  );
+}
+
+export default Autocomplete;`,
+    solution: `const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Argentina','Australia','Austria','Bangladesh',
+  'Belgium','Brazil','Canada','Chile','China','Colombia','Denmark','Egypt',
+  'Finland','France','Germany','Ghana','Greece','Hungary','India','Indonesia',
+  'Iran','Iraq','Ireland','Israel','Italy','Japan','Jordan','Kenya','Malaysia',
+  'Mexico','Morocco','Netherlands','New Zealand','Nigeria','Norway','Pakistan',
+  'Peru','Philippines','Poland','Portugal','Romania','Russia','Saudi Arabia',
+  'South Africa','South Korea','Spain','Sweden','Switzerland','Thailand','Turkey',
+  'Ukraine','United Kingdom','United States','Vietnam',
+];
+
+function Autocomplete() {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const [selected, setSelected] = useState('');
+
+  const filtered = query
+    ? COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    : [];
+
+  const pick = (country) => {
+    setSelected(country);
+    setQuery(country);
+    setOpen(false);
+    setActive(-1);
+  };
+
+  const onKey = (e) => {
+    if (!open) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(a + 1, filtered.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(a - 1, 0)); }
+    else if (e.key === 'Enter' && active >= 0) pick(filtered[active]);
+    else if (e.key === 'Escape') setOpen(false);
+  };
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 380 }}>
+      <h2>Country Search</h2>
+      <div style={{ position: 'relative' }}>
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); setActive(-1); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={onKey}
+          placeholder="Type a country..."
+          style={{ width: '100%', padding: '10px 12px', fontSize: 14, borderRadius: 8,
+            border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+        />
+        {open && filtered.length > 0 && (
+          <ul style={{ position: 'absolute', top: '100%', left: 0, right: 0, margin: 0, padding: 0,
+            listStyle: 'none', background: '#fff', border: '1px solid #d1d5db', borderRadius: 8,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 10, overflow: 'hidden' }}>
+            {filtered.map((c, i) => (
+              <li key={c} onMouseDown={() => pick(c)}
+                style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14,
+                  background: i === active ? '#6366f1' : '#fff',
+                  color: i === active ? '#fff' : '#111827' }}>
+                {c}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {selected && (
+        <p style={{ marginTop: 14, color: '#22c55e', fontWeight: 600 }}>✓ Selected: {selected}</p>
+      )}
+    </div>
+  );
+}
+
+export default Autocomplete;`,
+    explanation: 'onBlur uses setTimeout(150ms) so the click on a dropdown item fires before the blur closes the list. Keyboard navigation tracks an active index and Arrow keys clamp it to the filtered list bounds. All state derives from the query string.',
+  },
+  {
+    id: 'r30',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'useMemo & useCallback Optimization',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Demonstrate useMemo and useCallback to prevent unnecessary re-renders.
+
+Requirements:
+• A parent with a counter (to trigger re-renders) and a list of numbers
+• An "expensive" computation (sum of squares) shown using useMemo
+• A child component wrapped in React.memo
+• A callback passed to the child wrapped in useCallback
+• Log when the child re-renders to show optimization working`,
+    starterCode: `// Child that should only re-render when its props change
+const ExpensiveChild = React.memo(function ExpensiveChild({ onAction, label }) {
+  console.log('ExpensiveChild rendered');
+  return (
+    <button onClick={onAction} style={{ padding: '8px 16px', borderRadius: 8 }}>
+      {label}
+    </button>
+  );
+});
+
+function MemoDemo() {
+  const [count, setCount] = useState(0);
+  const [numbers] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+  // TODO: wrap sumOfSquares in useMemo
+  const sumOfSquares = numbers.reduce((acc, n) => acc + n * n, 0);
+
+  // TODO: wrap this in useCallback
+  const handleAction = () => alert('Action!');
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420 }}>
+      <h2>Memoization Demo</h2>
+      {/* UI here */}
+    </div>
+  );
+}
+
+export default MemoDemo;`,
+    solution: `const ExpensiveChild = React.memo(function ExpensiveChild({ onAction, label }) {
+  console.log('ExpensiveChild rendered');
+  return (
+    <button onClick={onAction} style={{
+      padding: '8px 20px', borderRadius: 8, border: 'none',
+      background: '#6366f1', color: '#fff', cursor: 'pointer', fontSize: 14,
+    }}>{label}</button>
+  );
+});
+
+function MemoDemo() {
+  const [count, setCount] = useState(0);
+  const [numbers] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+  // Only recomputes when numbers changes
+  const sumOfSquares = useMemo(() => {
+    console.log('Computing sum of squares...');
+    return numbers.reduce((acc, n) => acc + n * n, 0);
+  }, [numbers]);
+
+  // Stable reference — ExpensiveChild won't re-render on count changes
+  const handleAction = useCallback(() => {
+    alert('Action triggered!');
+  }, []);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420 }}>
+      <h2>Memoization Demo</h2>
+      <p style={{ fontSize: 13, color: '#6b7280' }}>
+        Open the console and click the counter. <br/>
+        ExpensiveChild should NOT re-render on counter change.
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '20px 0',
+        padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+        <button onClick={() => setCount(c => c + 1)} style={{
+          padding: '8px 20px', borderRadius: 8, border: 'none', background: '#f59e0b',
+          color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+          Count: {count}
+        </button>
+        <span style={{ color: '#6b7280', fontSize: 13 }}>← Triggers parent re-render</span>
+      </div>
+      <div style={{ padding: 16, background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', marginBottom: 20 }}>
+        <div style={{ fontSize: 13, color: '#15803d', marginBottom: 4 }}>useMemo result</div>
+        <div style={{ fontWeight: 700, fontSize: 18 }}>Sum of squares: {sumOfSquares}</div>
+        <div style={{ fontSize: 12, color: '#6b7280' }}>numbers = [1..10]</div>
+      </div>
+      <div style={{ padding: 16, background: '#eff6ff', borderRadius: 10, border: '1px solid #bfdbfe' }}>
+        <div style={{ fontSize: 13, color: '#1d4ed8', marginBottom: 10 }}>useCallback + React.memo</div>
+        <ExpensiveChild onAction={handleAction} label="Trigger Action" />
+      </div>
+    </div>
+  );
+}
+
+export default MemoDemo;`,
+    explanation: 'React.memo skips re-renders when props are shallowly equal. Without useCallback, handleAction is a new function reference every render, breaking memo. With useCallback([]) the reference is stable. useMemo caches the computed value and only recalculates when numbers changes.',
+  },
+  {
+    id: 'r31',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Drag to Reorder List',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a list where items can be reordered by dragging.
+
+Requirements:
+• Render a list of items that can be dragged to reorder
+• Show visual feedback (opacity) on the dragged item
+• Drop on any item to reorder the list
+• No external libraries — use HTML5 drag-and-drop API`,
+    starterCode: `const INITIAL_ITEMS = [
+  { id: 1, text: '🍎 Apple' },
+  { id: 2, text: '🍌 Banana' },
+  { id: 3, text: '🍇 Grape' },
+  { id: 4, text: '🍊 Orange' },
+  { id: 5, text: '🍓 Strawberry' },
+];
+
+function DraggableList() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 360 }}>
+      <h2>Drag to Reorder</h2>
+      {/* list here */}
+    </div>
+  );
+}
+
+export default DraggableList;`,
+    solution: `const INITIAL_ITEMS = [
+  { id: 1, text: '🍎 Apple' },
+  { id: 2, text: '🍌 Banana' },
+  { id: 3, text: '🍇 Grape' },
+  { id: 4, text: '🍊 Orange' },
+  { id: 5, text: '🍓 Strawberry' },
+];
+
+function DraggableList() {
+  const [items, setItems] = useState(INITIAL_ITEMS);
+  const dragIdx = useRef(null);
+  const [overIdx, setOverIdx] = useState(null);
+
+  const onDragStart = (i) => { dragIdx.current = i; };
+  const onDragOver = (e, i) => { e.preventDefault(); setOverIdx(i); };
+  const onDrop = (targetIdx) => {
+    if (dragIdx.current === null || dragIdx.current === targetIdx) return;
+    setItems(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIdx.current, 1);
+      next.splice(targetIdx, 0, moved);
+      return next;
+    });
+    dragIdx.current = null;
+    setOverIdx(null);
+  };
+  const onDragEnd = () => { dragIdx.current = null; setOverIdx(null); };
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 360 }}>
+      <h2>Drag to Reorder</h2>
+      <p style={{ fontSize: 13, color: '#6b7280' }}>Drag items to reorder the list.</p>
+      <div>
+        {items.map((item, i) => (
+          <div key={item.id}
+            draggable
+            onDragStart={() => onDragStart(i)}
+            onDragOver={(e) => onDragOver(e, i)}
+            onDrop={() => onDrop(i)}
+            onDragEnd={onDragEnd}
+            style={{
+              padding: '12px 16px', marginBottom: 8, borderRadius: 10,
+              background: overIdx === i ? '#eff6ff' : '#fff',
+              border: \`2px solid \${overIdx === i ? '#6366f1' : '#e2e8f0'}\`,
+              opacity: dragIdx.current === i ? 0.4 : 1,
+              cursor: 'grab', fontSize: 15, display: 'flex', alignItems: 'center', gap: 12,
+              transition: 'border-color 0.15s, background 0.15s',
+            }}>
+            <span style={{ color: '#9ca3af', fontSize: 18 }}>⠿</span>
+            {item.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default DraggableList;`,
+    explanation: 'dragIdx ref (not state) tracks the dragged item index without causing re-renders. onDrop splices the dragged item out and inserts it at the target index using array spread to keep state immutable. overIdx state drives the drop-target highlight.',
+  },
+  {
+    id: 'r32',
+    estimatedTime: '10–15 min',
+    type: 'react',
+    title: 'Clock / Analog + Digital',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a real-time clock that shows both analog and digital time.
+
+Requirements:
+• Digital display: HH:MM:SS
+• Analog clock face with hour, minute, and second hands using SVG
+• Updates every second with useEffect + setInterval
+• Show AM/PM`,
+    starterCode: `function Clock() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, textAlign: 'center', maxWidth: 320, margin: '0 auto' }}>
+      <h2>Live Clock</h2>
+      {/* clock here */}
+    </div>
+  );
+}
+
+export default Clock;`,
+    solution: `function Clock() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  const pad = n => String(n).padStart(2, '0');
+  const digital = \`\${pad(h % 12 || 12)}:\${pad(m)}:\${pad(s)} \${h < 12 ? 'AM' : 'PM'}\`;
+
+  const deg = (val, max) => (val / max) * 360 - 90;
+  const hand = (angle, len, width, color) => {
+    const rad = (angle * Math.PI) / 180;
+    return { x2: 100 + len * Math.cos(rad), y2: 100 + len * Math.sin(rad), width, color };
+  };
+  const hourHand   = hand(deg(h % 12 * 60 + m, 720), 50, 6, '#1e293b');
+  const minuteHand = hand(deg(m * 60 + s, 3600), 70, 4, '#334155');
+  const secondHand = hand(deg(s, 60), 75, 2, '#ef4444');
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, textAlign: 'center', maxWidth: 320, margin: '0 auto' }}>
+      <h2>Live Clock</h2>
+      <svg viewBox="0 0 200 200" width="220" height="220">
+        <circle cx="100" cy="100" r="95" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="4" />
+        {[...Array(12)].map((_, i) => {
+          const a = (i / 12) * 2 * Math.PI;
+          return <line key={i}
+            x1={100 + 82 * Math.cos(a)} y1={100 + 82 * Math.sin(a)}
+            x2={100 + 90 * Math.cos(a)} y2={100 + 90 * Math.sin(a)}
+            stroke="#94a3b8" strokeWidth="2.5" />;
+        })}
+        {[hourHand, minuteHand, secondHand].map((h, i) => (
+          <line key={i} x1="100" y1="100" x2={h.x2} y2={h.y2}
+            stroke={h.color} strokeWidth={h.width} strokeLinecap="round" />
+        ))}
+        <circle cx="100" cy="100" r="4" fill="#1e293b" />
+      </svg>
+      <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: 2, color: '#1e293b', marginTop: 8 }}>
+        {digital}
+      </div>
+    </div>
+  );
+}
+
+export default Clock;`,
+    explanation: 'setInterval in useEffect ticks every 1s and updates state with new Date(). Hand angles are calculated by converting time to degrees (360°). SVG lines from the center point outward. Hour hand includes minutes for smooth movement.',
+  },
+  {
+    id: 'r33',
+    estimatedTime: '8–12 min',
+    type: 'react',
+    title: 'Tic-Tac-Toe Game',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a fully playable Tic-Tac-Toe game.
+
+Requirements:
+• 3×3 grid with X and O turns
+• Detect win conditions and draw
+• Highlight winning squares
+• Show whose turn it is and the result
+• Reset button to start a new game`,
+    starterCode: `function TicTacToe() {
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [xIsNext, setXIsNext] = useState(true);
+
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 320, margin: '0 auto', textAlign: 'center' }}>
+      <h2>Tic-Tac-Toe</h2>
+      {/* board here */}
+    </div>
+  );
+}
+
+export default TicTacToe;`,
+    solution: `const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function calcWinner(board) {
+  for (const [a, b, c] of LINES) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c])
+      return { winner: board[a], line: [a, b, c] };
+  }
+  return null;
+}
+
+function TicTacToe() {
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [xIsNext, setXIsNext] = useState(true);
+
+  const result = calcWinner(board);
+  const isDraw = !result && board.every(Boolean);
+
+  const click = (i) => {
+    if (board[i] || result) return;
+    const next = [...board];
+    next[i] = xIsNext ? 'X' : 'O';
+    setBoard(next);
+    setXIsNext(x => !x);
+  };
+
+  const status = result
+    ? \`🎉 Winner: \${result.winner}\`
+    : isDraw ? "It's a draw!"
+    : \`Next: \${xIsNext ? 'X' : 'O'}\`;
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 280, margin: '0 auto', textAlign: 'center' }}>
+      <h2>Tic-Tac-Toe</h2>
+      <p style={{ fontWeight: 700, fontSize: 16, color: result ? '#22c55e' : isDraw ? '#f59e0b' : '#1e293b' }}>
+        {status}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, maxWidth: 240, margin: '0 auto 20px' }}>
+        {board.map((val, i) => {
+          const isWin = result?.line.includes(i);
+          return (
+            <button key={i} onClick={() => click(i)} style={{
+              height: 72, fontSize: 28, fontWeight: 800, cursor: board[i] || result ? 'default' : 'pointer',
+              borderRadius: 10, border: '2px solid #e2e8f0',
+              background: isWin ? '#fef3c7' : '#f8fafc',
+              color: val === 'X' ? '#6366f1' : '#ef4444',
+              transition: 'background 0.2s',
+            }}>{val}</button>
+          );
+        })}
+      </div>
+      <button onClick={() => { setBoard(Array(9).fill(null)); setXIsNext(true); }} style={{
+        padding: '8px 24px', borderRadius: 8, border: 'none', background: '#6366f1',
+        color: '#fff', cursor: 'pointer', fontWeight: 700,
+      }}>Reset</button>
+    </div>
+  );
+}
+
+export default TicTacToe;`,
+    explanation: 'Board is a flat array of 9 squares. calcWinner checks all 8 win lines. Winning indices are highlighted by checking result.line.includes(i). All game logic is pure functions — state is minimal (board + turn).',
+  },
+  {
+    id: 'r34',
+    estimatedTime: '12–18 min',
+    type: 'react',
+    title: 'Virtual Keyboard',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build an on-screen keyboard that types into a text display.
+
+Requirements:
+• Full QWERTY layout in 3 rows
+• Space bar, Backspace, and Caps Lock keys
+• Show typed text in a display area
+• Caps Lock toggles uppercase/lowercase
+• Highlight physical key presses with keydown event listener`,
+    starterCode: `const ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m'],
+];
+
+function VirtualKeyboard() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <h2>Virtual Keyboard</h2>
+      {/* display + keyboard here */}
+    </div>
+  );
+}
+
+export default VirtualKeyboard;`,
+    solution: `const ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m'],
+];
+
+function VirtualKeyboard() {
+  const [text, setText] = useState('');
+  const [caps, setCaps] = useState(false);
+  const [active, setActive] = useState(null);
+
+  useEffect(() => {
+    const down = (e) => {
+      setActive(e.key.toLowerCase());
+      if (e.key === 'CapsLock') setCaps(c => !c);
+    };
+    const up = () => setActive(null);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, []);
+
+  const type = (key) => {
+    if (key === 'backspace') setText(t => t.slice(0, -1));
+    else if (key === 'caps') setCaps(c => !c);
+    else if (key === 'space') setText(t => t + ' ');
+    else setText(t => t + (caps ? key.toUpperCase() : key));
+  };
+
+  const Key = ({ k, label, wide }) => (
+    <button
+      onClick={() => type(k)}
+      style={{
+        padding: wide ? '10px 18px' : '10px 0', minWidth: wide ? undefined : 36,
+        flex: wide ? undefined : 1, borderRadius: 8, border: '1px solid #d1d5db',
+        background: active === k || (k === 'caps' && caps) ? '#6366f1' : '#fff',
+        color: active === k || (k === 'caps' && caps) ? '#fff' : '#1e293b',
+        cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'monospace',
+        transition: 'background 0.1s',
+      }}
+    >{label || (caps ? k.toUpperCase() : k)}</button>
+  );
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 560, margin: '0 auto' }}>
+      <h2>Virtual Keyboard</h2>
+      <div style={{
+        minHeight: 56, padding: '12px 16px', background: '#f8fafc', border: '2px solid #e2e8f0',
+        borderRadius: 10, fontSize: 20, marginBottom: 16, letterSpacing: 1,
+        color: text ? '#1e293b' : '#9ca3af',
+      }}>{text || 'Start typing...'}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {ROWS.map((row, ri) => (
+          <div key={ri} style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+            {ri === 2 && <Key k="caps" label="Caps" wide />}
+            {row.map(k => <Key key={k} k={k} />)}
+            {ri === 2 && <Key k="backspace" label="⌫" wide />}
+          </div>
+        ))}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+          <button onClick={() => type('space')} style={{
+            padding: '10px 0', width: 280, borderRadius: 8, border: '1px solid #d1d5db',
+            background: active === ' ' ? '#6366f1' : '#fff', color: active === ' ' ? '#fff' : '#1e293b',
+            cursor: 'pointer', fontSize: 13, fontWeight: 600,
+          }}>SPACE</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default VirtualKeyboard;`,
+    explanation: 'Physical key presses update active state via keydown/keyup listeners for visual feedback. Caps toggle persists in state and maps to uppercase via ternary. Backspace slices the last character. cleanup removes both listeners on unmount.',
+  },
+  {
+    id: 'r35',
+    estimatedTime: '3–5 min',
+    type: 'react',
+    title: 'useRef – Focus Management',
+    difficulty: 'Easy',
+    category: 'React',
+    description: `Demonstrate practical useRef patterns for DOM manipulation.
+
+Requirements:
+• Auto-focus an input on mount
+• A "Focus Input" button that re-focuses the input
+• A scroll-to-top button using a ref on the container
+• Track how many times the component has rendered using a ref (without causing re-renders)`,
+    starterCode: `function FocusDemo() {
+  const [count, setCount] = useState(0);
+  // Your refs here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420 }}>
+      <h2>useRef Patterns</h2>
+      {/* UI here */}
+    </div>
+  );
+}
+
+export default FocusDemo;`,
+    solution: `function FocusDemo() {
+  const [count, setCount] = useState(0);
+  const inputRef = useRef(null);
+  const topRef = useRef(null);
+  const renderCount = useRef(0);
+
+  renderCount.current += 1;
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 420 }}>
+      <div ref={topRef} />
+      <h2>useRef Patterns</h2>
+
+      <div style={{ background: '#f0fdf4', padding: 14, borderRadius: 10, border: '1px solid #bbf7d0', marginBottom: 18 }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#15803d' }}>
+          ⚡ Render count (via ref, no re-render): <strong>{renderCount.current}</strong>
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 18 }}>
+        <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: '#374151' }}>
+          Input (auto-focused on mount):
+        </label>
+        <input ref={inputRef} placeholder="I was focused on mount..."
+          style={{ padding: '10px 12px', fontSize: 14, borderRadius: 8, border: '1px solid #d1d5db', width: '100%', boxSizing: 'border-box' }} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button onClick={() => inputRef.current?.focus()} style={{
+          padding: '8px 16px', borderRadius: 8, border: 'none', background: '#6366f1',
+          color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Focus Input</button>
+        <button onClick={() => setCount(c => c + 1)} style={{
+          padding: '8px 16px', borderRadius: 8, border: '1px solid #d1d5db',
+          background: '#fff', cursor: 'pointer', fontWeight: 600 }}>Re-render ({count})</button>
+        <button onClick={scrollTop} style={{
+          padding: '8px 16px', borderRadius: 8, border: 'none', background: '#14b8a6',
+          color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Scroll to Top</button>
+      </div>
+
+      <div style={{ marginTop: 24, padding: 14, background: '#eff6ff', borderRadius: 10, border: '1px solid #bfdbfe' }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#1d4ed8' }}>
+          Key insight: <code>renderCount.current</code> increments on every render but <em>does not cause</em> a re-render.
+          useState would cause an infinite loop here.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default FocusDemo;`,
+    explanation: 'useRef returns a mutable object whose .current persists across renders without triggering re-renders. inputRef.current?.focus() imperatively focuses the DOM node. renderCount.current++ is safe exactly because it does not schedule a re-render.',
+  },
+  {
+    id: 'r36',
+    estimatedTime: '3–5 min',
+    type: 'react',
+    title: 'Custom Hook – useWindowSize',
+    difficulty: 'Easy',
+    category: 'React',
+    description: `Build a useWindowSize hook and demonstrate responsive behavior.
+
+Requirements:
+• useWindowSize() returns { width, height } that updates on resize
+• Demonstrate with a responsive component that changes layout based on width
+• Breakpoints: mobile < 640px, tablet < 1024px, desktop ≥ 1024px
+• Debounce the resize handler (optional but good practice)`,
+    starterCode: `function useWindowSize() {
+  // Your hook here
+}
+
+function ResponsiveDemo() {
+  const { width, height } = useWindowSize();
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Responsive Demo</h2>
+      {/* show size info and responsive layout here */}
+    </div>
+  );
+}
+
+export default ResponsiveDemo;`,
+    solution: `function useWindowSize() {
+  const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  useEffect(() => {
+    let timer;
+    const handler = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setSize({ width: window.innerWidth, height: window.innerHeight });
+      }, 100);
+    };
+    window.addEventListener('resize', handler);
+    return () => { window.removeEventListener('resize', handler); clearTimeout(timer); };
+  }, []);
+
+  return size;
+}
+
+function ResponsiveDemo() {
+  const { width, height } = useWindowSize();
+  const bp = width < 640 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
+  const bpColor = { mobile: '#ef4444', tablet: '#f59e0b', desktop: '#22c55e' }[bp];
+  const cols = bp === 'mobile' ? 1 : bp === 'tablet' ? 2 : 3;
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Responsive Demo</h2>
+      <div style={{ padding: 16, background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 20 }}>
+        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>Window Size</div>
+        <div style={{ fontSize: 22, fontWeight: 800 }}>{width} × {height}</div>
+        <div style={{ marginTop: 8 }}>
+          <span style={{ background: bpColor, color: '#fff', borderRadius: 6, padding: '2px 10px', fontSize: 13, fontWeight: 700 }}>
+            {bp.toUpperCase()}
+          </span>
+          <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 10 }}>
+            {bp === 'mobile' ? '< 640px' : bp === 'tablet' ? '640–1023px' : '≥ 1024px'}
+          </span>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: \`repeat(\${cols}, 1fr)\`, gap: 12 }}>
+        {['Card A','Card B','Card C'].map(label => (
+          <div key={label} style={{ padding: 20, background: '#fff', borderRadius: 10,
+            border: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 700, color: bpColor }}>
+            {label}
+          </div>
+        ))}
+      </div>
+      <p style={{ marginTop: 16, fontSize: 13, color: '#6b7280' }}>
+        Resize the browser window — layout adjusts automatically.
+      </p>
+    </div>
+  );
+}
+
+export default ResponsiveDemo;`,
+    explanation: 'The resize listener in useEffect updates state on window resize. The debounce (100ms setTimeout) batches rapid resize events to avoid excessive re-renders. Cleanup removes the listener and the pending timer. The component derives its column count directly from width.',
+  },
+  {
+    id: 'r37',
+    estimatedTime: '10–15 min',
+    type: 'react',
+    title: 'Notification Toast System',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a toast notification system with auto-dismiss.
+
+Requirements:
+• Buttons to trigger Success, Error, Warning, and Info toasts
+• Toasts stack vertically in the top-right corner
+• Each auto-dismisses after 3 seconds
+• Manual close button (✕) on each toast
+• Smooth slide-in animation`,
+    starterCode: `let toastId = 0;
+
+function ToastDemo() {
+  const [toasts, setToasts] = useState([]);
+
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Toast Notifications</h2>
+      {/* trigger buttons here */}
+      {/* toast container here */}
+    </div>
+  );
+}
+
+export default ToastDemo;`,
+    solution: `let toastId = 0;
+
+const TYPES = {
+  success: { bg: '#f0fdf4', border: '#bbf7d0', icon: '✅', color: '#15803d' },
+  error:   { bg: '#fef2f2', border: '#fecaca', icon: '❌', color: '#dc2626' },
+  warning: { bg: '#fffbeb', border: '#fde68a', icon: '⚠️', color: '#d97706' },
+  info:    { bg: '#eff6ff', border: '#bfdbfe', icon: 'ℹ️', color: '#2563eb' },
+};
+
+function Toast({ toast, onClose }) {
+  const t = TYPES[toast.type];
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 10,
+      padding: '12px 16px', borderRadius: 10, marginBottom: 8,
+      background: t.bg, border: \`1px solid \${t.border}\`,
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      animation: 'slideIn 0.25s ease',
+      minWidth: 280, maxWidth: 360,
+    }}>
+      <span>{t.icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, color: t.color, fontSize: 14 }}>{toast.title}</div>
+        {toast.msg && <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>{toast.msg}</div>}
+      </div>
+      <button onClick={() => onClose(toast.id)} style={{
+        border: 'none', background: 'none', cursor: 'pointer', fontSize: 16,
+        color: '#9ca3af', lineHeight: 1, padding: 0,
+      }}>✕</button>
+    </div>
+  );
+}
+
+function ToastDemo() {
+  const [toasts, setToasts] = useState([]);
+
+  const add = (type, title, msg) => {
+    const id = ++toastId;
+    setToasts(t => [...t, { id, type, title, msg }]);
+    setTimeout(() => remove(id), 3000);
+  };
+
+  const remove = (id) => setToasts(t => t.filter(x => x.id !== id));
+
+  const btnStyle = (bg) => ({
+    padding: '8px 16px', borderRadius: 8, border: 'none',
+    background: bg, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+  });
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <style>{\`@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }\`}</style>
+      <h2>Toast Notifications</h2>
+      <p style={{ fontSize: 13, color: '#6b7280' }}>Click a button to show a toast. It auto-dismisses after 3 seconds.</p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+        <button style={btnStyle('#22c55e')} onClick={() => add('success', 'Success!', 'Your changes were saved.')}>Success</button>
+        <button style={btnStyle('#ef4444')} onClick={() => add('error', 'Error', 'Something went wrong.')}>Error</button>
+        <button style={btnStyle('#f59e0b')} onClick={() => add('warning', 'Warning', 'Please review your input.')}>Warning</button>
+        <button style={btnStyle('#3b82f6')} onClick={() => add('info', 'Info', 'New update available.')}>Info</button>
+      </div>
+      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999 }}>
+        {toasts.map(t => <Toast key={t.id} toast={t} onClose={remove} />)}
+      </div>
+    </div>
+  );
+}
+
+export default ToastDemo;`,
+    explanation: 'Each toast has a unique id (incrementing ref outside component). setTimeout schedules removal after 3s. The remove function filters by id to remove a specific toast. CSS @keyframes animation is injected via a <style> tag in JSX.',
+  },
+  {
+    id: 'r38',
+    estimatedTime: '12–18 min',
+    type: 'react',
+    title: 'useReducer – Shopping Cart',
+    difficulty: 'Medium',
+    category: 'React',
+    description: `Build a product listing + shopping cart using useReducer for state management.
+
+Requirements:
+• Product grid with "Add to Cart" buttons
+• Cart panel showing items, quantities, and total
+• Actions: ADD_ITEM, REMOVE_ITEM, INCREMENT, DECREMENT, CLEAR_CART
+• Quantity badge on cart icon
+• Prevent adding more than available stock`,
+    starterCode: `const PRODUCTS = [
+  { id: 1, name: 'Wireless Headphones', price: 79, stock: 3, emoji: '🎧' },
+  { id: 2, name: 'Mechanical Keyboard', price: 129, stock: 2, emoji: '⌨️' },
+  { id: 3, name: 'USB-C Hub',           price: 49,  stock: 5, emoji: '🔌' },
+  { id: 4, name: 'Webcam HD',           price: 89,  stock: 1, emoji: '📷' },
+];
+
+function cartReducer(state, action) {
+  // Your reducer here
+}
+
+function ShoppingCart() {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+  const [showCart, setShowCart] = useState(false);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 600 }}>
+      {/* products + cart here */}
+    </div>
+  );
+}
+
+export default ShoppingCart;`,
+    solution: `const PRODUCTS = [
+  { id: 1, name: 'Wireless Headphones', price: 79, stock: 3, emoji: '🎧' },
+  { id: 2, name: 'Mechanical Keyboard', price: 129, stock: 2, emoji: '⌨️' },
+  { id: 3, name: 'USB-C Hub',           price: 49,  stock: 5, emoji: '🔌' },
+  { id: 4, name: 'Webcam HD',           price: 89,  stock: 1, emoji: '📷' },
+];
+
+function cartReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_ITEM': {
+      const existing = state.find(i => i.id === action.product.id);
+      if (existing) {
+        if (existing.qty >= action.product.stock) return state;
+        return state.map(i => i.id === action.product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      return [...state, { ...action.product, qty: 1 }];
+    }
+    case 'REMOVE_ITEM': return state.filter(i => i.id !== action.id);
+    case 'INCREMENT':   return state.map(i => i.id === action.id && i.qty < i.stock ? { ...i, qty: i.qty + 1 } : i);
+    case 'DECREMENT':   return state.map(i => i.id === action.id && i.qty > 1 ? { ...i, qty: i.qty - 1 } : i);
+    case 'CLEAR_CART':  return [];
+    default: return state;
+  }
+}
+
+function ShoppingCart() {
+  const [cart, dispatch] = useReducer(cartReducer, []);
+  const [showCart, setShowCart] = useState(false);
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  const totalPrice = cart.reduce((s, i) => s + i.qty * i.price, 0);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 600 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ margin: 0 }}>Products</h2>
+        <button onClick={() => setShowCart(s => !s)} style={{
+          position: 'relative', padding: '8px 16px', borderRadius: 8, border: '1px solid #e2e8f0',
+          background: '#fff', cursor: 'pointer', fontSize: 20,
+        }}>
+          🛒
+          {totalQty > 0 && <span style={{
+            position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff',
+            borderRadius: '50%', width: 20, height: 20, fontSize: 11, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>{totalQty}</span>}
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+        {PRODUCTS.map(p => {
+          const inCart = cart.find(i => i.id === p.id);
+          const atMax = inCart?.qty >= p.stock;
+          return (
+            <div key={p.id} style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 12, background: '#f8fafc' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>{p.emoji}</div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
+              <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 10 }}>
+                \${p.price} · {p.stock} in stock
+              </div>
+              <button onClick={() => dispatch({ type: 'ADD_ITEM', product: p })}
+                disabled={atMax}
+                style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: atMax ? 'not-allowed' : 'pointer',
+                  background: atMax ? '#e5e7eb' : '#6366f1', color: atMax ? '#9ca3af' : '#fff', fontWeight: 600, fontSize: 13 }}>
+                {atMax ? 'Max reached' : inCart ? \`In cart (\${inCart.qty})\` : 'Add to Cart'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {showCart && (
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, background: '#fff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h3 style={{ margin: 0 }}>Cart</h3>
+            {cart.length > 0 && <button onClick={() => dispatch({ type: 'CLEAR_CART' })} style={{
+              fontSize: 12, border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer',
+            }}>Clear All</button>}
+          </div>
+          {cart.length === 0 ? <p style={{ color: '#6b7280', fontSize: 14 }}>Cart is empty.</p> : (
+            <>
+              {cart.map(item => (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+                  padding: 10, background: '#f8fafc', borderRadius: 8 }}>
+                  <span style={{ fontSize: 22 }}>{item.emoji}</span>
+                  <div style={{ flex: 1, fontSize: 13 }}>
+                    <div style={{ fontWeight: 600 }}>{item.name}</div>
+                    <div style={{ color: '#6b7280' }}>\${item.price} × {item.qty} = \${item.price * item.qty}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <button onClick={() => dispatch({ type: 'DECREMENT', id: item.id })} style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid #d1d5db', cursor: 'pointer', background: '#fff' }}>−</button>
+                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 14, fontWeight: 700 }}>{item.qty}</span>
+                    <button onClick={() => dispatch({ type: 'INCREMENT', id: item.id })} style={{ width: 24, height: 24, borderRadius: 6, border: '1px solid #d1d5db', cursor: 'pointer', background: '#fff' }}>+</button>
+                    <button onClick={() => dispatch({ type: 'REMOVE_ITEM', id: item.id })} style={{ marginLeft: 4, width: 24, height: 24, borderRadius: 6, border: 'none', cursor: 'pointer', background: '#fee2e2', color: '#ef4444' }}>✕</button>
+                  </div>
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, fontWeight: 800, fontSize: 16, textAlign: 'right' }}>
+                Total: \${totalPrice}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default ShoppingCart;`,
+    explanation: 'useReducer centralizes all cart mutations. Each action type is a pure transformation of state. Stock checking in ADD_ITEM and INCREMENT prevents over-ordering. The badge derives totalQty directly from cart without extra state.',
+  },
+  {
+    id: 'r39',
+    estimatedTime: '20–30 min',
+    type: 'react',
+    title: 'Resizable Split Pane',
+    difficulty: 'Hard',
+    category: 'React',
+    description: `Build a horizontally resizable split pane layout.
+
+Requirements:
+• Two panels side by side with a draggable divider
+• Mouse down on divider → drag to resize both panels
+• Min width of 100px for each panel
+• Show current widths in pixels
+• Use useRef for drag state (not useState to avoid excessive re-renders)`,
+    starterCode: `function SplitPane() {
+  // Your code here
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Resizable Split Pane</h2>
+      {/* split pane here */}
+    </div>
+  );
+}
+
+export default SplitPane;`,
+    solution: `function SplitPane() {
+  const containerRef = useRef(null);
+  const [leftWidth, setLeftWidth] = useState(300);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startW = useRef(0);
+
+  const onMouseDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startW.current = leftWidth;
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const totalW = containerRef.current.offsetWidth;
+      const delta = e.clientX - startX.current;
+      const newW = Math.min(Math.max(100, startW.current + delta), totalW - 106);
+      setLeftWidth(newW);
+    };
+    const onUp = () => { isDragging.current = false; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [leftWidth]);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', padding: 24 }}>
+      <h2>Resizable Split Pane</h2>
+      <div ref={containerRef} style={{
+        display: 'flex', height: 320, border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden',
+      }}>
+        <div style={{ width: leftWidth, flexShrink: 0, background: '#eff6ff', padding: 16, overflow: 'auto' }}>
+          <div style={{ fontWeight: 700, color: '#3b82f6', marginBottom: 8 }}>Left Panel</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>Width: {Math.round(leftWidth)}px</div>
+          <p style={{ fontSize: 13, color: '#374151', marginTop: 12 }}>
+            Drag the divider to resize. This panel has a minimum width of 100px.
+          </p>
+        </div>
+        <div
+          onMouseDown={onMouseDown}
+          style={{
+            width: 6, flexShrink: 0, background: '#e2e8f0', cursor: 'col-resize',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#6366f1'}
+          onMouseLeave={e => e.currentTarget.style.background = '#e2e8f0'}
+        >
+          <div style={{ width: 2, height: 32, background: 'rgba(255,255,255,0.6)', borderRadius: 2 }} />
+        </div>
+        <div style={{ flex: 1, background: '#f0fdf4', padding: 16, overflow: 'auto' }}>
+          <div style={{ fontWeight: 700, color: '#22c55e', marginBottom: 8 }}>Right Panel</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>Fills remaining space</div>
+          <p style={{ fontSize: 13, color: '#374151', marginTop: 12 }}>
+            The right panel uses flex:1 to take all remaining space automatically.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default SplitPane;`,
+    explanation: 'isDragging and startX/startW are refs — they hold drag state without triggering re-renders during mousemove. Only setLeftWidth causes a render, and only when the actual value changes. Global mousemove/mouseup listeners handle mouse leaving the divider during drag.',
+  },
+  {
+    id: 'r40',
+    estimatedTime: '15–20 min',
+    type: 'react',
+    title: 'React.memo & Context Performance',
+    difficulty: 'Hard',
+    category: 'React',
+    description: `Demonstrate Context + memo to share global state without unnecessary re-renders.
+
+Requirements:
+• AppContext provides a theme and a counter
+• Three child components: one reads theme, one reads counter, one reads both
+• Wrap each in React.memo and log renders to console
+• Show that updating the counter only re-renders counter consumers, not theme-only consumers
+• Toggle button for theme, increment for counter`,
+    starterCode: `const AppContext = createContext(null);
+
+function useApp() {
+  return useContext(AppContext);
+}
+
+// These components should only re-render when their relevant data changes
+function ThemePanel() {
+  console.log('ThemePanel rendered');
+  // reads only theme
+  return <div>ThemePanel</div>;
+}
+
+function CounterPanel() {
+  console.log('CounterPanel rendered');
+  // reads only counter
+  return <div>CounterPanel</div>;
+}
+
+function BothPanel() {
+  console.log('BothPanel rendered');
+  // reads both
+  return <div>BothPanel</div>;
+}
+
+function App() {
+  // Your provider and state here
+  return <div style={{ fontFamily: 'sans-serif', padding: 24 }}>Performance Demo</div>;
+}
+
+export default App;`,
+    solution: `const ThemeCtx   = createContext(null);
+const CounterCtx = createContext(null);
+
+const ThemePanel = React.memo(function ThemePanel() {
+  console.log('ThemePanel rendered');
+  const { theme, toggleTheme } = useContext(ThemeCtx);
+  return (
+    <div style={{ padding: 16, borderRadius: 10, border: '1px solid #e2e8f0',
+      background: theme === 'dark' ? '#1e293b' : '#f8fafc', transition: 'background 0.3s' }}>
+      <div style={{ fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#1e293b', marginBottom: 8 }}>
+        🎨 Theme Panel <span style={{ fontSize: 11, color: '#9ca3af' }}>(reads theme only)</span>
+      </div>
+      <button onClick={toggleTheme} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+        background: theme === 'dark' ? '#6366f1' : '#1e293b', color: '#fff', fontWeight: 600 }}>
+        Switch to {theme === 'dark' ? 'Light' : 'Dark'}
+      </button>
+    </div>
+  );
+});
+
+const CounterPanel = React.memo(function CounterPanel() {
+  console.log('CounterPanel rendered');
+  const { count, increment } = useContext(CounterCtx);
+  return (
+    <div style={{ padding: 16, borderRadius: 10, border: '1px solid #e2e8f0', background: '#f8fafc' }}>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>
+        🔢 Counter Panel <span style={{ fontSize: 11, color: '#9ca3af' }}>(reads counter only)</span>
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#6366f1', marginBottom: 10 }}>{count}</div>
+      <button onClick={increment} style={{ padding: '6px 14px', borderRadius: 8, border: 'none',
+        cursor: 'pointer', background: '#6366f1', color: '#fff', fontWeight: 600 }}>
+        Increment
+      </button>
+    </div>
+  );
+});
+
+const BothPanel = React.memo(function BothPanel() {
+  console.log('BothPanel rendered');
+  const { theme } = useContext(ThemeCtx);
+  const { count } = useContext(CounterCtx);
+  return (
+    <div style={{ padding: 16, borderRadius: 10, border: '1px solid #e2e8f0',
+      background: theme === 'dark' ? '#1e293b' : '#eff6ff' }}>
+      <div style={{ fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#1e293b', marginBottom: 8 }}>
+        🔀 Both Panel <span style={{ fontSize: 11, color: '#9ca3af' }}>(reads both)</span>
+      </div>
+      <div style={{ fontSize: 13, color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>
+        Theme: <b>{theme}</b> · Count: <b>{count}</b>
+      </div>
+    </div>
+  );
+});
+
+function App() {
+  const [theme, setTheme] = useState('light');
+  const [count, setCount] = useState(0);
+
+  const themeValue = useMemo(() => ({ theme, toggleTheme: () => setTheme(t => t === 'light' ? 'dark' : 'light') }), [theme]);
+  const counterValue = useMemo(() => ({ count, increment: () => setCount(c => c + 1) }), [count]);
+
+  return (
+    <ThemeCtx.Provider value={themeValue}>
+      <CounterCtx.Provider value={counterValue}>
+        <div style={{ fontFamily: 'sans-serif', padding: 24, maxWidth: 480 }}>
+          <h2>Context Performance</h2>
+          <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+            Open the console. Toggling theme shouldn't re-render CounterPanel, and vice versa.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ThemePanel />
+            <CounterPanel />
+            <BothPanel />
+          </div>
+        </div>
+      </CounterCtx.Provider>
+    </ThemeCtx.Provider>
+  );
+}
+
+export default App;`,
+    explanation: 'Splitting into two contexts (ThemeCtx + CounterCtx) means consumers only re-render when their specific context changes. useMemo on the context values prevents new object references on unrelated re-renders. React.memo then skips the child if props (none here) and context are unchanged.',
+  },
 ];

@@ -423,6 +423,14 @@ export default function CodePractice({ isLight }) {
               fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
               color: '#22d3ee', background: 'rgba(34,211,238,0.12)',
             }}>⚛️ React</span>
+            {activeQ.estimatedTime && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                color: '#f59e0b', background: 'rgba(245,158,11,0.12)',
+                border: '1px solid rgba(245,158,11,0.3)',
+                marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3,
+              }}>⏱ {activeQ.estimatedTime}</span>
+            )}
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <ReactIDE key={activeQ.id} question={activeQ} isLight={isLight} />

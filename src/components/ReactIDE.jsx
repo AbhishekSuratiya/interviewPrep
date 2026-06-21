@@ -119,8 +119,7 @@ function ReactEditor({ value, onChange, readOnly = false }) {
   }, []);
 
   function beforeMount(monaco) {
-    // Enable JSX globally before any editor instance loads
-    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+    const jsxCompilerOpts = {
       jsx: monaco.languages.typescript.JsxEmit.React,
       jsxFactory: 'React.createElement',
       target: monaco.languages.typescript.ScriptTarget.ES2020,
@@ -129,11 +128,66 @@ function ReactEditor({ value, onChange, readOnly = false }) {
       esModuleInterop: true,
       allowJs: true,
       checkJs: false,
-    });
-    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: true,
-      noSyntaxValidation: false,
-    });
+    };
+    const noDiagnostics = { noSemanticValidation: true, noSyntaxValidation: true };
+
+    // Apply to both JS and TS defaults — Monaco uses whichever matches the model URI
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions(jsxCompilerOpts);
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(noDiagnostics);
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(jsxCompilerOpts);
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(noDiagnostics);
+
+    // React type definitions for autocomplete
+    const reactTypes = `
+declare namespace React {
+  type ReactNode = ReactElement | string | number | boolean | null | undefined;
+  interface ReactElement { type: any; props: any; key: any; }
+  interface FC<P = {}> { (props: P): ReactElement | null; displayName?: string; }
+  type CSSProperties = { [key: string]: string | number };
+  interface HTMLAttributes<T> {
+    className?: string; id?: string; style?: CSSProperties;
+    onClick?: (e: MouseEvent) => void; onChange?: (e: any) => void;
+    onSubmit?: (e: any) => void; onKeyDown?: (e: any) => void;
+    onKeyUp?: (e: any) => void; onFocus?: (e: any) => void;
+    onBlur?: (e: any) => void; onMouseEnter?: (e: any) => void;
+    onMouseLeave?: (e: any) => void; children?: ReactNode;
+    placeholder?: string; value?: string | number; type?: string;
+    disabled?: boolean; checked?: boolean; href?: string; src?: string;
+    alt?: string; ref?: any; key?: any; [key: string]: any;
+  }
+  function createElement(type: any, props?: any, ...children: any[]): ReactElement;
+  function useState<T>(init: T | (() => T)): [T, (val: T | ((prev: T) => T)) => void];
+  function useEffect(fn: () => void | (() => void), deps?: any[]): void;
+  function useCallback<T extends (...args: any[]) => any>(fn: T, deps: any[]): T;
+  function useMemo<T>(fn: () => T, deps: any[]): T;
+  function useRef<T = any>(init?: T): { current: T };
+  function useReducer<S, A>(reducer: (state: S, action: A) => S, init: S): [S, (action: A) => void];
+  function useContext<T>(ctx: Context<T>): T;
+  function useLayoutEffect(fn: () => void | (() => void), deps?: any[]): void;
+  function useId(): string;
+  function useTransition(): [boolean, (fn: () => void) => void];
+  function memo<T>(component: T): T;
+  function forwardRef<T, P = {}>(render: (props: P, ref: any) => ReactElement | null): FC<P & { ref?: any }>;
+  interface Context<T> { Provider: FC<{ value: T; children?: ReactNode }>; }
+  function createContext<T>(defaultValue: T): Context<T>;
+  const Fragment: any;
+}
+declare function useState<T>(init: T | (() => T)): [T, (val: T | ((prev: T) => T)) => void];
+declare function useEffect(fn: () => void | (() => void), deps?: any[]): void;
+declare function useCallback<T extends (...args: any[]) => any>(fn: T, deps: any[]): T;
+declare function useMemo<T>(fn: () => T, deps: any[]): T;
+declare function useRef<T = any>(init?: T): { current: T };
+declare function useReducer<S, A>(reducer: (state: S, action: A) => S, init: S): [S, (action: A) => void];
+declare function useContext<T>(ctx: any): T;
+declare function useLayoutEffect(fn: () => void | (() => void), deps?: any[]): void;
+declare function useId(): string;
+declare function useTransition(): [boolean, (fn: () => void) => void];
+declare function createContext<T>(defaultValue: T): any;
+declare const Fragment: any;
+declare function memo<T>(component: T): T;
+declare function forwardRef<T, P = {}>(render: (props: P, ref: any) => any): any;
+`;
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(reactTypes, 'file:///react-globals.d.ts');
 
     monaco.editor.defineTheme('solution-dark', {
       base: 'vs-dark', inherit: true,
@@ -148,26 +202,18 @@ function ReactEditor({ value, onChange, readOnly = false }) {
   }
 
   function handleMount(editor, monaco) {
-    const jsDefaults = monaco.languages.typescript.javascriptDefaults;
-
-    jsDefaults.setCompilerOptions({
-      jsx: monaco.languages.typescript.JsxEmit.React,
-      jsxFactory: 'React.createElement',
-      target: monaco.languages.typescript.ScriptTarget.ES2020,
-      allowNonTsExtensions: true,
-      allowSyntheticDefaultImports: true,
-      esModuleInterop: true,
-      allowJs: true,
-      checkJs: false,
-    });
-
-    // Suppress semantic errors (unknown types, missing modules etc.)
-    // Keep only syntax validation so JSX tags don't show red squiggles
-    jsDefaults.setDiagnosticsOptions({
-      noSemanticValidation: true,
-      noSyntaxValidation: false,
-    });
-
+    const model = editor.getModel();
+    if (model) {
+      const clearMarkers = () => {
+        ['typescript', 'javascript'].forEach(owner =>
+          monaco.editor.setModelMarkers(model, owner, [])
+        );
+      };
+      clearMarkers();
+      monaco.editor.onDidChangeMarkers(uris => {
+        if (uris.some(u => u.toString() === model.uri.toString())) clearMarkers();
+      });
+    }
     if (!readOnly) editor.focus();
   }
 
@@ -197,6 +243,7 @@ function ReactEditor({ value, onChange, readOnly = false }) {
       <Editor
         height={editorHeight}
         language="javascript"
+        path={readOnly ? 'solution.jsx' : 'app.jsx'}
         value={value}
         theme={readOnly ? 'solution-dark' : 'vs-dark'}
         beforeMount={beforeMount}
@@ -406,9 +453,22 @@ export default function ReactIDE({ question, isLight }) {
               border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
               background: isLight ? '#fff' : 'rgba(255,255,255,0.03)',
             }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#60a5fa', marginBottom: 8,
-                textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                📋 Problem
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#60a5fa',
+                  textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  📋 Problem
+                </div>
+                {question.estimatedTime && (
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+                    color: '#f59e0b', background: 'rgba(245,158,11,0.12)',
+                    border: '1px solid rgba(245,158,11,0.3)',
+                    borderRadius: 6, padding: '2px 7px',
+                    display: 'flex', alignItems: 'center', gap: 3,
+                  }}>
+                    ⏱ {question.estimatedTime}
+                  </div>
+                )}
               </div>
               <pre style={{
                 margin: 0, fontFamily: 'inherit', fontSize: 12.5, lineHeight: 1.75,
