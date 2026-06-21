@@ -61,7 +61,7 @@ export default function App() {
           hideSearch={isCodePractice}
         />
 
-        <main className="pt-16 min-h-screen">
+        <main className="min-h-screen">
           {/* Code Practice view */}
           {isCodePractice && (
             <CodePractice isLight={isLight} />

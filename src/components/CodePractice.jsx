@@ -285,7 +285,7 @@ export default function CodePractice({ isLight }) {
   };
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', paddingLeft: !listCollapsed ? '16px' : '12px' }}>
 
       {/* ── Question List Sidebar ── */}
       {listCollapsed ? (

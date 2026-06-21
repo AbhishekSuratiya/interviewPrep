@@ -63,7 +63,7 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
 
   // expanded = hovered; collapsed = !hovered
   const expanded = hovered;
-  const w = expanded ? 256 : 56;
+  const w = expanded ? 256 : 68;
 
   const renderIcon = (skill, size = 20) => {
     const src = SKILL_ICONS[skill.id];
@@ -102,8 +102,7 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           transition: 'background 0.15s',
           textAlign: 'left',
           marginBottom: 2,
-          boxShadow: isActive ? `inset 3px 0 0 ${color}` : 'none',
-          overflow: 'hidden',
+          boxShadow: 'none',
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)'; }}
@@ -114,8 +113,9 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: isActive ? `${color}22` : isLight ? '#f1f5f9' : 'rgba(255,255,255,0.06)',
-          border: isActive ? `1px solid ${color}44` : '1px solid transparent',
-          boxShadow: isActive ? `0 0 10px ${color}22` : 'none',
+          outline: isActive ? `2px solid ${color}` : '2px solid transparent',
+          outlineOffset: 1,
+          boxShadow: isActive ? `0 0 8px ${color}55` : 'none',
           transition: 'all 0.15s',
         }}>
           {iconEl}
@@ -137,6 +137,7 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           <span style={{
             width: 6, height: 6, borderRadius: '50%',
             background: color, flexShrink: 0,
+            display: expanded ? 'inline-block' : 'none',
             opacity: expanded ? 1 : 0,
             transition: 'opacity 0.18s',
           }} />

@@ -1,12 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 
-const REACT_CDN = `
-<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-`;
-
 function buildSandbox(userCode) {
   const encoded = JSON.stringify(userCode);
 
@@ -25,7 +19,6 @@ function buildSandbox(userCode) {
 <body>
   <div id="root"></div>
   <script>
-    /* ── Console bridge ── */
     function _ser(a) {
       if (a === null) return 'null';
       if (a === undefined) return 'undefined';
@@ -45,7 +38,6 @@ function buildSandbox(userCode) {
     };
     window.onunhandledrejection = (e) => { _send('error', [String(e.reason)]); };
 
-    /* ── CommonJS require shim — handles import React from 'react' etc. ── */
     function require(mod) {
       if (mod === 'react') return React;
       if (mod === 'react-dom' || mod === 'react-dom/client') return ReactDOM;
@@ -53,7 +45,6 @@ function buildSandbox(userCode) {
       return {};
     }
 
-    /* ── Expose React hooks as globals (so useState() works without import) ── */
     ['useState','useEffect','useRef','useCallback','useMemo','useReducer',
      'useContext','createContext','useLayoutEffect','useId','useTransition',
      'useImperativeHandle','useDebugValue','Fragment','memo','forwardRef',
@@ -63,39 +54,25 @@ function buildSandbox(userCode) {
       var userSource = ${encoded};
       var el = document.getElementById('root');
       try {
-        /* Babel: JSX → React.createElement  +  import/export → CommonJS */
         var result = Babel.transform(userSource, {
           presets: [['react', { runtime: 'classic' }]],
           plugins: ['transform-modules-commonjs'],
           filename: 'app.jsx',
         });
-
-        /* Run inside a function that has module / exports / require in scope */
         var _module  = { exports: {} };
         var _exports = _module.exports;
-        var fn = new Function('React', 'ReactDOM', 'require', 'module', 'exports',
-                              result.code);
+        var fn = new Function('React', 'ReactDOM', 'require', 'module', 'exports', result.code);
         fn(React, ReactDOM, require, _module, _exports);
-
-        /* Resolve default export */
         var Comp = _module.exports['default'] || _module.exports;
         if (typeof Comp !== 'function') Comp = null;
-
         if (!Comp) {
-          el.innerHTML = [
-            '<div style="color:#ef4444;padding:20px;font-family:monospace;font-size:13px">',
-            '⚠️ No default export found.<br/><br/>',
-            'Add at the bottom of your code:<br/>',
-            '<b>export default YourComponentName;</b>',
-            '</div>',
-          ].join('');
+          el.innerHTML = '<div style="color:#ef4444;padding:20px;font-family:monospace;font-size:13px">⚠️ No default export found.<br/><br/>Add at the bottom of your code:<br/><b>export default YourComponentName;</b></div>';
           return;
         }
         ReactDOM.createRoot(el).render(React.createElement(Comp));
       } catch(e) {
         _send('error', [e.stack || e.toString()]);
-        el.innerHTML = '<pre style="color:#ef4444;padding:16px;white-space:pre-wrap;font-size:12px;margin:0">'
-          + e.toString() + '</pre>';
+        el.innerHTML = '<pre style="color:#ef4444;padding:16px;white-space:pre-wrap;font-size:12px;margin:0">' + e.toString() + '</pre>';
       }
     });
   <\/script>
@@ -130,14 +107,11 @@ function ReactEditor({ value, onChange, readOnly = false }) {
       checkJs: false,
     };
     const noDiagnostics = { noSemanticValidation: true, noSyntaxValidation: true };
-
-    // Apply to both JS and TS defaults — Monaco uses whichever matches the model URI
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions(jsxCompilerOpts);
     monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(noDiagnostics);
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions(jsxCompilerOpts);
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(noDiagnostics);
 
-    // React type definitions for autocomplete
     const reactTypes = `
 declare namespace React {
   type ReactNode = ReactElement | string | number | boolean | null | undefined;
@@ -294,8 +268,7 @@ function CollapsedStrip({ label, icon, color, onClick, side }) {
         background: 'rgba(255,255,255,0.03)',
         borderRight: side === 'left'  ? '1px solid rgba(255,255,255,0.08)' : undefined,
         borderLeft:  side === 'right' ? '1px solid rgba(255,255,255,0.08)' : undefined,
-        gap: 8,
-        transition: 'background 0.15s',
+        gap: 8, transition: 'background 0.15s',
       }}
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
       onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
@@ -313,36 +286,44 @@ function CollapsedStrip({ label, icon, color, onClick, side }) {
   );
 }
 
-// Divider with a toggle button in the middle
-function PaneDivider({ onToggleLeft, onToggleRight, leftCollapsed, rightCollapsed, isLight }) {
+// Draggable resize divider with grip dots
+function ResizeDivider({ onMouseDown, isLight }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{
-      width: 6, flexShrink: 0, position: 'relative', cursor: 'col-resize',
-      background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'background 0.15s',
-    }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.3)'}
-      onMouseLeave={e => e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}
+    <div
+      onMouseDown={onMouseDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title="Drag to resize panels"
+      style={{
+        width: 6, flexShrink: 0, position: 'relative',
+        cursor: 'col-resize',
+        background: hovered
+          ? 'rgba(99,102,241,0.55)'
+          : isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)',
+        transition: 'background 0.15s',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 10,
+      }}
     >
-      <button
-        onClick={leftCollapsed ? onToggleLeft : onToggleRight}
-        title={leftCollapsed ? 'Expand left panel' : 'Collapse left panel'}
-        style={{
-          position: 'absolute',
-          width: 18, height: 42, borderRadius: 4,
-          border: '1px solid rgba(255,255,255,0.15)',
-          background: 'rgba(30,30,46,0.95)',
-          color: '#94a3b8', fontSize: 9, fontWeight: 700,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 10, lineHeight: 1,
-        }}
-      >
-        {leftCollapsed ? '›' : '‹'}
-      </button>
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 3,
+        opacity: hovered ? 0.9 : 0.3, transition: 'opacity 0.15s',
+      }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{
+            width: 2, height: 2, borderRadius: '50%',
+            background: hovered ? '#818cf8' : '#94a3b8',
+          }} />
+        ))}
+      </div>
     </div>
   );
 }
+
+const DEFAULT_DESC_WIDTH = 260;
+const DEFAULT_PREVIEW_WIDTH = 420;
+const MIN_WIDTH = 80;
 
 export default function ReactIDE({ question, isLight }) {
   const [code, setCode] = useState(question.starterCode);
@@ -352,10 +333,15 @@ export default function ReactIDE({ question, isLight }) {
   const [activeTab, setActiveTab] = useState('preview');
   const [hasRun, setHasRun] = useState(false);
   const consoleRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // Collapse state for each panel
   const [descCollapsed,    setDescCollapsed]    = useState(false);
   const [previewCollapsed, setPreviewCollapsed] = useState(false);
+
+  // Resizable panel widths
+  const [descWidth,    setDescWidth]    = useState(DEFAULT_DESC_WIDTH);
+  const [previewWidth, setPreviewWidth] = useState(DEFAULT_PREVIEW_WIDTH);
+  const dragRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
@@ -395,22 +381,51 @@ export default function ReactIDE({ question, isLight }) {
     setShowSolution(false);
   };
 
+  // Start dragging a panel divider
+  const startDrag = useCallback((panel, e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = panel === 'desc' ? descWidth : previewWidth;
+    dragRef.current = { panel, startX, startWidth };
+
+    const onMove = (ev) => {
+      if (!dragRef.current) return;
+      const delta = ev.clientX - dragRef.current.startX;
+      const containerW = containerRef.current?.offsetWidth ?? 1200;
+      const otherFixed = panel === 'desc' ? previewWidth : descWidth;
+      const maxW = containerW - otherFixed - MIN_WIDTH * 2;
+
+      if (panel === 'desc') {
+        setDescWidth(Math.max(MIN_WIDTH, Math.min(dragRef.current.startWidth + delta, maxW)));
+      } else {
+        // Preview panel grows leftward, so delta is inverted
+        setPreviewWidth(Math.max(MIN_WIDTH, Math.min(dragRef.current.startWidth - delta, maxW)));
+      }
+    };
+
+    const onUp = () => {
+      dragRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [descWidth, previewWidth]);
+
   const errorCount = consoleLogs.filter(l => l.level === 'error').length;
 
-  const dividerStyle = {
-    width: 1, flexShrink: 0,
-    background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
-  };
-
-  // Collapse toggle button rendered on the border between panels
   const CollapseBtn = ({ collapsed, onClick, direction }) => (
     <button
       onClick={onClick}
       title={collapsed ? 'Expand' : 'Collapse'}
       style={{
         position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-        zIndex: 20,
-        width: 16, height: 36, borderRadius: 4,
+        zIndex: 20, width: 16, height: 36, borderRadius: 4,
         border: '1px solid rgba(255,255,255,0.12)',
         background: isLight ? '#e2e8f0' : '#1e1e2e',
         color: isLight ? '#475569' : '#94a3b8',
@@ -427,9 +442,9 @@ export default function ReactIDE({ question, isLight }) {
   );
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
 
-      {/* ── DESCRIPTION PANEL ─────────────────────────── */}
+      {/* ── DESCRIPTION PANEL ── */}
       {descCollapsed ? (
         <CollapsedStrip
           label="PROBLEM" icon="📋" color="#60a5fa" side="left"
@@ -437,11 +452,9 @@ export default function ReactIDE({ question, isLight }) {
         />
       ) : (
         <div style={{
-          width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column',
+          width: descWidth, flexShrink: 0, display: 'flex', flexDirection: 'column',
           position: 'relative',
-          transition: 'width 0.2s ease',
         }}>
-          {/* Collapse button on right edge */}
           <CollapseBtn collapsed={false} direction="right" onClick={() => setDescCollapsed(true)} />
 
           <div style={{
@@ -490,12 +503,16 @@ export default function ReactIDE({ question, isLight }) {
         </div>
       )}
 
-      {/* ── EDITOR PANEL (flex:1 — always takes remaining space) ── */}
+      {/* ── RESIZE DIVIDER: Description ↔ Editor ── */}
+      {!descCollapsed && (
+        <ResizeDivider isLight={isLight} onMouseDown={(e) => startDrag('desc', e)} />
+      )}
+
+      {/* ── EDITOR PANEL (flex:1) ── */}
       <div style={{
-        flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', position: 'relative',
+        flex: 1, minWidth: MIN_WIDTH, display: 'flex', flexDirection: 'column', position: 'relative',
         borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
       }}>
-        {/* Collapse button on LEFT edge (collapse description) — only when desc is open */}
         {!descCollapsed && (
           <button
             onClick={() => setDescCollapsed(true)}
@@ -578,7 +595,12 @@ export default function ReactIDE({ question, isLight }) {
         )}
       </div>
 
-      {/* ── PREVIEW + CONSOLE PANEL ───────────────────── */}
+      {/* ── RESIZE DIVIDER: Editor ↔ Preview ── */}
+      {!previewCollapsed && (
+        <ResizeDivider isLight={isLight} onMouseDown={(e) => startDrag('preview', e)} />
+      )}
+
+      {/* ── PREVIEW + CONSOLE PANEL ── */}
       {previewCollapsed ? (
         <CollapsedStrip
           label="PREVIEW" icon="⚛️" color="#22d3ee" side="right"
@@ -586,15 +608,14 @@ export default function ReactIDE({ question, isLight }) {
         />
       ) : (
         <div style={{
-          width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column',
+          width: previewWidth, flexShrink: 0, display: 'flex', flexDirection: 'column',
           overflow: 'hidden', position: 'relative',
         }}>
-          {/* Collapse button on LEFT edge of preview panel */}
           <button
             onClick={() => setPreviewCollapsed(true)}
             title="Collapse preview"
             style={{
-              position: 'absolute', top: '50%', left: -8, transform: 'translateY(-50%)',
+              position: 'absolute', top: '50%', left: -2, transform: 'translateY(-50%)',
               zIndex: 20, width: 16, height: 36, borderRadius: 4,
               border: '1px solid rgba(255,255,255,0.12)',
               background: isLight ? '#e2e8f0' : '#1e1e2e',
