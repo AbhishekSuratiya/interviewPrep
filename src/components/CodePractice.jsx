@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { codingQuestions, reactQuestions } from '../data/codePractice';
 import ReactIDE from './ReactIDE';
@@ -17,11 +17,19 @@ const CATEGORY_COLORS = {
   React:  { bg: 'rgba(34,211,238,0.12)',  text: '#22d3ee'  },
 };
 
-function CodeEditor({ value, onChange, readOnly = false, height = 320 }) {
+function CodeEditor({ value, onChange, readOnly = false, height = 320, onReady, onSave }) {
   const editorRef = useRef(null);
 
   function handleMount(editor, monaco) {
     editorRef.current = editor;
+    if (!readOnly && onReady) onReady(editor);
+
+    // Cmd/Ctrl+S → run the code (and suppress the browser "Save page" dialog)
+    if (!readOnly) {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        onSave?.();
+      });
+    }
 
     // Enable JS/TS validation and strict type checking suggestions
     monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
@@ -227,10 +235,17 @@ function QuestionCard({ q, isLight, isActive, onClick }) {
 }
 
 export default function CodePractice({ isLight }) {
+  const STORAGE_KEY = 'codePractice:codes';
   const [activeId, setActiveId] = useState(1);
-  const [codes, setCodes] = useState(() =>
-    Object.fromEntries(allQuestions.map(q => [q.id, q.starterCode]))
-  );
+  const [codes, setCodes] = useState(() => {
+    const defaults = Object.fromEntries(allQuestions.map(q => [q.id, q.starterCode]));
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return { ...defaults, ...saved };
+    } catch {
+      return defaults;
+    }
+  });
   const [outputs, setOutputs] = useState({});
   const [showSolution, setShowSolution] = useState({});
   const [search, setSearch] = useState('');
@@ -247,8 +262,20 @@ export default function CodePractice({ isLight }) {
     return matchSearch && matchDiff && matchCat;
   });
 
-  const runCode = () => {
-    const code = codes[activeId] || '';
+  // Holds the live Monaco editor instance for the editable pane (for formatting)
+  const editorInstanceRef = useRef(null);
+
+  // Auto-save: persist all code to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
+    } catch {
+      /* storage full or unavailable — ignore */
+    }
+  }, [codes]);
+
+  const runCode = (codeArg) => {
+    const code = codeArg ?? codes[activeId] ?? '';
     const logs = [];
     const fakeConsole = {
       log: (...args) => logs.push(args.map(a => {
@@ -274,6 +301,44 @@ export default function CodePractice({ isLight }) {
       }));
     }
   };
+
+  // Format the editable Monaco document via its built-in formatter
+  const formatActiveEditor = () => {
+    const editor = editorInstanceRef.current;
+    if (!editor) return;
+    const action = editor.getAction('editor.action.formatDocument');
+    if (action) action.run();
+  };
+
+  const activeCode = codes[activeId];
+
+  // Page-level guard: Cmd/Ctrl+S runs the code instead of opening the browser save dialog
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (activeQ && activeQ.type !== 'react') {
+          formatActiveEditor();
+          runCode(codes[activeId]);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, activeQ, codes]);
+
+  // Auto-run + auto-format 500ms after the user stops typing (JS questions only)
+  useEffect(() => {
+    if (!activeQ || activeQ.type === 'react') return;
+    if (activeCode === undefined) return;
+    const timer = setTimeout(() => {
+      formatActiveEditor();
+      runCode(activeCode);
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCode, activeId]);
 
   const toggleSolution = () => {
     setShowSolution(prev => ({ ...prev, [activeId]: !prev[activeId] }));
@@ -465,7 +530,13 @@ export default function CodePractice({ isLight }) {
                 }}>{activeQ.category}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: isLight ? '#94a3b8' : '#64748b',
+                display: 'flex', alignItems: 'center', gap: 4, marginRight: 2,
+              }} title="Your code auto-saves, formats, and runs 500ms after you stop typing">
+                ⚡ Auto-run, format & save
+              </span>
               <button onClick={resetCode} style={{
                 padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                 border: `1px solid ${isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
@@ -547,6 +618,8 @@ export default function CodePractice({ isLight }) {
                 key={activeId}
                 value={codes[activeId] || ''}
                 onChange={val => setCodes(prev => ({ ...prev, [activeId]: val }))}
+                onReady={editor => { editorInstanceRef.current = editor; }}
+                onSave={() => { formatActiveEditor(); runCode(codes[activeId]); }}
                 height={340}
               />
 
