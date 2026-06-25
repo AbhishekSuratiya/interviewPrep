@@ -67,7 +67,14 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
 
   const renderIcon = (skill, size = 20) => {
     const src = SKILL_ICONS[skill.id];
-    if (!src) return null;
+    // Fallback for skills without a devicon (e.g. emoji/text icons)
+    if (!src) {
+      return (
+        <span style={{ fontSize: size - 1, lineHeight: 1, display: 'block' }}>
+          {skill.icon}
+        </span>
+      );
+    }
     return (
       <img
         src={src}
