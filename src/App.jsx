@@ -7,6 +7,7 @@ import SkillHero from './components/SkillHero';
 import SectionCard from './components/SectionCard';
 import CodeModal from './components/CodeModal';
 import CodePractice from './components/CodePractice';
+import BehavioralSection from './components/BehavioralSection';
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -33,7 +34,7 @@ export default function App() {
   ];
 
   const visibleSections = allSections.filter(section =>
-    !q || section.topics.some(t =>
+    !q || section.topics?.some(t =>
       t.title.toLowerCase().includes(q) ||
       t.summary.toLowerCase().includes(q) ||
       t.explanation?.toLowerCase().includes(q)
@@ -138,6 +139,29 @@ export default function App() {
                       search={q}
                     />
                   ))}
+
+                  {/* Behavioral section */}
+                  {data?.behavioralSection && (
+                    <>
+                      {visibleSections.length > 0 && (
+                        <div className="flex items-center gap-4 my-8">
+                          <div className={`flex-1 h-px ${isLight ? 'bg-amber-200' : 'bg-amber-500/20'}`} />
+                          <div className={`
+                            flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border
+                            ${isLight ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-amber-500/10 border-amber-500/25 text-amber-300'}
+                          `}>
+                            🤝 Behavioral & Situational
+                          </div>
+                          <div className={`flex-1 h-px ${isLight ? 'bg-amber-200' : 'bg-amber-500/20'}`} />
+                        </div>
+                      )}
+                      <BehavioralSection
+                        section={data.behavioralSection}
+                        isLight={isLight}
+                        search={q}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </div>

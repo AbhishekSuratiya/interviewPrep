@@ -5,6 +5,8 @@ export default function SkillHero({ data, config, isLight }) {
   const totalTopics =
     (data.sections || []).reduce((a, s) => a + s.topics.length, 0) +
     (data.seniorSections || []).reduce((a, s) => a + s.topics.length, 0);
+  const totalQuestions = data.behavioralSection?.questions?.length || 0;
+  const isBehavioralOnly = totalSections === 0 && totalTopics === 0 && totalQuestions > 0;
 
   return (
     <div className={`
@@ -42,15 +44,21 @@ export default function SkillHero({ data, config, isLight }) {
             {data.skill}
           </h1>
           <p className={`text-sm mb-5 ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
-            Advanced concepts for senior interview preparation
+            {isBehavioralOnly
+              ? 'Managerial round & leadership questions for senior engineers'
+              : 'Advanced concepts for senior interview preparation'}
           </p>
 
           {/* Stats */}
           <div className="flex gap-4 flex-wrap">
-            {[
-              { label: 'Sections', value: totalSections, icon: '📂' },
-              { label: 'Topics', value: totalTopics, icon: '📚' },
-            ].map(stat => (
+            {(isBehavioralOnly
+              ? [{ label: 'Questions', value: totalQuestions, icon: '🤝' }]
+              : [
+                  { label: 'Sections', value: totalSections, icon: '📂' },
+                  { label: 'Topics', value: totalTopics, icon: '📚' },
+                  ...(totalQuestions ? [{ label: 'Behavioral Qs', value: totalQuestions, icon: '🤝' }] : []),
+                ]
+            ).map(stat => (
               <div
                 key={stat.label}
                 className={`
