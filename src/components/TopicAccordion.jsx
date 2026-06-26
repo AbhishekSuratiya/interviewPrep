@@ -54,10 +54,39 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
               <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-blue-600' : 'text-blue-400'}`}>
                 Explanation
               </div>
-              <p className={`text-sm leading-relaxed ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
+              <p className={`text-sm leading-relaxed whitespace-pre-line ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
                 {topic.explanation}
               </p>
             </div>
+
+            {/* Analogy — plain-language intuition */}
+            {topic.analogy && (
+              <div className={`rounded-xl p-4 border ${isLight ? 'bg-teal-50 border-teal-100' : 'bg-teal-500/5 border-teal-500/15'}`}>
+                <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-teal-700' : 'text-teal-400'}`}>
+                  🧠 In Simple Terms
+                </div>
+                <p className={`text-sm leading-relaxed ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
+                  {topic.analogy}
+                </p>
+              </div>
+            )}
+
+            {/* Key Points — quick revision */}
+            {topic.keyPoints?.length > 0 && (
+              <div>
+                <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-green-600' : 'text-green-400'}`}>
+                  ⚡ Quick Revision
+                </div>
+                <ul className="space-y-1.5">
+                  {topic.keyPoints.map((point, i) => (
+                    <li key={i} className={`flex gap-2 text-sm leading-relaxed ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
+                      <span className={`flex-shrink-0 ${isLight ? 'text-green-500' : 'text-green-400'}`}>▸</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Image */}
             {topic.imageUrl && (

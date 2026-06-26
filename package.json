@@ -4,7 +4,10 @@
   "description": "Welcome to the Senior Interview Prep project!",
   "main": "app.js",
   "scripts": {
+    "sync-data": "node scripts/sync-data.mjs",
+    "predev": "node scripts/sync-data.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/sync-data.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

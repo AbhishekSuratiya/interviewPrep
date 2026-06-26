@@ -13,6 +13,14 @@
           "title": "Execution Context",
           "summary": "The environment where JS code is executed — Global, Function, and Eval.",
           "explanation": "The environment where JS code is executed. Three types: Global, Function, Eval. Each has a Creation Phase (memory allocation for vars/functions) and Execution Phase (code runs line-by-line). The Variable Environment, Lexical Environment, and 'this' binding are set during creation. Understanding this is critical because every closure, hoisting behavior, and 'this' confusion stems from how execution contexts are created and stacked.",
+          "analogy": "Think of an execution context as a fresh desk the JS engine sets up before running code: it lays out a notebook for variables, a phone book of scope references, and a sticky note saying who 'this' is — then it starts working line by line.",
+          "keyPoints": [
+            "Three kinds: Global, Function, and (rarely) Eval.",
+            "Two phases — Creation (allocate memory for vars/functions, set scope & 'this'), then Execution (run line by line).",
+            "In creation, var becomes undefined while let/const stay uninitialized (the TDZ).",
+            "Every function call creates a new context that gets pushed on the call stack.",
+            "'this' is decided here by HOW a function is called, not where it was written."
+          ],
           "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
           "imageCaption": "JavaScript Runtime Environment — Call Stack, Web APIs, Callback Queue & Event Loop",
           "code": "var x = 10;\nfunction foo() {\n  var y = 20; // New Function Execution Context\n  console.log(x + y); // 30 — x found via scope chain\n}\nfoo(); // Pushed onto Call Stack\n\n// Each EC has:\n// - Variable Environment (var declarations)\n// - Lexical Environment (let/const + references)\n// - this binding",
@@ -32,6 +40,14 @@
           "title": "Call Stack",
           "summary": "LIFO data structure tracking function calls — stack overflow on deep recursion.",
           "explanation": "A LIFO (Last In, First Out) data structure tracking function calls. When a function is called, its execution context is pushed on top. When it returns, it's popped off. Stack overflow happens during infinite recursion. The default call stack size in V8 (Node.js/Chrome) is approximately 10,000–15,000 frames. The call stack is synchronous — it can only process one thing at a time, which is why long-running JS blocks the UI.",
+          "analogy": "The call stack is a stack of plates: each function call adds a plate on top, and you can only take the top one off. Pile on too many (deep recursion) and the stack 'overflows'.",
+          "keyPoints": [
+            "LIFO — the last function called is the first to return.",
+            "Synchronous: only one frame runs at a time, so long tasks freeze the UI.",
+            "'Maximum call stack size exceeded' = recursion with a missing or wrong base case.",
+            "Fix deep recursion by going iterative (explicit stack) or trampolining.",
+            "V8's stack holds roughly 10–15k frames."
+          ],
           "code": "function first() { second(); }\nfunction second() { third(); }\nfunction third() { console.log('done'); }\nfirst();\n// Stack: [Global] → [first] → [second] → [third]\n// After third() returns: → [second] → [first] → [Global]\n\n// Stack Overflow Example:\nfunction recurse() { recurse(); }\ntry { recurse(); } catch(e) { console.log(e); } // RangeError",
           "situations": [
             {
@@ -49,6 +65,14 @@
           "title": "Event Loop",
           "summary": "Single-threaded async — Microtasks (Promises) before Macrotasks (setTimeout).",
           "explanation": "JS is single-threaded. The Event Loop continuously monitors the Call Stack and the Task Queues. When the Call Stack is empty: 1) It processes ALL pending Microtasks (Promise.then, queueMicrotask, MutationObserver) completely. 2) Then it picks ONE Macrotask (setTimeout, setInterval, setImmediate, I/O callback) and runs it. 3) After each Macrotask, it again drains ALL Microtasks before picking another Macrotask. This is the precise ordering that determines async execution order.",
+          "analogy": "The event loop is a bouncer who only lets the next task onto the dance floor when it's empty. All the VIP microtasks (Promises) get in first, then exactly ONE regular macrotask (setTimeout), then VIPs again.",
+          "keyPoints": [
+            "Order: run all sync code → drain ALL microtasks → run ONE macrotask → repeat.",
+            "Microtasks: Promise.then, queueMicrotask, MutationObserver.",
+            "Macrotasks: setTimeout, setInterval, I/O, message events.",
+            "setTimeout(fn, 0) is NOT immediate — it runs after sync code and all microtasks.",
+            "A flood of microtasks can starve macrotasks and block rendering."
+          ],
           "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6f/JavaScript_Event_Loop.png",
           "imageCaption": "The JavaScript Event Loop — Call Stack, Web APIs (setTimeout, fetch), Callback Queue, and Microtask Queue",
           "code": "console.log('1 — synchronous');\nsetTimeout(() => console.log('2 — macrotask'), 0);\nPromise.resolve().then(() => console.log('3 — microtask 1'));\nPromise.resolve().then(() => console.log('4 — microtask 2'));\nconsole.log('5 — synchronous');\n\n// Output: 1, 5, 3, 4, 2\n// Reason: sync runs first → call stack empty → ALL microtasks → ONE macrotask",
@@ -72,6 +96,14 @@
           "title": "Closures",
           "summary": "A function that retains access to its outer scope even after it returns.",
           "explanation": "A closure is a function that retains access to its outer scope's variables even after the outer function has returned. Every function in JS forms a closure. Closures are the backbone of: module pattern (private state), React hooks (useState captures state via closure), event handlers (captured variables), memoization (cached results), and currying. The key insight: a closure doesn't copy the variable — it keeps a live reference to the Lexical Environment.",
+          "analogy": "A closure is a backpack a function carries: even after it leaves the room where it was created, it still holds the variables it packed — and those update live, not as a photocopy.",
+          "keyPoints": [
+            "A function plus the LIVE references to its outer scope's variables.",
+            "References are live, not copies — that's how counters and private state work.",
+            "Powers private state (module pattern), React hooks, currying, memoization.",
+            "Classic bug: var in a loop shares one variable (3,3,3) — fix with let.",
+            "Stale-closure bug in React: an effect captures old state — fix via deps or functional updates."
+          ],
           "code": "// Classic counter — private state via closure\nfunction counter() {\n  let count = 0; // Closed over by both methods\n  return {\n    increment: () => ++count,\n    decrement: () => --count,\n    getCount: () => count\n  };\n}\nconst c = counter();\nc.increment(); c.increment();\nconsole.log(c.getCount()); // 2\n// count cannot be accessed from outside\n\n// Classic closure bug:\nfor (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 3, 3, 3\n}\n// Fix with let:\nfor (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0); // 0, 1, 2\n}",
           "situations": [
             {
@@ -89,6 +121,14 @@
           "title": "Scope Chain",
           "summary": "How JS walks up nested scopes to find variables — determined at write-time.",
           "explanation": "When a variable is accessed, JS first looks in the current (local) scope. If not found, it walks up to the parent scope, then grandparent, all the way to the global scope. This is the Scope Chain. The key distinction: scope is determined lexically (at write-time) — where a function is defined determines its scope chain, NOT where it is called. This is why closures work even when a function is called in a completely different scope.",
+          "analogy": "Looking up a variable is like asking for something at home: check your room first, then the living room, then the whole house — outward until you find it or hit the front door (global).",
+          "keyPoints": [
+            "JS checks local scope first, then walks outward to parents, then global.",
+            "Lexical: scope is fixed by WHERE code is written, not where it's called.",
+            "Not found anywhere → ReferenceError (or an accidental global in sloppy mode).",
+            "Inner scopes can read outer variables; outer scopes can't read inner ones.",
+            "This outward-walk is exactly what makes closures possible."
+          ],
           "code": "const global = 'G'; // Global scope\n\nfunction outer() {\n  const outerVar = 'O'; // Outer function scope\n  \n  function inner() {\n    const innerVar = 'I'; // Inner function scope\n    // Scope chain: inner → outer → global\n    console.log(innerVar, outerVar, global); // 'I', 'O', 'G'\n  }\n  \n  inner();\n}\nouter();",
           "situations": [
             {
@@ -102,6 +142,14 @@
           "title": "Hoisting",
           "summary": "var/function declarations hoisted — let/const hoisted but in TDZ until init.",
           "explanation": "'var' declarations and function declarations are moved to the top of their scope during compilation. 'var' is initialized as undefined. 'let'/'const' are hoisted but NOT initialized — they sit in the Temporal Dead Zone (TDZ) until the declaration is reached. Function expressions (const fn = function(){}) are NOT hoisted. This happens in the Creation Phase of the Execution Context before any code runs.",
+          "analogy": "Hoisting is the engine reading the guest list before the party starts: it already 'knows' every var and function name. var guests get a blank name tag (undefined); let/const guests exist but aren't allowed in until their line (the TDZ).",
+          "keyPoints": [
+            "Function declarations are fully hoisted — callable before their line.",
+            "var is hoisted and initialized to undefined.",
+            "let/const are hoisted but sit in the Temporal Dead Zone until declared.",
+            "Function expressions and arrow functions are NOT hoisted (only the variable is).",
+            "Prefer let/const so you get a clear error instead of a silent undefined."
+          ],
           "code": "console.log(a); // undefined — var hoisted, initialized to undefined\nvar a = 5;\n\nfoo(); // Works! — function declaration hoisted in full\nfunction foo() { console.log('hoisted'); }\n\n// bar(); // TypeError: bar is not a function\nvar bar = function() {}; // function expression, NOT hoisted\n\n// TDZ with let:\n// console.log(b); // ReferenceError: Cannot access 'b' before init\nlet b = 10;",
           "situations": [
             {
@@ -122,6 +170,14 @@
           "title": "Promises",
           "summary": "Pending → Fulfilled/Rejected. .then(), .catch(), .finally() for chaining.",
           "explanation": "An object representing the eventual completion or failure of an async operation. States: Pending → Fulfilled (resolve) or Rejected (reject). Once settled, a Promise is immutable. Key: .then() always returns a NEW Promise — that's how chaining works. An unhandled Promise rejection crashes Node.js and triggers an error in browsers. Always have a .catch() or try/catch with async/await.",
+          "analogy": "A Promise is a restaurant buzzer: you get it immediately (pending), and later it either lights up 'food ready' (fulfilled) or 'order failed' (rejected). Once it goes off, it never changes again.",
+          "keyPoints": [
+            "States: pending → fulfilled OR rejected, and settling is permanent.",
+            ".then/.catch/.finally each return a NEW promise — that's how chaining works.",
+            "Always return inside .then or the next step receives undefined.",
+            "Always handle errors (.catch / try-catch) — unhandled rejections crash Node.",
+            "Combinators: all (fail-fast), allSettled (all results), race, any."
+          ],
           "code": "const p = new Promise((resolve, reject) => {\n  setTimeout(() => resolve('Done!'), 1000);\n});\n\np.then(val => console.log(val))  // 'Done!'\n .catch(err => console.error(err))\n .finally(() => console.log('Always runs'));\n\n// Common mistake — forgetting to RETURN inside .then():\nfetch('/api/user')\n  .then(res => {\n    res.json(); // Bug! Not returned — next .then gets undefined\n  })\n  .then(user => console.log(user)); // undefined\n\n// Fix:\n  .then(res => res.json()) // Implicit return",
           "situations": [
             {
@@ -139,6 +195,14 @@
           "title": "AbortController",
           "summary": "Cancel fetch requests and async operations — prevents stale responses and memory leaks.",
           "explanation": "AbortController provides a way to cancel one or more Web API requests. It creates a signal object that can be passed to fetch() (and other async APIs). Calling controller.abort() triggers the signal, causing any listening operation to throw an AbortError. Essential for: cancelling in-flight fetch on component unmount (React useEffect cleanup), cancelling previous search requests when user types again, implementing request timeouts, and cleaning up WebSocket connections. The AbortSignal.timeout(ms) static method creates a signal that auto-aborts after a delay.",
+          "analogy": "AbortController is the cancel button on a download: hand fetch the 'signal' wire, and pressing abort() instantly stops the request and throws an AbortError.",
+          "keyPoints": [
+            "Pass controller.signal to fetch; call controller.abort() to cancel.",
+            "Cancelled requests throw AbortError — catch and ignore it.",
+            "Essential in React useEffect cleanup to cancel stale requests.",
+            "AbortSignal.timeout(ms) auto-cancels after a delay (no manual timer).",
+            "One controller can cancel several requests at once."
+          ],
           "code": "// Basic fetch cancellation\nconst controller = new AbortController();\nconst { signal } = controller;\n\nfetch('/api/data', { signal })\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => {\n    if (err.name === 'AbortError') {\n      console.log('Request cancelled');\n    } else {\n      throw err; // Re-throw real errors\n    }\n  });\n\n// Cancel after 5 seconds\nsetTimeout(() => controller.abort(), 5000);\n\n// React useEffect cleanup pattern\nuseEffect(() => {\n  const controller = new AbortController();\n\n  async function fetchUser() {\n    try {\n      const res = await fetch(`/api/users/${id}`, { signal: controller.signal });\n      const user = await res.json();\n      setUser(user);\n    } catch (err) {\n      if (err.name !== 'AbortError') setError(err.message);\n    }\n  }\n\n  fetchUser();\n  return () => controller.abort(); // Cleanup on unmount or id change\n}, [id]);\n\n// AbortSignal.timeout — built-in timeout (no manual setTimeout needed)\nconst res = await fetch('/api/data', {\n  signal: AbortSignal.timeout(5000) // Throws TimeoutError after 5s\n});\n\n// Cancel multiple requests with one controller\nconst ctrl = new AbortController();\nPromise.all([\n  fetch('/api/a', { signal: ctrl.signal }),\n  fetch('/api/b', { signal: ctrl.signal }),\n]);\nctrl.abort(); // Cancels both",
           "situations": [
             {
@@ -156,6 +220,14 @@
           "title": "Async/Await",
           "summary": "Syntactic sugar over Promises — async code reads like synchronous code.",
           "explanation": "Syntactic sugar over Promises. 'async' functions always return a Promise (even if you return a plain value — it gets wrapped in Promise.resolve()). 'await' pauses execution of the async function until the Promise settles. It does NOT block the thread — other microtasks/macrotasks can run while awaiting. Use try/catch for error handling. Common mistake: awaiting inside loops creates sequential behavior when parallel is intended.",
+          "analogy": "async/await is Promises in plain clothes: 'await' is like pausing a video to wait for a download — but the rest of the app keeps playing, it doesn't freeze the thread.",
+          "keyPoints": [
+            "async functions always return a Promise.",
+            "await pauses only THIS function, not the whole thread.",
+            "Use try/catch for errors instead of .catch.",
+            "Awaiting in a loop is sequential (slow) — use Promise.all for parallel work.",
+            "No performance penalty vs Promises — it compiles down to them."
+          ],
           "code": "async function loadUserData(id) {\n  try {\n    const res = await fetch(`/api/user/${id}`);\n    if (!res.ok) throw new Error(`HTTP ${res.status}`);\n    const user = await res.json();\n    return user;\n  } catch (err) {\n    console.error('Failed:', err);\n    throw err; // Re-throw so caller can handle\n  }\n}\n\n// MISTAKE: Sequential when should be parallel\nasync function bad() {\n  const a = await fetch('/api/a'); // Waits 1s\n  const b = await fetch('/api/b'); // Waits another 1s\n}\n\n// FIX: Parallel\nasync function good() {\n  const [a, b] = await Promise.all([\n    fetch('/api/a'), fetch('/api/b') // Both start at same time\n  ]);\n}",
           "situations": [
             {
@@ -180,6 +252,14 @@
           "title": "Closures (Deep Dive)",
           "summary": "Every function forms a closure — live reference to outer scope, not a copy.",
           "explanation": "A closure is a function bundled with its Lexical Environment — the scope in which it was created. The closure holds a LIVE REFERENCE to variables, not a snapshot copy. This is why incrementing a counter through a closure works. React hooks rely entirely on closures: useState's setter, useEffect's callback, useCallback's memoized function — all are closures over their surrounding scope at render time.",
+          "analogy": "Same backpack idea: a function and the scope it was born in travel together. The module pattern uses this to keep things private inside the bag and hand out only a few public zippers.",
+          "keyPoints": [
+            "Closure = a function bundled with its birth scope (lexical environment).",
+            "Holds live references, enabling private state without classes.",
+            "Module pattern: an IIFE returns only the public API; the rest stays hidden.",
+            "Every React hook (useState/useEffect/useCallback) relies on closures.",
+            "Return copies, not internal references, to keep state truly private."
+          ],
           "code": "// Module pattern using closures\nconst userService = (() => {\n  let _users = []; // Private — only accessible via methods\n  let _nextId = 1;\n  \n  return {\n    add(name) {\n      const user = { id: _nextId++, name };\n      _users.push(user);\n      return user;\n    },\n    getAll() { return [..._users]; }, // Return copy, not reference\n    remove(id) { _users = _users.filter(u => u.id !== id); }\n  };\n})();\n\nuserService.add('Abhishek'); // { id: 1, name: 'Abhishek' }\nconsole.log(userService.getAll()); // [{ id: 1, name: 'Abhishek' }]",
           "situations": [
             {
@@ -193,6 +273,14 @@
           "title": "Debouncing",
           "summary": "Delay execution until X ms of silence — ideal for search inputs.",
           "explanation": "Debouncing ensures a function executes only after a specified wait time has elapsed since the LAST call. If called again within the wait period, the timer resets. This is crucial for search inputs (don't fire API per keystroke), window resize handlers (don't recalculate layout on every pixel), and auto-save features. The debounce function returns a new function that closes over a timer variable.",
+          "analogy": "Debounce is an elevator door: every new person who steps in resets the 'closing' timer, so the doors only close once there's a gap with nobody entering.",
+          "keyPoints": [
+            "Runs the function only after X ms of SILENCE since the last call.",
+            "Each new call resets the timer.",
+            "Ideal for search inputs, window resize, and autosave.",
+            "Debounce = wait for a pause; throttle = at most once per interval.",
+            "In React, keep the timer in useRef/useCallback so it survives re-renders."
+          ],
           "code": "function debounce(fn, delay) {\n  let timerId; // Closed over by returned function\n  return function(...args) {\n    clearTimeout(timerId); // Cancel previous timer\n    timerId = setTimeout(() => {\n      fn.apply(this, args); // Call with correct this + args\n    }, delay);\n  };\n}\n\n// React usage with useCallback for stable reference:\nconst handleSearch = useCallback(\n  debounce((query) => {\n    if (!query.trim()) return;\n    fetchResults(query);\n  }, 300),\n  [] // Create once\n);\n// Cleanup: call handleSearch.cancel() on unmount",
           "situations": [
             {
@@ -206,6 +294,14 @@
           "title": "Memoization",
           "summary": "Cache expensive computation results — foundation of React.memo and useMemo.",
           "explanation": "Memoization is an optimization technique that caches the results of expensive function calls. When called with the same arguments again, the cached result is returned without recomputation. This trades memory for CPU time. In React: useMemo memoizes computed values, useCallback memoizes function references, React.memo wraps components to skip re-renders. The cache key must uniquely represent the inputs — JSON.stringify is simple but slow for large objects; consider hashing or WeakMap for object keys.",
+          "analogy": "Memoization is keeping the answers to homework you've already solved: same question → hand back the saved answer instead of redoing the work.",
+          "keyPoints": [
+            "Cache results keyed by inputs — trades memory for CPU.",
+            "Identical arguments return the cached result instantly.",
+            "Backs React's useMemo (values), useCallback (functions), React.memo (renders).",
+            "The cache key must uniquely represent the inputs.",
+            "Use a WeakMap for object keys so entries auto-clean when keys are GC'd."
+          ],
           "code": "function memoize(fn) {\n  const cache = new Map();\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) {\n      console.log('Cache hit!');\n      return cache.get(key);\n    }\n    const result = fn.apply(this, args);\n    cache.set(key, result);\n    return result;\n  };\n}\n\nconst expensiveFib = memoize(function fib(n) {\n  if (n <= 1) return n;\n  return expensiveFib(n - 1) + expensiveFib(n - 2);\n});\n\nconsole.log(expensiveFib(40)); // Computed once\nconsole.log(expensiveFib(40)); // Cache hit — instant",
           "situations": [
             {
@@ -226,6 +322,14 @@
           "title": "Prototype & Prototype Chain",
           "summary": "Objects inherit via [[Prototype]] link — Object.prototype is the top.",
           "explanation": "Every object has a hidden [[Prototype]] property linking to another object. When you access a property, JS first looks at the object's own properties, then walks UP the prototype chain until found or until null is reached (Object.prototype's prototype is null). This is the mechanism behind inheritance in JS. ES6 classes are syntactic sugar — they still use prototypes under the hood. Understanding this is essential for debugging 'property not found' errors and optimizing V8's hidden classes.",
+          "analogy": "Prototypes are a family inheritance line: if you don't own a trait, you ask your parent, then grandparent, up the chain — until someone has it or you reach the end (null).",
+          "keyPoints": [
+            "Every object has a hidden [[Prototype]] link to another object.",
+            "Property lookup walks UP the chain until found or null.",
+            "The top is Object.prototype, whose prototype is null.",
+            "ES6 classes are syntax sugar over prototypes.",
+            "Own properties shadow inherited ones — check with hasOwnProperty/Object.hasOwn."
+          ],
           "code": "// Object.create for explicit prototype setting\nconst animal = {\n  type: 'Animal',\n  describe() { return `I am a ${this.type}`; }\n};\n\nconst dog = Object.create(animal);\ndog.type = 'Dog'; // Own property shadows prototype\ndog.bark = function() { return 'Woof!'; };\n\nconsole.log(dog.describe()); // 'I am a Dog' — found on dog (own)\nconsole.log(dog.bark()); // 'Woof!' — own property\nconsole.log(dog.hasOwnProperty('type')); // true — own\nconsole.log(dog.hasOwnProperty('describe')); // false — on prototype\n\n// Prototype chain: dog → animal → Object.prototype → null",
           "situations": [
             {
@@ -246,6 +350,14 @@
           "title": "Destructuring",
           "summary": "Extract values from arrays/objects with defaults, renaming, and nesting.",
           "explanation": "Destructuring is a concise syntax to extract values from arrays or objects. Supports: default values, renaming, nested patterns, rest operator, and skipping elements. Key use case in React: destructuring props, state, and hook return values. Performance-wise, destructuring creates no overhead — it's syntax sugar over property access.",
+          "analogy": "Destructuring is unpacking a grocery bag straight onto labeled shelves in one line, instead of pulling out each item separately.",
+          "keyPoints": [
+            "Pull values from arrays/objects into variables in a single statement.",
+            "Supports defaults, renaming, nesting, rest (...), and skipping.",
+            "Used everywhere in React for props, state, and hook returns.",
+            "Pure syntax sugar — no runtime cost.",
+            "Destructuring a null/undefined nested path throws — guard with `?? {}`."
+          ],
           "code": "// Object destructuring with rename and default\nconst { name: fullName, age = 25, address: { city } } = {\n  name: 'Abhishek',\n  address: { city: 'Delhi' }\n}; // age defaults to 25\n\n// Array destructuring with skip\nconst [, second, , fourth] = [1, 2, 3, 4];\n\n// Function params — very common in React\nfunction UserCard({ name, role = 'User', onDelete }) {\n  return `${name} (${role})`;\n}\n\n// Swapping variables — no temp needed\nlet a = 1, b = 2;\n[a, b] = [b, a]; // a=2, b=1",
           "situations": [
             {
@@ -259,6 +371,14 @@
           "title": "Optional Chaining",
           "summary": "?. short-circuits to undefined instead of throwing on null/undefined access.",
           "explanation": "The ?. operator safely accesses deeply nested properties. If the left side is null or undefined, it short-circuits and returns undefined instead of throwing a TypeError. Works for: property access (obj?.prop), method calls (obj?.method()), array indexing (arr?.[0]), and constructor calls (new Ctor?.()). Do NOT overuse it — it can hide real bugs where a value is unexpectedly null.",
+          "analogy": "?. is a careful stepping-stone walk across a stream: if a stone is missing (null/undefined), you stop safely and return undefined instead of falling in (throwing).",
+          "keyPoints": [
+            "obj?.a?.b returns undefined if any link is null/undefined — no TypeError.",
+            "Works for properties, methods (obj?.fn()), and indexes (arr?.[0]).",
+            "Pair with ?? to supply a fallback value.",
+            "Don't overuse it — it can hide real bugs where a value shouldn't be null.",
+            "Strong types + boundary validation reduce the need for defensive ?."
+          ],
           "code": "const user = { profile: { address: { city: 'Delhi' } } };\n\n// Safe deep access\nconsole.log(user?.profile?.address?.city); // 'Delhi'\nconsole.log(user?.phone?.number); // undefined — no throw\nconsole.log(user?.getProfile?.()); // undefined if no method\n\n// With nullish coalescing for default\nconst city = user?.profile?.address?.city ?? 'Unknown';\n\n// Array item access\nconst firstFriend = user?.friends?.[0]?.name ?? 'No friends';",
           "situations": [
             {
@@ -279,6 +399,14 @@
           "title": "Event Delegation",
           "summary": "Attach one listener to a parent instead of hundreds to children — efficient and dynamic.",
           "explanation": "Event delegation leverages event bubbling: events fired on a child element bubble up through all ancestors. Instead of attaching a listener to every list item (100 items = 100 listeners), you attach ONE listener to the parent and check event.target to identify which child was clicked. Benefits: 1) Memory — O(1) listeners vs O(n). 2) Dynamic elements — works for items added AFTER the listener was attached. 3) Setup speed — no need to re-bind on DOM updates. The key method is event.target.closest(selector) which walks up from the clicked element to find the nearest matching ancestor, handling clicks on nested child elements correctly.",
+          "analogy": "Instead of giving every kid in a classroom their own teacher, put ONE teacher at the door who handles whoever walks through — even new students who arrive later.",
+          "keyPoints": [
+            "Attach ONE listener to a parent; use event.target to find the child.",
+            "Relies on event bubbling from child up to ancestors.",
+            "Saves memory (1 vs N listeners) and handles dynamically added elements.",
+            "Use event.target.closest(selector) to catch clicks on nested children.",
+            "Watch out: a child's stopPropagation() blocks delegation."
+          ],
           "code": "// Without delegation — bad for large lists\ndocument.querySelectorAll('.todo-item').forEach(item => {\n  item.addEventListener('click', handleClick); // N listeners!\n});\n// Also breaks when new items are added dynamically\n\n// WITH delegation — one listener on parent\nconst list = document.getElementById('todo-list');\n\nlist.addEventListener('click', (event) => {\n  // closest() handles clicks on child elements (icon inside button)\n  const item = event.target.closest('.todo-item');\n  if (!item) return; // Click was outside any item\n\n  const deleteBtn = event.target.closest('[data-action=\"delete\"]');\n  const checkbox = event.target.closest('[data-action=\"toggle\"]');\n\n  if (deleteBtn) {\n    const id = deleteBtn.dataset.id;\n    deleteItem(id); // Works for dynamically added items too\n  } else if (checkbox) {\n    toggleItem(checkbox.dataset.id);\n  }\n});\n\n// Dynamically added item — no new listener needed\nlist.insertAdjacentHTML('beforeend',\n  '<li class=\"todo-item\"><button data-action=\"delete\" data-id=\"99\">X</button></li>'\n);\n// The existing listener handles it automatically\n\n// Stopping propagation — use carefully\ndocument.addEventListener('click', () => closeDropdown());\ndropdownToggle.addEventListener('click', (e) => {\n  e.stopPropagation(); // Prevent closeDropdown from firing\n  toggleDropdown();\n});",
           "situations": [
             {
@@ -296,6 +424,14 @@
           "title": "Custom Events",
           "summary": "Dispatch and listen to your own events — decoupled communication between DOM components.",
           "explanation": "The CustomEvent API lets you define and dispatch your own events on any DOM element. This enables decoupled communication between web components, widgets, and vanilla JS modules — no direct references needed. CustomEvent extends Event and accepts a detail property for payload. Events bubble by default if bubbles: true is set. This is the foundation of web component communication and is how native HTML elements communicate state changes (input's 'change', form's 'submit').",
+          "analogy": "CustomEvents are a building's PA system: one module announces 'cart updated' over the speakers, and any listening module reacts — without any of them knowing each other directly.",
+          "keyPoints": [
+            "new CustomEvent(name, { detail, bubbles }) + dispatchEvent to broadcast.",
+            "detail carries your payload; bubbles:true lets it travel up the DOM.",
+            "composed:true crosses shadow DOM boundaries (web components).",
+            "Decouples modules — the publisher doesn't know its listeners.",
+            "Always removeEventListener in cleanup to avoid leaks."
+          ],
           "code": "// Dispatch a custom event with payload\nfunction addToCart(product) {\n  const event = new CustomEvent('cart:item-added', {\n    bubbles: true,       // Bubbles up the DOM tree\n    composed: true,      // Crosses shadow DOM boundaries (web components)\n    detail: { product, timestamp: Date.now() }\n  });\n  document.dispatchEvent(event);\n}\n\n// Listen anywhere in the tree\ndocument.addEventListener('cart:item-added', (event) => {\n  const { product } = event.detail;\n  updateCartUI(product);\n  updateCartCount();\n});\n\n// Scoped to a component element — better encapsulation\nconst cartWidget = document.getElementById('cart-widget');\ncartWidget.addEventListener('cart:item-added', handler);\n\n// Triggering from a button click\ndocument.getElementById('add-btn').addEventListener('click', () => {\n  addToCart({ id: 1, name: 'Widget', price: 9.99 });\n});\n\n// Cleanup — always remove listeners\nfunction cleanup() {\n  document.removeEventListener('cart:item-added', handler);\n}",
           "situations": [
             {
@@ -316,6 +452,14 @@
           "title": "XSS (Cross-Site Scripting)",
           "summary": "Never use innerHTML with user input — React escapes by default.",
           "explanation": "XSS allows attackers to inject malicious scripts into web pages. Types: Stored XSS (persisted in DB, executed for all visitors), Reflected XSS (via URL params), DOM-based XSS (client-side manipulation). Prevention: always escape output, use textContent over innerHTML, implement CSP headers, and use frameworks that auto-escape (React). React's dangerouslySetInnerHTML bypasses XSS protection — never use it with unvalidated user content.",
+          "analogy": "XSS is a stranger slipping a malicious note into your form that the page then 'reads aloud' as code. The defense: always treat user input as plain text, never as HTML or script.",
+          "keyPoints": [
+            "Three types: Stored, Reflected, and DOM-based XSS.",
+            "Never set innerHTML from user input — use textContent.",
+            "React auto-escapes {value}; dangerouslySetInnerHTML bypasses that.",
+            "Sanitize untrusted HTML with DOMPurify before rendering.",
+            "Add a Content-Security-Policy header as defense-in-depth."
+          ],
           "code": "// VULNERABLE — Never do this\nelement.innerHTML = userInput;\n\n// SAFE alternatives\nelement.textContent = userInput; // Escapes HTML entities\nelement.innerText = userInput;\n\n// React is safe by default:\n<div>{userInput}</div> // Auto-escaped to text\n\n// React UNSAFE — only with sanitized content:\nimport DOMPurify from 'dompurify';\n<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />\n\n// CSP Header to prevent inline scripts:\n// Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-randomvalue'",
           "situations": [
             {
@@ -329,6 +473,14 @@
           "title": "Performance Optimization",
           "summary": "CRP, bundle size, lazy loading, code splitting, runtime performance.",
           "explanation": "Web performance optimization spans multiple layers: 1) Critical Rendering Path — minimize render-blocking CSS/JS, inline critical CSS. 2) Bundle: tree shaking, code splitting, dynamic imports, brotli compression. 3) Runtime: avoid layout thrashing (batch DOM reads/writes), debounce expensive handlers, use passive event listeners. 4) Network: HTTP/2, CDN, proper cache-control headers. 5) Images: WebP/AVIF format, responsive srcset, lazy loading. Key metrics: FCP (< 1.8s), LCP (< 2.5s), CLS (< 0.1), INP (< 200ms).",
+          "analogy": "Web performance is like shipping a package fast: send less stuff (smaller bundle), send it the short way (CDN/caching), and don't make the recipient reassemble it on a slow phone (avoid heavy main-thread work).",
+          "keyPoints": [
+            "Layers: critical rendering path, bundle size, runtime, network, images.",
+            "Code-split and lazy-load routes; tree-shake; compress with brotli.",
+            "Avoid layout thrash — batch DOM reads, then writes.",
+            "Optimize images: WebP/AVIF, responsive srcset, lazy loading.",
+            "Targets: LCP <2.5s, INP <200ms, CLS <0.1."
+          ],
           "code": "// 1. Code splitting with dynamic import\nconst Dashboard = React.lazy(() => import('./Dashboard'));\n\n// 2. Avoid layout thrashing\nconst width = container.offsetWidth; // Read once\nelements.forEach(el => {\n  el.style.width = width + 'px'; // Write in batch\n});\n\n// 3. Passive event listeners for scroll (no preventDefault)\ndocument.addEventListener('scroll', handler, { passive: true });\n\n// 4. RequestAnimationFrame for visual updates\nconst animate = () => {\n  el.style.transform = `translateX(${getPosition()}px)`;\n  requestAnimationFrame(animate);\n};",
           "situations": [
             {
@@ -355,6 +507,14 @@
           "title": "Module Pattern & IIFE",
           "summary": "Encapsulation via closures — private state without classes.",
           "explanation": "The Module Pattern uses an IIFE (Immediately Invoked Function Expression) to create a private scope. Only what's returned is public. Modern ES Modules achieve the same with import/export but the pattern remains critical for understanding closures, encapsulation, and the Revealing Module Pattern. Senior engineers recognize this as the precursor to ES6 classes and understand when a plain object with closures is simpler than a class.",
+          "analogy": "An IIFE module is a vending machine: all the machinery is sealed inside (private), and you interact only through the buttons it exposes (the returned public API).",
+          "keyPoints": [
+            "An IIFE creates a private scope; only the returned object is public.",
+            "Variables prefixed with _ stay private via closure.",
+            "Revealing Module Pattern: define privately, expose a clean public API.",
+            "ES Modules (import/export) are the modern equivalent.",
+            "Great for singletons; use classes when you need many instances or inheritance."
+          ],
           "code": "// Revealing Module Pattern\nconst AuthService = (() => {\n  let _token = null;   // private\n  let _user = null;    // private\n\n  function _validateToken(token) {\n    return token && token.length > 10;  // private helper\n  }\n\n  function login(credentials) {\n    // Call API, get token\n    _token = 'jwt.token.here';\n    _user = { id: 1, role: 'admin' };\n  }\n\n  function logout() {\n    _token = null;\n    _user = null;\n  }\n\n  function getUser() { return _user; }\n  function isAuthenticated() { return _validateToken(_token); }\n\n  return { login, logout, getUser, isAuthenticated }; // Public API\n})();",
           "situations": [
             {
@@ -372,6 +532,14 @@
           "title": "Observer Pattern (EventEmitter)",
           "summary": "Pub/Sub decoupling — components communicate without direct dependencies.",
           "explanation": "The Observer (Pub/Sub) pattern allows objects to subscribe to events and be notified when they occur. This decouples the event source from its consumers. Foundation of: Node.js EventEmitter, React synthetic events, Redux store subscriptions, RxJS Observables. Key insight: different from a direct callback — multiple listeners can subscribe, and the publisher doesn't know who's listening.",
+          "analogy": "Pub/Sub is a newsletter: subscribers sign up, the publisher sends an issue to everyone on the list, and it never needs to know who they personally are.",
+          "keyPoints": [
+            "Subjects emit events; many listeners subscribe and react.",
+            "Decouples the event source from its consumers.",
+            "Backs Node's EventEmitter, Redux subscriptions, and RxJS.",
+            "on() should return an unsubscribe function.",
+            "Always unsubscribe in cleanup to prevent memory leaks."
+          ],
           "code": "class EventEmitter {\n  #listeners = new Map();\n\n  on(event, listener) {\n    if (!this.#listeners.has(event)) {\n      this.#listeners.set(event, new Set());\n    }\n    this.#listeners.get(event).add(listener);\n    return () => this.off(event, listener); // Returns unsubscribe fn\n  }\n\n  off(event, listener) {\n    this.#listeners.get(event)?.delete(listener);\n  }\n\n  emit(event, ...args) {\n    this.#listeners.get(event)?.forEach(fn => fn(...args));\n  }\n\n  once(event, listener) {\n    const wrapper = (...args) => {\n      listener(...args);\n      this.off(event, wrapper);\n    };\n    return this.on(event, wrapper);\n  }\n}\n\n// Usage\nconst bus = new EventEmitter();\nconst unsub = bus.on('user:login', user => console.log('Logged in:', user));\nbus.emit('user:login', { id: 1 }); // 'Logged in: { id: 1 }'\nunsub(); // Clean up",
           "situations": [
             {
@@ -385,6 +553,14 @@
           "title": "Strategy Pattern",
           "summary": "Swap algorithms at runtime — replaces switch/if chains with polymorphism.",
           "explanation": "The Strategy Pattern defines a family of algorithms, encapsulates each one, and makes them interchangeable. The caller selects the strategy at runtime. This eliminates large if/switch blocks and makes adding new behavior O(1) code change (add a new strategy, don't modify existing). In JS, functions are first-class — strategies are just functions stored in a map.",
+          "analogy": "Strategy is swapping the bit on one drill: same handle (caller), different bit (algorithm) chosen at runtime — instead of a giant if/switch deciding everything.",
+          "keyPoints": [
+            "Store interchangeable algorithms as functions in a map/object.",
+            "The caller picks the strategy by key at runtime.",
+            "Replaces large if/switch chains.",
+            "Adding a behavior = one new entry, no edits to existing code (open/closed).",
+            "Each strategy is independently testable."
+          ],
           "code": "// Sorting strategies\nconst sortStrategies = {\n  price: (a, b) => a.price - b.price,\n  name: (a, b) => a.name.localeCompare(b.name),\n  rating: (a, b) => b.rating - a.rating,\n  popularity: (a, b) => b.views - a.views,\n};\n\n// No switch statement needed\nfunction sortProducts(products, strategy) {\n  const fn = sortStrategies[strategy];\n  if (!fn) throw new Error(`Unknown sort strategy: ${strategy}`);\n  return [...products].sort(fn);\n}\n\n// Adding a new strategy requires ZERO changes to sortProducts\nsortStrategies.discount = (a, b) => b.discount - a.discount;\n\n// Payment strategies\nconst paymentStrategies = {\n  stripe: async (amount, token) => stripeSDK.charge(amount, token),\n  paypal: async (amount) => paypalSDK.createOrder(amount),\n  crypto: async (amount, wallet) => cryptoAPI.send(amount, wallet),\n};\n\nconst processPayment = async (method, ...args) => {\n  return paymentStrategies[method]?.(...args)\n    ?? Promise.reject(new Error('Unsupported payment method'));\n};",
           "situations": [
             {
@@ -398,6 +574,14 @@
           "title": "Proxy & Reflect",
           "summary": "Intercept object operations — validation, logging, reactivity (Vue 3 internals).",
           "explanation": "ES6 Proxy wraps an object and intercepts operations: get, set, has, deleteProperty, apply (function calls), and more. Reflect provides the default behavior for each trap. Vue 3's reactivity system is built entirely on Proxy. Use cases: validation/sanitization on set, lazy initialization (virtualize expensive properties), logging/auditing, rate limiting function calls, immutable object facades.",
+          "analogy": "A Proxy is a receptionist in front of an object: every read or write goes through them first, so they can validate, log, or block it before passing it on.",
+          "keyPoints": [
+            "Proxy wraps an object and intercepts operations via traps (get/set/has/…).",
+            "Reflect provides the default behavior to delegate to inside traps.",
+            "Powers Vue 3's reactivity system.",
+            "Use for validation, audit logging, read-only facades, lazy init.",
+            "The set trap can intercept brand-new properties (a plain setter can't)."
+          ],
           "code": "// Validation proxy\nfunction createValidatedUser(data) {\n  return new Proxy(data, {\n    set(target, prop, value, receiver) {\n      if (prop === 'age') {\n        if (typeof value !== 'number' || value < 0 || value > 150) {\n          throw new RangeError(`Invalid age: ${value}`);\n        }\n      }\n      if (prop === 'email') {\n        if (!/^[^@]+@[^@]+\\.[^@]+$/.test(value)) {\n          throw new Error(`Invalid email: ${value}`);\n        }\n      }\n      return Reflect.set(target, prop, value, receiver);\n    },\n    get(target, prop, receiver) {\n      console.log(`[Audit] Reading: ${prop}`);  // Logging\n      return Reflect.get(target, prop, receiver);\n    }\n  });\n}\n\nconst user = createValidatedUser({ name: 'Abhishek', age: 28 });\nuser.age = 30;   // OK\nuser.age = -5;   // Throws: Invalid age: -5\nuser.email = 'bad'; // Throws: Invalid email\n\n// Readonly proxy (freeze without copying):\nconst readonly = (obj) => new Proxy(obj, {\n  set: () => { throw new Error('Object is read-only'); },\n  deleteProperty: () => { throw new Error('Object is read-only'); }\n});",
           "situations": [
             {
@@ -418,6 +602,14 @@
           "title": "Garbage Collection & Mark-and-Sweep",
           "summary": "V8 GC: minor (Scavenger) + major (Mark-Sweep/Compact). Avoid holding references.",
           "explanation": "V8 uses generational garbage collection. New space (young generation): small, collected frequently via Scavenger (copying GC). Old space (old generation): larger, collected less frequently via Mark-Sweep-Compact. Objects that survive 2+ young GC cycles are promoted to old space. The GC root set includes: global objects, stack variables, CPU registers. If an object is reachable from ANY root, it cannot be collected. Understanding this drives correct cleanup code.",
+          "analogy": "GC is a janitor who throws out anything no longer reachable from the 'roots'. If even one sticky note (reference) still points to an object, it stays — that lingering note is how leaks happen.",
+          "keyPoints": [
+            "V8 is generational: young space (frequent, fast) + old space (rare, mark-sweep-compact).",
+            "An object survives if reachable from any root (globals, stack, etc.).",
+            "Leaks come from unwanted references: listeners, timers, closures, growing maps.",
+            "WeakMap/WeakRef let GC collect once only the weak reference remains.",
+            "Diagnose with DevTools heap snapshots; hunt for detached DOM."
+          ],
           "code": "// Memory leak: closures retaining large objects\nfunction createHeavyProcessor() {\n  const LARGE_DATA = new Array(1000000).fill('x'); // 8MB\n  \n  return {\n    process: (item) => {\n      // LARGE_DATA is closed over — never GC'd while this object lives\n      return LARGE_DATA.includes(item);\n    }\n  };\n}\n\n// Fix: don't close over what you don't need\nconst LOOKUP_SET = new Set(heavyDataArray); // Process once\nfunction createProcessor(lookupSet) {\n  return {\n    process: (item) => lookupSet.has(item) // No unnecessary closure\n  };\n}\n\n// WeakMap — keys GC'd when no other references exist\nconst cache = new WeakMap();\nfunction processElement(el) {\n  if (cache.has(el)) return cache.get(el);\n  const result = expensiveComputation(el);\n  cache.set(el, result); // Auto-cleaned when el is GC'd\n  return result;\n}\n// Unlike Map: when el DOM node is removed, cache entry is gone too",
           "situations": [
             {
@@ -435,6 +627,14 @@
           "title": "WeakRef & FinalizationRegistry",
           "summary": "Hold non-preventing references to objects. Run cleanup when GC collects.",
           "explanation": "WeakRef holds a 'weak' reference to an object — if no other strong references exist, GC can collect it. Call .deref() to get the object (returns undefined if GC'd). FinalizationRegistry lets you run cleanup code when an object is GC'd. Both are for advanced memory management. Use cases: caches that don't prevent GC, tracking DOM elements that may be removed. Caution: GC timing is non-deterministic — never rely on FinalizationRegistry for critical cleanup.",
+          "analogy": "A WeakRef is keeping a phone number for someone who may move without telling you — when you call (.deref()) they might be gone. FinalizationRegistry is a postcard that arrives after they've moved out, so you can tidy up.",
+          "keyPoints": [
+            "WeakRef holds an object without preventing GC; .deref() may return undefined.",
+            "FinalizationRegistry runs a cleanup callback after an object is collected.",
+            "GC timing is non-deterministic — never rely on it for critical cleanup.",
+            "Good for best-effort caches that should yield memory under pressure.",
+            "WeakMap when the KEY's lifecycle matters; WeakRef when the VALUE may be collected."
+          ],
           "code": "// WeakRef-based cache\nclass ResourceCache {\n  #cache = new Map();\n  #registry = new FinalizationRegistry((key) => {\n    console.log(`Cache entry for '${key}' was GC'd — cleaning up`);\n    this.#cache.delete(key); // Clean up Map entry\n  });\n\n  set(key, value) {\n    const ref = new WeakRef(value);\n    this.#cache.set(key, ref);\n    this.#registry.register(value, key); // Notify when GC'd\n  }\n\n  get(key) {\n    const ref = this.#cache.get(key);\n    if (!ref) return undefined;\n    const value = ref.deref(); // Could be undefined if GC'd\n    if (!value) this.#cache.delete(key); // Cleanup stale Map entry\n    return value;\n  }\n}\n\n// When to use WeakRef vs WeakMap:\n// WeakMap: when KEY is the object you want to tie the lifecycle to\n// WeakRef: when VALUE is the object you want GC to possibly collect",
           "situations": [
             {
@@ -455,6 +655,14 @@
           "title": "Generator Functions",
           "summary": "function* produces lazy iterables — pause/resume execution via yield.",
           "explanation": "Generator functions (function*) return a Generator object that is both an iterator and an iterable. 'yield' pauses execution and returns a value. 'next()' resumes. Generators are lazy — they compute values only when requested (infinite sequences are possible). Key use cases: infinite sequences, lazy data pipelines, custom iterators, cooperative multitasking (async generators for streaming), implementing state machines. Two-way communication: next(value) can pass a value INTO the generator (received as yield's result).",
+          "analogy": "A generator is a series you watch one episode at a time: yield pauses on a cliffhanger, next() resumes — and it only produces the next episode when you ask, so an 'infinite series' never blows up memory.",
+          "keyPoints": [
+            "function* + yield pauses/resumes; returns an iterator and iterable.",
+            "Lazy — values are computed only on demand (infinite sequences are fine).",
+            "next(value) can pass data back INTO the generator.",
+            "Compose lazy map/filter/take pipelines with O(1) memory.",
+            "Async generators (for await…of) are ideal for streaming data."
+          ],
           "code": "// Infinite sequence — memory safe\nfunction* naturals(start = 1) {\n  while (true) yield start++;\n}\n\nconst nums = naturals();\nconsole.log(nums.next().value); // 1\nconsole.log(nums.next().value); // 2\n\n// Lazy pipeline — process only what's needed\nfunction* map(iterable, fn) {\n  for (const item of iterable) yield fn(item);\n}\n\nfunction* filter(iterable, pred) {\n  for (const item of iterable) if (pred(item)) yield item;\n}\n\nfunction* take(iterable, n) {\n  let i = 0;\n  for (const item of iterable) {\n    if (i++ >= n) break;\n    yield item;\n  }\n}\n\n// Only computes 5 items despite working on infinite sequence:\nconst result = [...take(\n  filter(map(naturals(), n => n * n), n => n % 2 === 0),\n  5\n)]; // [4, 16, 36, 64, 100]\n\n// Async generator for streaming API:\nasync function* streamLLMResponse(prompt) {\n  const response = await fetch('/api/llm', { method: 'POST', body: prompt });\n  const reader = response.body.getReader();\n  while (true) {\n    const { done, value } = await reader.read();\n    if (done) break;\n    yield new TextDecoder().decode(value); // Yield each chunk\n  }\n}\n\n// Process stream:\nfor await (const chunk of streamLLMResponse('Hello')) {\n  process.stdout.write(chunk); // Streaming output\n}",
           "situations": [
             {
@@ -479,6 +687,14 @@
           "title": "Concurrency Patterns",
           "summary": "Promise combinators, rate limiting, circuit breakers, retry with backoff.",
           "explanation": "Beyond Promise.all() there are sophisticated async patterns: 1) Rate limiting: process N at a time (p-limit). 2) Circuit breaker: stop calling a failing service, fail fast after N failures, auto-retry after timeout. 3) Retry with exponential backoff: double wait time between retries + jitter. 4) Bulkhead: isolate failure in one async operation from affecting others. 5) Timeout wrapping: fail a promise after N milliseconds. These patterns are essential for production API clients.",
+          "analogy": "Production async is like running a call center: don't let everyone dial at once (rate limit), back off and retry busy lines with random spacing (jitter), and stop calling a dead number for a while (circuit breaker).",
+          "keyPoints": [
+            "Cap concurrency / rate-limit so you don't overwhelm a service.",
+            "Retry with exponential backoff + jitter to avoid thundering herds.",
+            "Circuit breaker: after N failures, fail fast and let the service recover.",
+            "Timeout-wrap with Promise.race (pair with AbortController to truly cancel).",
+            "Bulkhead: isolate one failing operation from the rest."
+          ],
           "code": "// Retry with exponential backoff + jitter\nasync function withRetry(fn, { maxAttempts = 3, baseDelay = 1000, jitter = true } = {}) {\n  for (let attempt = 1; attempt <= maxAttempts; attempt++) {\n    try {\n      return await fn();\n    } catch (err) {\n      if (attempt === maxAttempts) throw err;\n      const delay = baseDelay * Math.pow(2, attempt - 1);\n      const jitterDelay = jitter ? delay + Math.random() * delay * 0.2 : delay;\n      await new Promise(r => setTimeout(r, jitterDelay));\n    }\n  }\n}\n\n// Circuit Breaker\nclass CircuitBreaker {\n  #failures = 0;\n  #state = 'closed'; // closed → open → half-open\n  #nextRetry = 0;\n\n  constructor(fn, { threshold = 5, timeout = 30000 } = {}) {\n    this.fn = fn;\n    this.threshold = threshold;\n    this.timeout = timeout;\n  }\n\n  async call(...args) {\n    if (this.#state === 'open') {\n      if (Date.now() < this.#nextRetry) throw new Error('Circuit open');\n      this.#state = 'half-open';\n    }\n    try {\n      const result = await this.fn(...args);\n      this.#failures = 0;\n      this.#state = 'closed';\n      return result;\n    } catch (err) {\n      this.#failures++;\n      if (this.#failures >= this.threshold) {\n        this.#state = 'open';\n        this.#nextRetry = Date.now() + this.timeout;\n      }\n      throw err;\n    }\n  }\n}\n\n// Concurrency limiter (manual p-limit implementation)\nfunction createConcurrencyLimiter(max) {\n  let running = 0;\n  const queue = [];\n  return async (fn) => {\n    if (running >= max) await new Promise(r => queue.push(r));\n    running++;\n    try { return await fn(); }\n    finally { running--; queue.shift()?.(); }\n  };\n}",
           "situations": [
             {
@@ -496,6 +712,14 @@
           "title": "Observables & Reactive Programming",
           "summary": "Push-based streams — lazy, cancellable, composable — the foundation of RxJS.",
           "explanation": "An Observable is a lazy push-based data stream. Unlike Promises (single value, eager), Observables: emit multiple values over time, are lazy (nothing runs until subscribed), support cancellation (unsubscribe), and are infinitely composable with operators (map, filter, merge, debounce, etc.). Key concepts: Cold Observable (starts fresh per subscriber, like a Promise), Hot Observable (shared stream, like EventEmitter), Subject (both Observable and Observer). RxJS operators cover virtually every async pattern.",
+          "analogy": "A Promise is a single text message; an Observable is a live group chat: many messages over time, you can leave (unsubscribe), and nothing is sent until someone joins (lazy).",
+          "keyPoints": [
+            "Observables emit many values over time, are lazy, and cancellable.",
+            "Composable via operators: map, filter, debounce, merge…",
+            "Cold = fresh per subscriber; Hot = shared; Subject = both.",
+            "throttleTime/debounceTime/distinctUntilChanged tame floods of events.",
+            "Always unsubscribe (or takeUntilDestroyed) to avoid leaks."
+          ],
           "code": "// Manual Observable implementation (simplified RxJS)\nclass Observable {\n  constructor(subscribeFn) {\n    this._subscribe = subscribeFn;\n  }\n\n  subscribe(observer) {\n    return this._subscribe(observer);\n  }\n\n  map(fn) {\n    return new Observable(observer =>\n      this.subscribe({\n        next: (val) => observer.next(fn(val)),\n        error: (err) => observer.error(err),\n        complete: () => observer.complete(),\n      })\n    );\n  }\n\n  filter(pred) {\n    return new Observable(observer =>\n      this.subscribe({\n        next: (val) => pred(val) && observer.next(val),\n        error: (err) => observer.error(err),\n        complete: () => observer.complete(),\n      })\n    );\n  }\n}\n\n// RxJS: WebSocket stream with automatic reconnection\nimport { webSocket } from 'rxjs/webSocket';\nimport { retryWhen, delay, tap } from 'rxjs/operators';\n\nconst socket$ = webSocket('wss://api.myapp.com/live').pipe(\n  retryWhen(errors => errors.pipe(\n    tap(err => console.log('WS error, retrying...', err)),\n    delay(2000) // Wait 2s before reconnecting\n  ))\n);",
           "situations": [
             {
@@ -516,6 +740,14 @@
           "title": "Web Workers",
           "summary": "True multi-threading in JS — run CPU-heavy code off the main thread.",
           "explanation": "Web Workers run JavaScript in a separate thread with no access to the DOM. Communication via postMessage() (structured clone). Types: Dedicated Worker (one consumer), Shared Worker (multiple tabs share one worker), Service Worker (network proxy, push notifications, offline). Workers can use: fetch, IndexedDB, crypto, WebSockets, Canvas OffscreenCanvas. They CANNOT use: document, window, localStorage. Essential for: image processing, encryption, ML inference, heavy data parsing — anything that would block the main thread.",
+          "analogy": "A Web Worker is a second chef in a back kitchen: they do the heavy chopping (CPU work) off the main counter so the front (UI) keeps serving customers — but they can't touch the dining room (DOM).",
+          "keyPoints": [
+            "Runs JS on a separate thread; communicates via postMessage (structured clone).",
+            "No DOM/window access; can use fetch, IndexedDB, crypto, OffscreenCanvas.",
+            "Use for CPU-bound work (parsing, crypto, ML) — not I/O, which is already async.",
+            "Transfer ArrayBuffers (postMessage(buf,[buf])) to skip the copy cost.",
+            "SharedArrayBuffer + Atomics give true shared memory (needs COOP/COEP headers)."
+          ],
           "code": "// worker.js\nself.addEventListener('message', ({ data }) => {\n  const { type, payload } = data;\n  \n  if (type === 'SORT_LARGE_ARRAY') {\n    const sorted = payload.slice().sort((a, b) => a - b);\n    self.postMessage({ type: 'SORTED', result: sorted });\n  }\n  \n  if (type === 'ENCRYPT') {\n    // Heavy crypto — runs off main thread\n    const encrypted = encryptData(payload.data, payload.key);\n    self.postMessage({ type: 'ENCRYPTED', result: encrypted });\n  }\n});\n\n// main.js\nconst worker = new Worker(new URL('./worker.js', import.meta.url));\n\n// Promise wrapper for clean API\nfunction runInWorker(type, payload) {\n  return new Promise((resolve, reject) => {\n    const handler = ({ data }) => {\n      worker.removeEventListener('message', handler);\n      resolve(data.result);\n    };\n    worker.addEventListener('message', handler);\n    worker.addEventListener('error', reject, { once: true });\n    worker.postMessage({ type, payload });\n  });\n}\n\n// React usage\nconst sorted = await runInWorker('SORT_LARGE_ARRAY', hugeArray);",
           "situations": [
             {
@@ -540,6 +772,14 @@
           "title": "Conditional & Mapped Types",
           "summary": "Type-level programming — transform, filter, and derive types from other types.",
           "explanation": "TypeScript's type system is Turing-complete. Conditional types (T extends U ? X : Y) enable type-level branching. Mapped types ({[K in keyof T]: T[K]}) transform object types. Combining them enables powerful type utilities: Partial, Required, Pick, Exclude, Extract are all built using these primitives. Understanding these makes you able to create zero-overhead type safety for complex APIs — the types catch errors at build time.",
+          "analogy": "These are formulas for types: a conditional type is an if/else for types, a mapped type is a for-loop over an object's keys — together they compute new types from existing ones.",
+          "keyPoints": [
+            "Conditional: T extends U ? X : Y (use infer to extract inner types).",
+            "Mapped: { [K in keyof T]: … } transforms each property.",
+            "Built-ins like Partial, Pick, Exclude are made from these primitives.",
+            "Template literal types build string unions (e.g. `on${Capitalize<T>}`).",
+            "All erased at runtime — zero overhead, pure build-time safety."
+          ],
           "code": "// Conditional type: extract Promise's inner type\ntype Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T;\ntype Result = Awaited<Promise<string>>; // string\ntype NestedResult = Awaited<Promise<Promise<number>>>; // number\n\n// Mapped type: make specific keys required\ntype RequireKeys<T, K extends keyof T> = T & Required<Pick<T, K>>;\ntype User = { name?: string; email?: string; age?: number };\ntype UserWithEmail = RequireKeys<User, 'email'>; // email is required, rest optional\n\n// Distributive conditional: filter union members\ntype NonNullable<T> = T extends null | undefined ? never : T;\ntype Clean = NonNullable<string | null | undefined | number>; // string | number\n\n// Template literal types\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>; // 'onClick'\n\n// Deep Readonly\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];\n};",
           "situations": [
             {
@@ -557,6 +797,14 @@
           "title": "Decorators & Reflect Metadata",
           "summary": "Class/method decoration at define-time — DI containers, ORM, validation frameworks.",
           "explanation": "Decorators are functions applied to class declarations, methods, properties, or parameters at definition time. With Reflect Metadata (reflect-metadata), decorators can attach metadata to classes that other code reads at runtime. This powers: NestJS dependency injection (@Injectable, @Controller), TypeORM (@Entity, @Column), class-validator (@IsEmail, @MinLength). Senior engineers understand decorators not just as syntax sugar but as the mechanism enabling IoC containers and schema inference.",
+          "analogy": "Decorators are stickers you slap on a class or method at definition time (@Injectable, @Get) that tools later scan to wire everything up — like luggage tags a baggage system reads to route your bag.",
+          "keyPoints": [
+            "Functions applied to classes/methods/properties/params at define-time.",
+            "With reflect-metadata, they attach metadata that runtime code reads.",
+            "Power NestJS DI, TypeORM entities, and class-validator.",
+            "Method decorators can transparently wrap behavior (logging, timing).",
+            "They're the mechanism behind IoC containers and schema inference."
+          ],
           "code": "import 'reflect-metadata';\n\n// Method decorator — log execution time\nfunction LogExecutionTime(target: any, key: string, descriptor: PropertyDescriptor) {\n  const original = descriptor.value;\n  descriptor.value = async function (...args: any[]) {\n    const start = performance.now();\n    const result = await original.apply(this, args);\n    console.log(`${key} took ${performance.now() - start}ms`);\n    return result;\n  };\n  return descriptor;\n}\n\n// Property decorator — validation via metadata\nfunction IsEmail(target: any, propertyKey: string) {\n  Reflect.defineMetadata('validation:type', 'email', target, propertyKey);\n}\n\nfunction validate(obj: any): string[] {\n  const errors: string[] = [];\n  for (const key of Object.keys(obj)) {\n    const type = Reflect.getMetadata('validation:type', obj, key);\n    if (type === 'email' && !obj[key].includes('@')) {\n      errors.push(`${key} must be a valid email`);\n    }\n  }\n  return errors;\n}\n\nclass UserDTO {\n  @IsEmail name = '';\n  @IsEmail email = '';\n}\n\nconst dto = new UserDTO();\nvalidate(dto); // ['name must be a valid email', 'email must be a valid email']",
           "situations": [
             {
@@ -577,6 +825,14 @@
           "title": "Testing Architecture & Strategies",
           "summary": "Test pyramid, contract testing, property-based testing, mutation testing.",
           "explanation": "Beyond unit/integration/e2e, senior engineers know: Contract Testing (Pact) — verify API consumer and provider independently. Property-based testing (fast-check) — define invariants and let the library generate hundreds of edge-case inputs automatically. Mutation testing (Stryker) — introduce bugs and verify tests catch them (tests your tests). Visual regression testing (Playwright snapshots, Chromatic). Performance regression testing. The Testing Trophy (Kent C. Dodds): write mostly integration tests, some unit, some e2e, few snapshot tests.",
+          "analogy": "Good testing is layered like a pyramid: lots of cheap, fast unit/integration tests at the base and a few slow end-to-end tests on top. Coverage % tells you what ran — not whether a test would actually catch a bug.",
+          "keyPoints": [
+            "Testing Trophy: mostly integration, some unit, few e2e, minimal snapshots.",
+            "Mutation testing (Stryker) checks whether tests catch injected bugs.",
+            "Property-based testing (fast-check) auto-generates tricky edge cases.",
+            "Contract testing (Pact) verifies consumer/provider API agreements.",
+            "Test behavior, not implementation; coverage ≠ correctness."
+          ],
           "code": "// Property-based testing with fast-check\nimport * as fc from 'fast-check';\n\n// Define invariant: sort output must be ordered and same length\ntest('sort: sorted array length matches input', () => {\n  fc.assert(fc.property(\n    fc.array(fc.integer()),\n    (arr) => {\n      const sorted = mySort(arr);\n      // Invariant 1: same length\n      expect(sorted).toHaveLength(arr.length);\n      // Invariant 2: each element <= next\n      for (let i = 0; i < sorted.length - 1; i++) {\n        expect(sorted[i]).toBeLessThanOrEqual(sorted[i + 1]);\n      }\n    }\n  ));\n  // fast-check generates 100 random arrays of any size/content\n});\n\n// Mutation testing config (stryker.config.ts)\nconst config = {\n  testRunner: 'jest',\n  mutate: ['src/**/*.ts'],\n  thresholds: { high: 80, low: 60, break: 50 } // Fail CI if <50% mutations caught\n};\n\n// Contract test (Pact — consumer side)\nconst interaction = {\n  uponReceiving: 'a request for user 1',\n  withRequest: { method: 'GET', path: '/users/1' },\n  willRespondWith: {\n    status: 200,\n    body: { id: 1, name: like('Abhishek') } // Flexible matchers\n  }\n};",
           "situations": [
             {
@@ -601,6 +857,14 @@
           "title": "IntersectionObserver",
           "summary": "Detect element visibility efficiently — infinite scroll, lazy images, analytics.",
           "explanation": "IntersectionObserver asynchronously observes whether a target element intersects with its ancestor or the viewport. It replaces scroll event listeners + getBoundingClientRect() loops — which force layout (expensive) on every scroll event. The callback fires off the main thread when visibility thresholds are crossed. Key options: root (parent to observe against, defaults to viewport), rootMargin (extend/shrink root bounds — use '200px' to load images 200px before they enter view), threshold (0–1, fraction visible before callback fires). Always disconnect the observer when done.",
+          "analogy": "IntersectionObserver is a motion sensor for the viewport: instead of constantly measuring 'is it visible yet?' on every scroll (expensive), the browser just taps you when an element crosses into view.",
+          "keyPoints": [
+            "Async visibility detection — replaces scroll + getBoundingClientRect loops.",
+            "Runs off the main thread, so no layout thrash.",
+            "Options: root, rootMargin (preload early), threshold (0–1 visible).",
+            "Uses: lazy images, infinite scroll, ad/analytics viewability.",
+            "Always unobserve/disconnect when done."
+          ],
           "code": "// Lazy image loading\nconst imageObserver = new IntersectionObserver(\n  (entries) => {\n    entries.forEach(entry => {\n      if (!entry.isIntersecting) return;\n      const img = entry.target;\n      img.src = img.dataset.src; // Load real src\n      img.classList.add('loaded');\n      imageObserver.unobserve(img); // Stop watching once loaded\n    });\n  },\n  {\n    rootMargin: '200px 0px', // Start loading 200px before viewport\n    threshold: 0             // Trigger as soon as 1px is visible\n  }\n);\n\ndocument.querySelectorAll('img[data-src]').forEach(img => {\n  imageObserver.observe(img);\n});\n\n// Infinite scroll — load more when sentinel enters view\nconst sentinel = document.getElementById('load-more-sentinel');\nconst scrollObserver = new IntersectionObserver(async ([entry]) => {\n  if (!entry.isIntersecting) return;\n  scrollObserver.unobserve(sentinel); // Pause while loading\n  await loadNextPage();\n  scrollObserver.observe(sentinel);   // Re-enable for next trigger\n}, { threshold: 1.0 }); // Fully visible\n\nscrollObserver.observe(sentinel);\n\n// Analytics — track time element was visible\nlet visibleSince = null;\nconst analyticsObserver = new IntersectionObserver(([entry]) => {\n  if (entry.isIntersecting) {\n    visibleSince = performance.now();\n  } else if (visibleSince) {\n    const duration = performance.now() - visibleSince;\n    trackEvent('content_viewed', { duration, id: entry.target.id });\n    visibleSince = null;\n  }\n}, { threshold: 0.5 }); // 50% visible counts as 'seen'",
           "situations": [
             {
@@ -618,6 +882,14 @@
           "title": "MutationObserver",
           "summary": "Watch DOM changes — added/removed nodes, attribute changes, text mutations.",
           "explanation": "MutationObserver watches for changes to the DOM tree. It fires asynchronously (batched as microtasks) after a series of DOM changes, rather than synchronously on each change. Use cases: detecting when third-party code modifies the DOM, reacting to dynamic content injection (ads, chat widgets), implementing undo/redo for rich text editors, auto-saving form state, accessibility tooling. Much more efficient than polling the DOM with setInterval. Key config: childList (added/removed children), attributes, subtree (observe entire subtree), characterData (text changes).",
+          "analogy": "MutationObserver is a security camera on the DOM: it records added/removed nodes and attribute changes, then hands you the batched footage — far cheaper than re-checking the room every second.",
+          "keyPoints": [
+            "Watches DOM changes: childList, attributes, characterData, subtree.",
+            "Fires asynchronously, batched as microtasks (not once per change).",
+            "Uses: detect injected third-party DOM, autosave, accessibility tooling.",
+            "attributeFilter limits which attributes you watch.",
+            "Always disconnect() when finished to avoid overhead and leaks."
+          ],
           "code": "// Watch for dynamically added elements\nconst observer = new MutationObserver((mutations) => {\n  mutations.forEach(mutation => {\n    mutation.addedNodes.forEach(node => {\n      if (node.nodeType !== Node.ELEMENT_NODE) return;\n      if (node.matches('.ad-banner')) {\n        initAdTracking(node); // React to injected ads\n      }\n      // Also check subtree of added nodes\n      node.querySelectorAll?.('.lazy-component').forEach(initLazy);\n    });\n\n    mutation.removedNodes.forEach(node => {\n      if (node.nodeType === Node.ELEMENT_NODE) {\n        cleanupComponent(node); // Cleanup removed elements\n      }\n    });\n  });\n});\n\nobserver.observe(document.body, {\n  childList: true,  // Watch for added/removed children\n  subtree: true,    // Watch all descendants, not just direct children\n});\n\n// Watch attribute changes\nconst attrObserver = new MutationObserver((mutations) => {\n  mutations.forEach(({ attributeName, target, oldValue }) => {\n    if (attributeName === 'aria-expanded') {\n      handleAccordionToggle(target, oldValue);\n    }\n  });\n});\n\nattrObserver.observe(accordionEl, {\n  attributes: true,\n  attributeFilter: ['aria-expanded'], // Only watch specific attributes\n  attributeOldValue: true\n});\n\n// Always disconnect when done\nfunction cleanup() {\n  observer.disconnect();\n  attrObserver.disconnect();\n}",
           "situations": [
             {
@@ -638,6 +910,14 @@
           "title": "V8 Optimization & Hidden Classes",
           "summary": "V8 creates hidden classes for objects — consistent shape = JIT optimization.",
           "explanation": "V8 optimizes JavaScript using hidden classes (also called Shapes or Maps). When you create an object, V8 creates a hidden class. If you always add properties in the same order, V8 can optimize property access to a fixed offset lookup (like a C struct). If you change the shape (add properties out of order, delete properties), V8 creates new hidden classes and may deoptimize. The JIT compiler (TurboFan) inlines, optimizes, and generates native machine code for hot paths. 'Deoptimization' happens when assumptions are violated.",
+          "analogy": "V8 'hidden classes' are like filing each object into a known shape-drawer for instant lookup. Keep objects the same shape and they stay fast; add or delete properties in odd orders and V8 reshuffles drawers (deopt).",
+          "keyPoints": [
+            "V8 builds a hidden class (shape) per object structure.",
+            "Same property order = fixed-offset access = fast (monomorphic).",
+            "Mixing shapes/types at a call site → polymorphic/megamorphic → slow.",
+            "Avoid delete (set to null) and conditional property adds in hot paths.",
+            "TypedArrays give stable numeric shapes for hot loops."
+          ],
           "code": "// BAD: Different shapes — V8 creates multiple hidden classes\nfunction makePoint(x, y, is3D) {\n  const p = { x, y };\n  if (is3D) p.z = 0; // Conditionally adds property — different shapes!\n  return p;\n}\n\n// GOOD: Consistent shape — one hidden class, optimized\nfunction makePoint(x, y, z = undefined) {\n  return { x, y, z }; // Same structure always — V8 optimizes\n}\n\n// BAD: delete creates different hidden class\nconst obj = { a: 1, b: 2, c: 3 };\ndelete obj.b; // Shape change — V8 may deoptimize!\n// GOOD: set to null/undefined instead:\nobj.b = null;\n\n// Monomorphic (optimized) vs Megamorphic (deoptimized)\nfunction process(obj) {\n  return obj.value * 2; // V8 learns the shape of obj\n}\nprocess({ value: 1 });         // shape A → V8 learns\nprocess({ value: 2 });         // shape A → still optimized\nprocess({ name: 'x', value: 3 }); // shape B → polymorphic, degrades perf",
           "situations": [
             {
@@ -651,6 +931,14 @@
           "title": "JS Compilation Pipeline",
           "summary": "Parse → AST → Bytecode (Ignition) → Native code (TurboFan). JIT compilation.",
           "explanation": "The V8 compilation pipeline: 1) Parse: source code → AST (Abstract Syntax Tree). 2) Ignition interpreter: AST → bytecode (fast startup, lower memory). 3) Profiling: Ignition tracks 'hot' functions. 4) TurboFan JIT compiler: optimizes hot functions → native machine code (speculative optimization based on observed types). 5) Deoptimization: if assumptions break (new type observed), TurboFan deoptimizes back to Ignition. This is why warm-up matters for benchmarks — initial runs are interpreted, later runs are compiled.",
+          "analogy": "V8 is a translator that first does a quick rough draft (Ignition bytecode) to start fast, then — for sentences you repeat a lot (hot functions) — writes a polished optimized version (TurboFan native code). Change the meaning and it tears that up (deopt).",
+          "keyPoints": [
+            "Pipeline: Parse → AST → Ignition bytecode → (hot) TurboFan native code.",
+            "Ignition = fast startup; TurboFan = optimized hot paths.",
+            "Optimization is speculative — it assumes observed types stay stable.",
+            "Type/shape changes trigger deoptimization back to bytecode.",
+            "Warm up before benchmarking — early runs are interpreted."
+          ],
           "code": "// Why this matters for benchmarks:\nfunction benchmarkSort() {\n  const arr = Array.from({ length: 10000 }, () => Math.random());\n  \n  // First few calls: Ignition (slow)\n  // After enough calls: TurboFan optimizes to native code\n  console.time('sort');\n  arr.slice().sort((a, b) => a - b);\n  console.timeEnd('sort');\n}\n\n// Warm up first in production benchmarks:\nfor (let i = 0; i < 100; i++) benchmarkSort(); // Allow JIT to kick in\nbenchmarkSort(); // This measurement is meaningful\n\n// Inline caching — V8 remembers call site types:\nfunction square(x) { return x * x; }\nsquare(5);   // V8: records that x is number\nsquare(10);  // V8: assumes number, generates fast number multiply\nsquare('a'); // Type change → inline cache miss → deopt penalty",
           "situations": [
             {

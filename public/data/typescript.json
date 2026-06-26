@@ -13,6 +13,14 @@
           "title": "TypeScript vs JavaScript",
           "summary": "Superset of JS — static typing, compile-time checks, better tooling. Compiles to plain JS.",
           "explanation": "TypeScript is a statically typed superset of JavaScript developed by Microsoft. Key differences: 1) Static typing: TS catches type errors at compile time, not at runtime. 2) Type inference: TS can infer types from context — you don't always need explicit annotations. 3) Interfaces & types: structural type system — if a value has the right shape, it's compatible. 4) No runtime overhead: TypeScript compiles to plain JavaScript — all type information is erased. 5) Optional: you can adopt TS gradually — .js files work fine alongside .ts files. 6) Tooling: IDEs (VS Code) get autocomplete, refactoring, and error highlights because they know the types.",
+          "analogy": "TypeScript is JavaScript with a spell-checker that runs before you publish: it catches 'you passed a string where a number goes' at compile time, then strips all the type notes away and ships plain JS.",
+          "keyPoints": [
+            "A statically-typed superset of JS — all JS is valid TS.",
+            "Catches type errors at compile time, not in production.",
+            "Type inference means you don't annotate everything.",
+            "Types are fully erased — zero runtime overhead.",
+            "Adoptable gradually (allowJs); huge tooling/autocomplete wins."
+          ],
           "code": "// JavaScript — runtime error (no warning at all):\nfunction add(a, b) {\n  return a + b;\n}\nadd('5', 3); // '53' — string concatenation, not addition. Bug silently.\n\n// TypeScript — caught at compile time:\nfunction add(a: number, b: number): number {\n  return a + b;\n}\nadd('5', 3);\n// ❌ Error: Argument of type 'string' is not assignable to parameter of type 'number'\n\n// Type inference — no annotation needed:\nconst name = 'Alice';    // inferred as: string\nconst age = 30;          // inferred as: number\nconst items = [1, 2, 3]; // inferred as: number[]\n\n// Compiles to plain JS — types are erased:\n// function add(a, b) { return a + b; }\n// All type safety exists ONLY at compile time",
           "situations": [
             {
@@ -26,6 +34,14 @@
           "title": "Types, Interfaces & Type Aliases",
           "summary": "interface vs type — structural typing, declaration merging, when to use which.",
           "explanation": "TypeScript has two ways to define object shapes: interface and type alias. Both describe the structure of objects. Key differences: 1) Interfaces can be extended with 'extends' and merged via declaration merging (two interface declarations with the same name merge their properties). 2) Type aliases use '=' and can represent unions, intersections, primitives, tuples — anything. 3) interfaces are open (can be added to); types are closed (final). Rule of thumb: use 'interface' for public API shapes (especially in libraries — consumers can extend them). Use 'type' for unions, intersections, function types, and complex computed types.",
+          "analogy": "interface vs type is like a blueprint vs a label: a blueprint (interface) can be extended and added to over time; a label (type) can describe anything — unions, tuples, functions — but is final once written.",
+          "keyPoints": [
+            "Both describe object shapes; TS uses structural ('duck') typing.",
+            "interface can be extended and declaration-merged.",
+            "type can express unions, intersections, tuples, function types.",
+            "Use interface for public/extendable API shapes.",
+            "Use type for unions, intersections, and computed types."
+          ],
           "code": "// Interface — extendable, mergeable\ninterface User {\n  id: string;\n  name: string;\n  email: string;\n}\n\ninterface AdminUser extends User {\n  permissions: string[];\n}\n\n// Declaration merging — adding to an existing interface:\ninterface User {\n  createdAt: Date; // merged into the original User interface\n}\n\n// Type alias — unions, intersections, complex types\ntype ID = string | number; // Union — can't do this with interface\ntype Nullable<T> = T | null;\ntype Callback = (event: MouseEvent) => void;\ntype Point = { x: number; y: number };\n\n// Intersection — combine multiple types:\ntype AdminUser = User & { permissions: string[] };\n\n// Structural typing — TypeScript checks shape, not name:\ninterface Named { name: string; }\nfunction greet(obj: Named) { console.log(obj.name); }\n\nconst user = { name: 'Alice', age: 30 };\ngreet(user); // ✅ Works! user has 'name', extra props are fine\n\n// Tuple type:\ntype Pair = [string, number];\nconst entry: Pair = ['age', 30]; // ✅\nconst bad: Pair  = [30, 'age']; // ❌ Order matters",
           "situations": [
             {
@@ -39,6 +55,14 @@
           "title": "Primitive & Special Types",
           "summary": "unknown vs any vs never. void, null, undefined. Literal types. Type narrowing.",
           "explanation": "TypeScript's special types: 1) 'any' — opt-out of type checking entirely. Avoid — it silently disables safety for that variable and anything it touches. 2) 'unknown' — the safe alternative to 'any'. You MUST narrow the type before using it. 3) 'never' — a value that never exists. Used for: unreachable code, exhaustive checks, functions that always throw. 4) 'void' — a function return type meaning 'no return value'. Different from 'undefined'. 5) Literal types: const mode: 'light' | 'dark' = 'light' — not just 'string', but specifically one of those values. 6) Type narrowing: using typeof, instanceof, in, or custom type guards to tell TS which specific type a variable is in a given code branch.",
+          "analogy": "any is taking the batteries out of the smoke detector — silence, but no safety. unknown is the smoke detector that makes you prove it's safe (narrow) before you proceed.",
+          "keyPoints": [
+            "any disables checking and infects everything it touches — avoid it.",
+            "unknown is the safe any: you must narrow before using it.",
+            "never = a value that can't exist (used for exhaustiveness checks).",
+            "void = a function returns nothing meaningful.",
+            "Literal types pin a value to exact options ('light' | 'dark')."
+          ],
           "code": "// any — dangerous\nlet val: any = 'hello';\nval.toFixed(2); // No error — TS can't help you here\n\n// unknown — safe\nlet val2: unknown = 'hello';\nval2.toFixed(2); // ❌ Error: Object is of type 'unknown'\n// Must narrow first:\nif (typeof val2 === 'string') {\n  val2.toUpperCase(); // ✅ TS knows it's a string here\n}\n\n// never — exhaustive checks\ntype Shape = 'circle' | 'square';\nfunction area(s: Shape): number {\n  switch (s) {\n    case 'circle': return Math.PI;\n    case 'square': return 1;\n    default:\n      const _exhaustive: never = s; // ❌ Error if Shape adds 'triangle' but we forget to handle it\n      throw new Error('Unhandled shape');\n  }\n}\n\n// Literal types — narrow string/number to specific values\ntype Direction = 'up' | 'down' | 'left' | 'right';\ntype HTTPStatus = 200 | 201 | 400 | 404 | 500;\ntype Flags = { readonly debug: true; env: 'prod' | 'dev' };\n\n// Type narrowing — 'in' operator\ninterface Cat { meow(): void; }\ninterface Dog { bark(): void; }\nfunction speak(animal: Cat | Dog) {\n  if ('meow' in animal) {\n    animal.meow(); // TS knows it's Cat here\n  } else {\n    animal.bark(); // TS knows it's Dog here\n  }\n}",
           "situations": [
             {
@@ -59,6 +83,14 @@
           "title": "Generic Functions & Constraints",
           "summary": "Write once, work for any type — with constraints to ensure the type has what you need.",
           "explanation": "Generics allow you to write functions, classes, and interfaces that work with any type while preserving type safety. Without generics you'd need 'any' or overloads for every type. Key concepts: 1) Type parameters: <T> is a placeholder resolved at call site. 2) Constraints: 'extends' limits what T can be — T extends string means T must be string or a subtype. 3) Multiple type params: <T, U> for functions relating two types. 4) Default type params: <T = string>. 5) Bounded generics: <T extends { length: number }> means 'any type with a length property'.",
+          "analogy": "Generics are a one-size-fits-all container that remembers what you put in: put in a number, get a number back — type safety preserved, no need for a separate box per type.",
+          "keyPoints": [
+            "<T> is a type placeholder resolved at the call site.",
+            "Preserves the input→output type relationship (vs any).",
+            "Constrain with extends (<T extends { length: number }>).",
+            "keyof constraints make property access type-safe.",
+            "Support defaults (<T = string>) and multiple params (<T, U>)."
+          ],
           "code": "// Without generics — forced to use any or overloads:\nfunction identity(arg: any): any { return arg; } // loses type info\n\n// With generics — type is preserved:\nfunction identity<T>(arg: T): T { return arg; }\nconst str = identity('hello');  // T = string, returns string\nconst num = identity(42);       // T = number, returns number\n\n// Generic with constraint — T must have 'length'\nfunction logLength<T extends { length: number }>(arg: T): T {\n  console.log(arg.length);\n  return arg;\n}\nlogLength('hello');   // ✅ strings have length\nlogLength([1, 2, 3]); // ✅ arrays have length\nlogLength(42);        // ❌ numbers don't have length\n\n// Generic interface\ninterface ApiResponse<T> {\n  data: T;\n  status: number;\n  message: string;\n}\ntype UserResponse = ApiResponse<User>;   // data: User\ntype ListResponse = ApiResponse<User[]>; // data: User[]\n\n// Keyof constraint — accessing object properties safely\nfunction getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key]; // T[K] = the exact type of that property\n}\nconst user = { name: 'Alice', age: 30 };\nconst name = getProperty(user, 'name'); // type: string ✅\ngetProperty(user, 'height');            // ❌ 'height' doesn't exist",
           "situations": [
             {
@@ -72,6 +104,14 @@
           "title": "Infer & Generic Patterns",
           "summary": "ReturnType, Parameters, infer keyword — extracting types from existing types.",
           "explanation": "Advanced generic patterns let you derive types from existing code automatically, keeping types in sync without duplication. Key utilities: 1) ReturnType<T>: extracts the return type of a function. 2) Parameters<T>: extracts the parameters as a tuple. 3) InstanceType<T>: extracts the instance type of a class. 4) 'infer' keyword: used inside conditional types to capture/extract a type into a variable. These are heavily used in library type definitions to ensure the types they expose stay in sync with their implementations automatically.",
+          "analogy": "infer is a fill-in-the-blank for types: 'if T looks like Promise<___>, capture the blank as U'. ReturnType/Parameters use it to read types straight off your existing functions, so they never drift out of sync.",
+          "keyPoints": [
+            "ReturnType<T> / Parameters<T> derive types from functions.",
+            "infer captures a type from inside a pattern in a conditional type.",
+            "Awaited<T> unwraps a (possibly nested) Promise.",
+            "Lets types stay in sync with implementation automatically.",
+            "Backbone of library typings (tRPC, Prisma)."
+          ],
           "code": "// ReturnType — extract what a function returns\nfunction createUser() {\n  return { id: '1', name: 'Alice', createdAt: new Date() };\n}\ntype User = ReturnType<typeof createUser>;\n// User = { id: string; name: string; createdAt: Date }\n// No duplication — if createUser changes, User type updates automatically!\n\n// Parameters — extract function params as tuple\nfunction login(email: string, password: string, rememberMe?: boolean) {}\ntype LoginParams = Parameters<typeof login>;\n// LoginParams = [email: string, password: string, rememberMe?: boolean]\n\n// infer — extract type in conditional type\ntype UnpackPromise<T> = T extends Promise<infer U> ? U : T;\ntype A = UnpackPromise<Promise<string>>;  // string\ntype B = UnpackPromise<Promise<User[]>>;  // User[]\ntype C = UnpackPromise<number>;           // number (not a Promise, returns T)\n\n// infer for array element type:\ntype ArrayElement<T> = T extends (infer U)[] ? U : never;\ntype X = ArrayElement<string[]>;  // string\ntype Y = ArrayElement<number[]>;  // number\n\n// Practical: extract event handler param type:\ntype EventParam<T extends (e: any) => any> = T extends (e: infer E) => any ? E : never;\ntype ClickEvent = EventParam<React.MouseEventHandler<HTMLButtonElement>>;\n// ClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>",
           "situations": [
             {
@@ -92,6 +132,14 @@
           "title": "Built-in Utility Types",
           "summary": "Partial, Required, Pick, Omit, Record, Readonly — transform types without duplication.",
           "explanation": "TypeScript includes built-in utility types that transform existing types. These eliminate the need to manually define variations of your types. Key utilities: Partial<T> makes all properties optional. Required<T> makes all properties required. Readonly<T> prevents mutation. Pick<T, K> selects specific properties. Omit<T, K> removes specific properties. Record<K, V> creates a dictionary type. Exclude<T, U> removes union members. Extract<T, U> keeps only matching union members. NonNullable<T> removes null and undefined.",
+          "analogy": "Utility types are photo filters for types: Partial makes everything optional, Pick crops to a few fields, Omit removes some — all from one original, so there's a single source of truth.",
+          "keyPoints": [
+            "Partial/Required toggle optionality; Readonly prevents mutation.",
+            "Pick selects fields; Omit removes fields.",
+            "Record<K,V> builds a typed dictionary.",
+            "Exclude/Extract/NonNullable manipulate union members.",
+            "Compose them (Partial<Pick<User,…>>) instead of redefining types."
+          ],
           "code": "interface User {\n  id: string;\n  name: string;\n  email: string;\n  age: number;\n  role: 'admin' | 'user';\n}\n\n// Partial — all optional (for update payloads)\ntype UserUpdate = Partial<User>;\n// { id?: string; name?: string; email?: string; ... }\n\n// Required — all required (opposite of Partial)\ntype RequiredUser = Required<User>; // removes all ?\n\n// Pick — select fields (for DTOs, API responses)\ntype UserPreview = Pick<User, 'id' | 'name'>;\n// { id: string; name: string }\n\n// Omit — exclude fields (hide sensitive data)\ntype PublicUser = Omit<User, 'email' | 'age'>;\n// { id: string; name: string; role: ... }\n\n// Record — typed dictionary\ntype RolePermissions = Record<User['role'], string[]>;\nconst perms: RolePermissions = {\n  admin: ['read', 'write', 'delete'],\n  user: ['read'],\n};\n\n// Exclude / Extract — manipulate union types\ntype Status = 'pending' | 'active' | 'deleted';\ntype ActiveStatus = Exclude<Status, 'deleted'>; // 'pending' | 'active'\ntype OnlyActive = Extract<Status, 'active' | 'archived'>; // 'active'\n\n// NonNullable\ntype MaybeString = string | null | undefined;\ntype SafeString = NonNullable<MaybeString>; // string",
           "situations": [
             {
@@ -105,6 +153,14 @@
           "title": "Readonly & Const Assertions",
           "summary": "'as const' for literal inference, Readonly for immutable objects, ReadonlyArray.",
           "explanation": "TypeScript has two mechanisms for immutability: 1) Readonly<T> utility type — makes all top-level properties readonly at the type level (deep immutability needs DeepReadonly). 2) 'as const' assertion — freezes a value to its most specific literal type. Without 'as const': const config = { env: 'prod' } has type { env: string }. With 'as const': type is { readonly env: 'prod' } — the exact literal, not just string. This is critical for objects used as lookup maps or config where you want exhaustive union types derived from the values.",
+          "analogy": "Without 'as const', TS rounds your value up to a vague type ('prod' becomes just string). 'as const' freezes it to the exact literal, so you can derive precise unions straight from the data.",
+          "keyPoints": [
+            "Readonly<T> makes top-level props immutable (deep needs DeepReadonly).",
+            "'as const' freezes a value to its narrowest literal type.",
+            "Derive unions from objects: typeof OBJ[keyof typeof OBJ].",
+            "ReadonlyArray blocks mutating methods (push/splice).",
+            "Single source of truth — add a value, the union updates."
+          ],
           "code": "// Without 'as const' — types are widened\nconst config = { env: 'prod', port: 3000 };\n// type: { env: string; port: number } — loses the literal values\n\n// With 'as const' — types are literal\nconst config = { env: 'prod', port: 3000 } as const;\n// type: { readonly env: 'prod'; readonly port: 3000 }\n\n// Derive union from object values:\nconst ROUTES = {\n  home: '/',\n  about: '/about',\n  profile: '/profile',\n} as const;\ntype Route = typeof ROUTES[keyof typeof ROUTES];\n// Route = '/' | '/about' | '/profile'\n// Adding a new route to ROUTES automatically updates Route!\n\n// Readonly arrays:\nconst PERMISSIONS = ['read', 'write', 'delete'] as const;\ntype Permission = typeof PERMISSIONS[number];\n// Permission = 'read' | 'write' | 'delete'\n\n// ReadonlyArray prevents mutation:\nfunction processItems(items: ReadonlyArray<string>) {\n  items.push('new'); // ❌ Error: Property 'push' does not exist on ReadonlyArray\n  return items.map(i => i.toUpperCase()); // ✅ non-mutating methods OK\n}\n\n// Deep readonly:\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];\n};",
           "situations": [
             {
@@ -125,6 +181,14 @@
           "title": "Type Guards",
           "summary": "typeof, instanceof, in, discriminated unions, custom type predicates — is operator.",
           "explanation": "Type narrowing is how TypeScript refines a broad type (union) to a specific type within a conditional block. Built-in narrowing: typeof (primitive checks), instanceof (class checks), 'in' (property existence). Custom type guards: functions that return 'value is Type' — a type predicate. TypeScript tracks narrowing through the control flow — after 'if (typeof x === string)', TS knows x is string in that block. Discriminated unions: add a 'kind' or 'type' literal field to each union member, then switch on it — TypeScript narrows to the exact member in each case.",
+          "analogy": "Narrowing is a series of doors that TS watches you walk through: after 'if (typeof x === string)', it knows x is a string in that room. A discriminated union puts a labeled tag on each door so the switch is exhaustive.",
+          "keyPoints": [
+            "Built-in narrowing: typeof, instanceof, the 'in' operator.",
+            "Discriminated unions: a shared literal 'kind' field + switch.",
+            "Custom guards return `value is Type` (type predicates).",
+            "Assertion functions (`asserts x is T`) narrow for the rest of the scope.",
+            "A `never` default case enforces exhaustive handling at compile time."
+          ],
           "code": "// Discriminated union — the most powerful narrowing pattern\ninterface Square  { kind: 'square';  side: number; }\ninterface Circle  { kind: 'circle';  radius: number; }\ninterface Triangle{ kind: 'triangle'; base: number; height: number; }\ntype Shape = Square | Circle | Triangle;\n\nfunction area(shape: Shape): number {\n  switch (shape.kind) {\n    case 'square':   return shape.side ** 2;           // narrowed to Square\n    case 'circle':   return Math.PI * shape.radius ** 2; // narrowed to Circle\n    case 'triangle': return 0.5 * shape.base * shape.height; // narrowed to Triangle\n    default:\n      const _never: never = shape; // ❌ compile error if a case is missing\n      throw new Error('Unknown shape');\n  }\n}\n\n// Custom type predicate — 'is' operator\ninterface ApiError { code: number; message: string; }\ninterface User { id: string; name: string; }\ntype ApiResult = User | ApiError;\n\nfunction isError(result: ApiResult): result is ApiError {\n  return 'code' in result && typeof result.code === 'number';\n}\n\nconst result: ApiResult = await fetchUser();\nif (isError(result)) {\n  console.error(result.code, result.message); // narrowed to ApiError\n} else {\n  console.log(result.name); // narrowed to User\n}\n\n// Assertion functions — throw on wrong type:\nfunction assertIsString(val: unknown): asserts val is string {\n  if (typeof val !== 'string') throw new TypeError('Expected string');\n}\nassertIsString(input); // After this line, TS knows input is string",
           "situations": [
             {
@@ -138,6 +202,14 @@
           "title": "Assertion Functions & satisfies",
           "summary": "'satisfies' operator — validate without widening. Assertion functions that narrow after call.",
           "explanation": "Two newer TypeScript features for type safety: 1) 'satisfies' operator (TS 4.9): validates that a value matches a type WITHOUT widening the type. Unlike a type annotation (which loses literal types), 'satisfies' keeps the inferred literal type while still checking the constraint. 2) Assertion functions: functions with 'asserts value is Type' in their return type. After calling them, TypeScript permanently narrows the type for the rest of the scope — unlike type predicates (which only narrow inside the if block).",
+          "analogy": "'satisfies' is a fitting room that checks the outfit fits the dress code WITHOUT swapping your clothes for a generic uniform: the value is validated but keeps its exact literal types.",
+          "keyPoints": [
+            "satisfies validates a value against a type without widening it.",
+            "Type annotation widens (loses literals); satisfies keeps them.",
+            "Great for config objects, route maps, palettes.",
+            "Assertion functions narrow permanently after the call (vs guards: only in the if).",
+            "Combine both for validated-yet-precise config."
+          ],
           "code": "// 'satisfies' — validate without widening\ntype Colors = Record<string, string>;\n\n// With type annotation — widened (loses literals)\nconst palette: Colors = {\n  red: '#ff0000',\n  green: '#00ff00',\n};\npalette.red.toUpperCase(); // Works but red is just 'string'\n\n// With 'satisfies' — validated AND literal types preserved!\nconst palette = {\n  red: '#ff0000',\n  green: '#00ff00',\n} satisfies Colors;\npalette.red.toUpperCase(); // Works AND 'red' is typed as '#ff0000' (literal)\npalette.unknownColor;      // ❌ Error! 'satisfies' validates the shape\n\n// Assertion function — narrows permanently in the scope\nfunction assertDefined<T>(val: T | null | undefined): asserts val is T {\n  if (val == null) throw new Error('Expected defined value');\n}\n\nlet user: User | null = getUser();\nassertDefined(user);  // Throws if null\nuser.name;            // ✅ TS knows user is not null after this line\n// No need for 'if (user)' on every usage\n\n// Combine both for powerful validation:\nconst config = {\n  env: process.env.NODE_ENV,\n  port: Number(process.env.PORT),\n} satisfies { env: string | undefined; port: number };\nassertDefined(config.env); // env is now string, not string | undefined",
           "situations": [
             {
@@ -158,6 +230,14 @@
           "title": "Class Features",
           "summary": "Access modifiers, abstract classes, readonly, parameter properties, class generics.",
           "explanation": "TypeScript adds to JavaScript classes: 1) Access modifiers: public (default), protected (class + subclasses), private (class only). Note: JS also has # private fields — TS 'private' is erased at runtime, # is truly private. 2) Parameter properties: shorthand to declare and initialize in constructor: constructor(private name: string) {} is equivalent to declaring private name: string and this.name = name. 3) readonly properties: can only be assigned in constructor. 4) Abstract classes: can't be instantiated — must be extended. Define the interface that subclasses must implement. 5) Class can implement multiple interfaces. 6) Generic classes: class Stack<T> { private items: T[] = []; }",
+          "analogy": "TS 'private' is a 'Staff Only' sign (a polite compile-time warning, removed at runtime); JS '#private' is a locked door (truly inaccessible even in plain JS).",
+          "keyPoints": [
+            "Modifiers: public (default), protected, private (compile-time only).",
+            "'#' fields are runtime-private (hidden from JSON/Reflect).",
+            "Parameter properties declare + assign in the constructor in one line.",
+            "abstract classes define a contract and can't be instantiated.",
+            "Classes can be generic (Stack<T>) and implement interfaces."
+          ],
           "code": "// Access modifiers + parameter properties\nclass UserService {\n  // Parameter property shorthand:\n  constructor(\n    private readonly db: Database,      // private + readonly\n    protected logger: Logger,           // protected\n    public readonly name: string = 'UserService', // public readonly\n  ) {}\n\n  async getUser(id: string): Promise<User> {\n    this.logger.log(`Fetching user ${id}`);\n    return this.db.query(`SELECT * FROM users WHERE id = $1`, [id]);\n  }\n}\n\n// Abstract class — defines interface, can't be instantiated\nabstract class Animal {\n  abstract makeSound(): string; // subclasses MUST implement\n  abstract get name(): string;\n\n  move(distance: number): void { // shared implementation\n    console.log(`${this.name} moves ${distance}m`);\n  }\n}\n\nclass Dog extends Animal {\n  get name() { return 'Dog'; }\n  makeSound() { return 'Woof!'; } // must implement\n}\n\nnew Animal(); // ❌ Cannot create instance of abstract class\nnew Dog();    // ✅\n\n// Generic class\nclass Stack<T> {\n  private items: T[] = [];\n  push(item: T): void { this.items.push(item); }\n  pop(): T | undefined { return this.items.pop(); }\n  peek(): T | undefined { return this.items[this.items.length - 1]; }\n}\n\nconst numStack = new Stack<number>();\nnumStack.push(1);  // ✅\nnumStack.push('a'); // ❌ string not assignable to number",
           "situations": [
             {
@@ -171,6 +251,14 @@
           "title": "Decorators",
           "summary": "Class, method, property, parameter decorators. Metadata reflection. Angular/NestJS patterns.",
           "explanation": "Decorators are a Stage 3 proposal (ES) and a TypeScript feature (with experimentalDecorators or the new TS 5.0 decorators). They are functions that modify classes, methods, properties, or parameters at definition time. Common uses: logging, dependency injection (Angular, NestJS), ORM mappings (TypeORM), validation, memoization. Two decorator APIs: 1) Legacy (experimentalDecorators: true): widely used by Angular, NestJS, TypeORM. 2) TS 5.0+ standard decorators: new ECMAScript-aligned API with different signature. Most libraries still use legacy decorators.",
+          "analogy": "Decorators are stamps you press onto a class or method at definition time (@Injectable, @Log) that add behavior or metadata — like a notary stamp that frameworks later read.",
+          "keyPoints": [
+            "Functions that modify classes/methods/properties/params at define-time.",
+            "Power Angular DI, NestJS, TypeORM, validation.",
+            "Method decorators can wrap behavior (logging, timing).",
+            "With reflect-metadata they attach readable metadata.",
+            "Two APIs exist: legacy (experimentalDecorators) and TS 5.0 standard."
+          ],
           "code": "// Legacy decorator (experimentalDecorators: true)\n// --- Class Decorator ---\nfunction Injectable(target: Function) {\n  // Mark this class as dependency-injectable\n  Reflect.defineMetadata('injectable', true, target);\n}\n\n// --- Method Decorator ---\nfunction Log(target: any, key: string, descriptor: PropertyDescriptor) {\n  const original = descriptor.value;\n  descriptor.value = function(...args: any[]) {\n    console.log(`[${key}] called with`, args);\n    const result = original.apply(this, args);\n    console.log(`[${key}] returned`, result);\n    return result;\n  };\n  return descriptor;\n}\n\n// --- Property Decorator ---\nfunction Required(target: any, propertyKey: string) {\n  // Can use reflect-metadata to record required fields\n  const fields: string[] = Reflect.getMetadata('required', target) || [];\n  fields.push(propertyKey);\n  Reflect.defineMetadata('required', fields, target);\n}\n\n// Usage (NestJS-style)\n@Injectable()\nclass UserService {\n  @Required\n  private readonly db: Database;\n\n  @Log\n  async getUser(id: string): Promise<User> {\n    return this.db.findUser(id);\n  }\n}\n\n// TS 5.0+ Standard Decorators (new API):\nfunction logged<T extends (...args: any[]) => any>(\n  target: T,\n  context: ClassMethodDecoratorContext\n) {\n  return function(...args: Parameters<T>): ReturnType<T> {\n    console.log(`Calling ${String(context.name)}`);\n    return target.apply(this, args);\n  } as T;\n}",
           "situations": [
             {
@@ -191,6 +279,14 @@
           "title": "tsconfig.json Deep Dive",
           "summary": "strict mode, target, module, paths, composite projects — what each option actually does.",
           "explanation": "tsconfig.json controls how TypeScript compiles your code. Key options: 1) strict: true — enables all strict checks (strictNullChecks, noImplicitAny, strictFunctionTypes, etc). Always enable. 2) target: which JS version to output (ES2020, ESNext). 3) module: how modules are output (CommonJS for Node, ESNext for bundlers). 4) moduleResolution: how imports are resolved (Bundler for modern setups, Node16 for native ESM Node). 5) paths: import aliases (@/ → src/). 6) composite: for project references (monorepos). 7) incremental: faster rebuilds by caching. 8) declaration + declarationMap: generate .d.ts files for libraries.",
+          "analogy": "tsconfig.json is the control panel for the compiler: it sets how strict the inspector is, which JS version to output, and how imports are resolved. 'strict: true' is the master safety switch you always leave on.",
+          "keyPoints": [
+            "strict: true enables the full suite of safety checks — always on.",
+            "target/module/moduleResolution control output and import resolution.",
+            "paths sets import aliases (@/ → src/).",
+            "noUncheckedIndexedAccess makes index access T | undefined.",
+            "incremental + skipLibCheck speed up builds."
+          ],
           "code": "// tsconfig.json — production-grade config\n{\n  \"compilerOptions\": {\n    // Strictness (always enable these):\n    \"strict\": true,          // Enables all strict checks\n    \"noUncheckedIndexedAccess\": true, // arr[0] is T | undefined, not T\n    \"exactOptionalPropertyTypes\": true, // { a?: string } rejects { a: undefined }\n    \"noImplicitReturns\": true,\n    \"noFallthroughCasesInSwitch\": true,\n    \"noImplicitOverride\": true, // must use 'override' keyword\n\n    // Output:\n    \"target\": \"ES2020\",       // JS syntax level\n    \"module\": \"ESNext\",        // Module format\n    \"moduleResolution\": \"Bundler\", // For Vite/webpack setups\n    \"lib\": [\"ES2020\", \"DOM\"],  // Available APIs\n\n    // Paths:\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@/*\": [\"src/*\"],        // import { api } from '@/lib/api'\n      \"@components/*\": [\"src/components/*\"]\n    },\n\n    // Performance:\n    \"incremental\": true,\n    \"tsBuildInfoFile\": \".tsbuildinfo\",\n\n    // Interop:\n    \"esModuleInterop\": true,  // default imports from CJS modules\n    \"allowSyntheticDefaultImports\": true,\n    \"resolveJsonModule\": true, // import data from './data.json'\n    \"skipLibCheck\": true      // Skip checking node_modules .d.ts\n  },\n  \"include\": [\"src\"],\n  \"exclude\": [\"node_modules\", \"dist\"]\n}",
           "situations": [
             {
@@ -204,6 +300,14 @@
           "title": "Declaration Files (.d.ts)",
           "summary": "Augmenting modules, global types, writing .d.ts for JS libraries, triple-slash references.",
           "explanation": "Declaration files (.d.ts) contain only type information — no runtime code. Uses: 1) Type definitions for JS libraries (DefinitelyTyped / @types packages). 2) Module augmentation: add types to an existing module (e.g., add custom properties to Express Request). 3) Global augmentation: add to the global namespace (e.g., add to Window). 4) Ambient declarations: declare global variables that exist in the environment (injected by bundler, etc). Writing your own: when building a library, set 'declaration: true' in tsconfig — TypeScript auto-generates .d.ts from your .ts files.",
+          "analogy": ".d.ts files are type-only instruction manuals with no working parts: they tell TS the shape of JS libraries or let you bolt extra typed properties onto existing things (like req.user on Express).",
+          "keyPoints": [
+            "Contain types only — no runtime code.",
+            "@types/* packages provide types for untyped JS libraries.",
+            "Module augmentation adds types to an existing module.",
+            "Global augmentation extends Window/global namespace.",
+            "declaration: true auto-generates .d.ts for your library."
+          ],
           "code": "// Module augmentation — add types to existing module\n// (e.g., add user to Express Request)\ndeclare module 'express-serve-static-core' {\n  interface Request {\n    user?: AuthenticatedUser; // Now req.user is typed everywhere\n    requestId: string;\n  }\n}\n\n// Global augmentation — add to Window\ndeclare global {\n  interface Window {\n    analytics: Analytics;\n    gtag: (command: string, ...args: any[]) => void;\n  }\n}\n// Now window.analytics and window.gtag are typed globally\n\n// Ambient declaration — declare a global injected by bundler\ndeclare const __DEV__: boolean;\ndeclare const __VERSION__: string;\n// e.g., webpack.DefinePlugin injects these at build time\n\n// Declare a JS-only module with types:\n// (for old npm packages without @types/)\ndeclare module 'old-js-library' {\n  export function doThing(input: string): number;\n  export interface Options { timeout: number; }\n  export default class MyLib {\n    constructor(opts?: Options);\n    run(): void;\n  }\n}\n\n// .d.ts file for a JS module you wrote:\n// src/utils.js (no types)\n// src/utils.d.ts (types only):\nexport declare function formatDate(date: Date, format?: string): string;\nexport declare const DEFAULT_FORMAT: string;",
           "situations": [
             {
@@ -224,6 +328,14 @@
           "title": "Builder & Fluent API Patterns",
           "summary": "Method chaining with precise return types. Builder accumulates type information at each step.",
           "explanation": "The Builder pattern in TypeScript can be enhanced with generics to track what has been set. A 'Fluent Builder' returns 'this' from each method — enabling chaining. An advanced 'Type-Safe Builder' uses generic type parameters to track which fields have been set, making the 'build()' method only available when all required fields are provided — a compile-time check rather than a runtime error.",
+          "analogy": "A fluent builder is ordering at a sandwich counter: each step (.where().limit()) adds to your order and hands the counter back to you. A type-safe builder won't let you say 'done' (build()) until the required ingredients are in.",
+          "keyPoints": [
+            "Each method returns `this` to enable chaining.",
+            "Accumulates configuration step by step.",
+            "Type-safe builders track set fields via generic state.",
+            "build() can be gated to require fields at compile time.",
+            "Used by query builders, AWS CDK, SDK configs."
+          ],
           "code": "// Simple fluent builder\nclass QueryBuilder {\n  private conditions: string[] = [];\n  private limitValue?: number;\n\n  where(condition: string): this {\n    this.conditions.push(condition);\n    return this; // return 'this' for chaining\n  }\n\n  limit(n: number): this {\n    this.limitValue = n;\n    return this;\n  }\n\n  build(): string {\n    const where = this.conditions.length\n      ? `WHERE ${this.conditions.join(' AND ')}`\n      : '';\n    const limit = this.limitValue ? `LIMIT ${this.limitValue}` : '';\n    return `SELECT * FROM users ${where} ${limit}`.trim();\n  }\n}\n\nconst query = new QueryBuilder()\n  .where('age > 18')\n  .where('active = true')\n  .limit(10)\n  .build();\n\n// Type-safe builder — build() only exists when required fields are set\ntype BuilderState = { name: boolean; email: boolean };\n\nclass UserBuilder<State extends BuilderState = { name: false; email: false }> {\n  private data: Partial<User> = {};\n\n  setName(name: string): UserBuilder<State & { name: true }> {\n    this.data.name = name;\n    return this as any;\n  }\n\n  setEmail(email: string): UserBuilder<State & { email: true }> {\n    this.data.email = email;\n    return this as any;\n  }\n\n  // build() only available when both name and email are set\n  build(this: UserBuilder<{ name: true; email: true }>): User {\n    return this.data as User;\n  }\n}\n\nconst user = new UserBuilder()\n  .setName('Alice')\n  .setEmail('alice@example.com')\n  .build(); // ✅ Both set\n\nnew UserBuilder().setName('Alice').build(); // ❌ Compile error: email not set",
           "situations": [
             {
@@ -237,6 +349,14 @@
           "title": "Result Types & Error Handling",
           "summary": "Result<T, E> pattern, Option/Maybe type — typed errors without exceptions.",
           "explanation": "Instead of throwing exceptions (which are untyped in TypeScript — any function can throw anything), the Result pattern makes errors explicit in the return type. Inspired by Rust's Result<T, E>. A function returns either Ok(value) or Err(error) — callers must handle both. This makes error handling visible, type-safe, and impossible to forget. Libraries: neverthrow, ts-results. The pattern works especially well with discriminated unions, which TypeScript narrows perfectly.",
+          "analogy": "The Result pattern is returning a labeled box that says either 'success: here's the data' or 'failure: here's why' — instead of throwing an unlabeled error nobody is forced to catch.",
+          "keyPoints": [
+            "Errors become values: Result<T,E> = Ok<T> | Err<E>.",
+            "Callers must handle both branches — errors can't be forgotten.",
+            "Throws are untyped in TS; Result makes failures explicit.",
+            "Pairs perfectly with discriminated-union narrowing.",
+            "Libraries: neverthrow, ts-results (Rust-inspired)."
+          ],
           "code": "// Result type — errors as values, not exceptions\ntype Ok<T>  = { success: true;  data: T };\ntype Err<E> = { success: false; error: E };\ntype Result<T, E = Error> = Ok<T> | Err<E>;\n\n// Factory helpers\nconst ok  = <T>(data: T): Ok<T>   => ({ success: true, data });\nconst err = <E>(error: E): Err<E> => ({ success: false, error });\n\n// Function that can fail — caller MUST handle both cases:\nasync function fetchUser(id: string): Promise<Result<User, 'NOT_FOUND' | 'NETWORK_ERROR'>> {\n  try {\n    const res = await fetch(`/api/users/${id}`);\n    if (res.status === 404) return err('NOT_FOUND');\n    if (!res.ok) return err('NETWORK_ERROR');\n    return ok(await res.json());\n  } catch {\n    return err('NETWORK_ERROR');\n  }\n}\n\n// Caller is forced to handle both:\nconst result = await fetchUser('123');\nif (result.success) {\n  console.log(result.data.name); // ✅ narrowed to Ok<User>\n} else {\n  // result.error is 'NOT_FOUND' | 'NETWORK_ERROR' — exhaustive handling:\n  switch (result.error) {\n    case 'NOT_FOUND': showNotFound(); break;\n    case 'NETWORK_ERROR': showRetry(); break;\n  }\n}\n\n// Option type — nullable without null\ntype Some<T> = { _tag: 'Some'; value: T };\ntype None   = { _tag: 'None' };\ntype Option<T> = Some<T> | None;\n\nconst some = <T>(value: T): Some<T> => ({ _tag: 'Some', value });\nconst none: None = { _tag: 'None' };",
           "situations": [
             {
@@ -259,6 +379,14 @@
           "title": "Conditional Types",
           "summary": "T extends U ? X : Y — type-level if/else. Distributive conditionals. infer in conditions.",
           "explanation": "Conditional types are the type-level equivalent of ternary expressions: T extends U ? X : Y. They are evaluated at compile time by TypeScript. Key behaviors: 1) Distributive: when T is a union, the conditional is applied to each member separately. 2) 'infer' inside conditional: extract/capture a type from the pattern being matched. 3) Naked type parameter: distributivity only applies when the type parameter is 'naked' (not wrapped in another type). Wrapping in a tuple ([T] extends [U]) disables distributivity. Used heavily in built-in utility types like ReturnType, Parameters, Awaited.",
+          "analogy": "A conditional type is an if/else at the type level: 'T extends string ? X : Y'. Over a union it's applied to each member separately — like running the check on every item in a list.",
+          "keyPoints": [
+            "T extends U ? X : Y — type-level ternary, evaluated at compile time.",
+            "Distributive over unions when T is 'naked'.",
+            "Wrap in a tuple ([T] extends [U]) to disable distribution.",
+            "infer extracts a captured type from the matched pattern.",
+            "Underlies ReturnType, Parameters, Awaited."
+          ],
           "code": "// Basic conditional type\ntype IsString<T> = T extends string ? 'yes' : 'no';\ntype A = IsString<string>; // 'yes'\ntype B = IsString<number>; // 'no'\n\n// Distributive over unions — applied to EACH member:\ntype ToArray<T> = T extends any ? T[] : never;\ntype C = ToArray<string | number>;\n// = string[] | number[] (not (string | number)[])\n\n// Disable distributivity with tuple wrapper:\ntype ToArrayND<T> = [T] extends [any] ? T[] : never;\ntype D = ToArrayND<string | number>;\n// = (string | number)[] — treated as one type\n\n// infer — extract part of a matched type\ntype UnwrapArray<T> = T extends (infer U)[] ? U : T;\ntype E = UnwrapArray<string[]>;  // string\ntype F = UnwrapArray<number>;    // number (not an array)\n\ntype UnwrapPromise<T> = T extends Promise<infer U> ? UnwrapPromise<U> : T;\ntype G = UnwrapPromise<Promise<Promise<string>>>; // string (recursive!)\n\n// Practical: get last element type of a tuple\ntype Last<T extends any[]> =\n  T extends [...any[], infer L] ? L : never;\ntype H = Last<[string, number, boolean]>; // boolean\n\n// Practical: function overload type selection\ntype PickByValue<T, V> = {\n  [K in keyof T as T[K] extends V ? K : never]: T[K]\n};\ntype StringProps = PickByValue<{ a: string; b: number; c: string }, string>;\n// { a: string; c: string } — only string properties",
           "situations": [
             {
@@ -272,6 +400,14 @@
           "title": "Mapped Types & Template Literal Types",
           "summary": "{ [K in keyof T]: ... } — transform every property. as clause remapping. Template literals.",
           "explanation": "Mapped types iterate over the keys of a type and produce a new type by transforming each key/value. Syntax: { [K in keyof T]: NewType }. Modifiers: '+?' or '-?' to add/remove optional, '+readonly' or '-readonly'. Key remapping with 'as': { [K in keyof T as NewKey]: T[K] } — can filter or rename keys. Template literal types (TS 4.1+) allow string manipulation at the type level: type Getters<T> = { [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K] }.",
+          "analogy": "A mapped type is .map() for an object's keys: walk every property and transform it. Template literal types are string math on top — turning 'name' into 'getName'.",
+          "keyPoints": [
+            "{ [K in keyof T]: … } transforms every property.",
+            "Modifiers +?/-? and +readonly/-readonly add or strip flags.",
+            "Key remapping with 'as' renames or filters keys.",
+            "Template literal types build/transform string keys.",
+            "Filter with `as (cond ? K : never)` to drop properties."
+          ],
           "code": "// Mapped type basics\ntype Optional<T> = { [K in keyof T]?: T[K] };   // same as Partial\ntype Mutable<T>  = { -readonly [K in keyof T]: T[K] }; // remove readonly\n\n// Key remapping with 'as'\ntype Getters<T> = {\n  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];\n};\ntype UserGetters = Getters<{ name: string; age: number }>;\n// { getName: () => string; getAge: () => number }\n\n// Filter keys with 'as ... never'\ntype OnlyStrings<T> = {\n  [K in keyof T as T[K] extends string ? K : never]: T[K];\n};\ntype A = OnlyStrings<{ id: number; name: string; email: string }>;\n// { name: string; email: string }\n\n// Template literal types — event system\ntype EventMap = {\n  click: MouseEvent;\n  keydown: KeyboardEvent;\n  resize: UIEvent;\n};\ntype EventListeners = {\n  [K in keyof EventMap as `on${Capitalize<K>}`]: (event: EventMap[K]) => void;\n};\n// { onClick: (event: MouseEvent) => void; onKeydown: ...; onResize: ... }\n\n// Deep partial:\ntype DeepPartial<T> = T extends object\n  ? { [K in keyof T]?: DeepPartial<T[K]> }\n  : T;\n\n// Practical: typed environment variables\ntype EnvVars = 'DATABASE_URL' | 'API_KEY' | 'PORT';\ntype ProcessEnv = Record<EnvVars, string>;\nconst env = process.env as unknown as ProcessEnv;\nconst dbUrl = env.DATABASE_URL; // string, not string | undefined",
           "situations": [
             {
@@ -285,6 +421,14 @@
           "title": "Declaration Merging & Module Augmentation",
           "summary": "Extend third-party types, augment global/module namespaces, interface merging mechanics.",
           "explanation": "Declaration merging allows multiple declarations with the same name to merge into a single definition. This is the mechanism behind: augmenting Express Request with user data, adding methods to built-in prototypes (safely in .d.ts), extending global namespace. Rules: interfaces merge property sets (must be compatible). Namespaces can merge with interfaces, classes, functions. Module augmentation: declare module 'module-name' { } inside a .ts file adds types to that module. Global augmentation: declare global { } adds to the global namespace. Note: module augmentation only works in module files (files with import/export).",
+          "analogy": "Declaration merging is two people adding pages to the same binder labeled 'Window' — TS staples them into one. It's how you bolt typed extras (req.user) onto libraries you don't own.",
+          "keyPoints": [
+            "Same-name interfaces merge their property sets.",
+            "Module augmentation adds types to an existing module.",
+            "Global augmentation extends the global namespace.",
+            "Only works inside module files (with import/export).",
+            "Use carefully when augmenting built-ins like Array."
+          ],
           "code": "// =====================================================\n// Interface Declaration Merging\n// =====================================================\ninterface Window {\n  myLibrary: MyLibrary;\n}\ninterface Window {\n  analytics: Analytics; // merges with first declaration\n}\n// Window now has BOTH myLibrary and analytics\n\n// =====================================================\n// Module Augmentation — Express Request\n// =====================================================\n// Create: src/types/express.d.ts\nimport 'express';\ndeclare module 'express-serve-static-core' {\n  interface Request {\n    user: AuthenticatedUser; // now req.user is typed everywhere\n    requestId: string;\n    startTime: number;\n  }\n}\n\n// =====================================================\n// Augmenting global namespace\n// =====================================================\n// src/types/global.d.ts\nexport {}; // Make this a module file\ndeclare global {\n  type ID = string;\n  type Nullable<T> = T | null;\n  interface Array<T> {\n    first(): T | undefined; // ⚠️ augmenting built-ins — use carefully\n  }\n}\n\n// =====================================================\n// Merging namespace with function\n// =====================================================\nfunction createStore(initial: State): Store { ... }\nnamespace createStore {\n  export interface Options { persist?: boolean; }\n}\n// createStore is both callable AND has sub-properties:\nconst store = createStore(initial);\nconst opts: createStore.Options = { persist: true };",
           "situations": [
             {
@@ -305,6 +449,14 @@
           "title": "Type-Level Performance",
           "summary": "Expensive types, type instantiation depth, lazy evaluation — avoiding 'type instantiation is excessively deep'.",
           "explanation": "TypeScript type checking has performance limits. Complex recursive or deeply nested types can cause: 1) 'Type instantiation is excessively deep and possibly infinite' error. 2) Slow IDE (type checking takes seconds). 3) 'tsc' taking minutes. Root causes: deep recursive conditional types, large union/intersection chains, overuse of infer in recursive types. Solutions: 1) Add bounds to recursive types. 2) Use interface instead of type for object shapes (interfaces cache better). 3) Break complex types into named intermediate types. 4) Use 'as' assertion when you've proven safety. 5) Enable incremental compilation. 6) Use 'isolatedModules: true' for faster per-file checking.",
+          "analogy": "Overly clever recursive types are like an inspector who re-checks every nested box infinitely — the build crawls or errors out ('excessively deep'). Bound the recursion and cache named types to keep it fast.",
+          "keyPoints": [
+            "Deep recursive/conditional types can blow up compile time.",
+            "Symptoms: 'instantiation excessively deep', slow IDE, slow tsc.",
+            "Add depth bounds to recursive types.",
+            "Prefer interface over complex type aliases (interfaces cache).",
+            "Diagnose with tsc --generateTrace and @typescript/analyze-trace."
+          ],
           "code": "// SLOW — recursive conditional type without bound:\ntype DeepReadonly<T> = {\n  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];\n};\n// On deeply nested objects, this explodes. TS may give up.\n\n// BETTER — add a depth limit:\ntype DeepReadonly<T, Depth extends number = 5,\n  Stack extends number[] = []> =\n  Stack['length'] extends Depth\n    ? T // stop recursing at depth limit\n    : {\n        readonly [K in keyof T]:\n          T[K] extends object\n            ? DeepReadonly<T[K], Depth, [0, ...Stack]>\n            : T[K];\n      };\n\n// SLOW — union explosion:\ntype Combination = 'a' | 'b' | 'c';\ntype AllCombinations = `${Combination}${Combination}${Combination}`;\n// = 27 members. Add one more and it's 81. Grows exponentially.\n\n// FAST — use interface for frequently used object types:\n// interfaces are checked structurally and cached;\n// type aliases with complex expressions are re-evaluated each use\ninterface User { id: string; name: string; } // cached\ntype User = { id: string; name: string; }    // re-evaluated on each use\n\n// Debugging slow types:\n// 1. VS Code: hover over a type to see instantiation count\n// 2. tsc --diagnostics — shows type check stats\n// 3. @typescript/analyze-trace — trace why compilation is slow\n// 4. isolatedModules: true — forces per-file mode, shows slow files",
           "situations": [
             {
@@ -318,6 +470,14 @@
           "title": "Project References & Monorepos",
           "summary": "composite projects, references, incremental builds — structuring large TypeScript codebases.",
           "explanation": "TypeScript Project References (TS 3.0+) allow splitting a large codebase into multiple tsconfig projects that reference each other. Benefits: 1) Incremental builds: only rebuild changed projects. 2) Isolation: each package has its own tsconfig, strictness, output. 3) Type-checked boundaries: importing from a referenced project goes through its built .d.ts, not re-checking all source. Setup: each package has 'composite: true' in tsconfig. The root tsconfig has 'references' pointing to each package. Build with 'tsc --build' (tsbuild). Works with pnpm/npm workspaces. Turborepo and Nx use this internally for TS monorepos.",
+          "analogy": "Project references split a giant codebase into separately-built rooms: change one room and only it gets rebuilt (via its .d.ts), instead of repainting the whole house every time.",
+          "keyPoints": [
+            "Split a codebase into multiple referenced tsconfig projects.",
+            "composite: true + declaration: true are required.",
+            "Imports go through built .d.ts — no full re-check.",
+            "Build with `tsc --build` for incremental rebuilds.",
+            "Turborepo/Nx use this for fast TS monorepos."
+          ],
           "code": "// Package structure:\n// packages/shared/tsconfig.json\n{\n  \"compilerOptions\": {\n    \"composite\": true,       // Required for references\n    \"declaration\": true,     // Required for references\n    \"outDir\": \"dist\",\n    \"rootDir\": \"src\"\n  },\n  \"include\": [\"src\"]\n}\n\n// packages/api/tsconfig.json\n{\n  \"compilerOptions\": {\n    \"composite\": true,\n    \"outDir\": \"dist\"\n  },\n  \"references\": [\n    { \"path\": \"../shared\" } // Depends on shared package\n  ]\n}\n\n// Root tsconfig.json (orchestrator)\n{\n  \"files\": [], // No direct compilation\n  \"references\": [\n    { \"path\": \"packages/shared\" },\n    { \"path\": \"packages/api\" },\n    { \"path\": \"packages/web\" }\n  ]\n}\n\n// Build commands:\n// tsc --build                 — build all changed\n// tsc --build --force         — rebuild everything\n// tsc --build --clean         — remove outputs\n// tsc --build --watch         — watch mode\n\n// In package.json scripts:\n// \"build\": \"tsc --build\"\n// \"type-check\": \"tsc --build --noEmit\"",
           "situations": [
             {

@@ -13,6 +13,14 @@
           "title": "Virtual DOM & Reconciliation (Fiber)",
           "summary": "React's VDOM diff algorithm — Fiber makes reconciliation interruptible.",
           "explanation": "React maintains an in-memory Virtual DOM (Fiber tree). On state changes: Render Phase (async, interruptible) — React calls your component, creates a new Fiber tree, diffs it with the old one using its heuristic O(n) algorithm. Key heuristics: (1) Elements of different types → unmount old, mount new. (2) Same type → update props. (3) Lists → use keys to match siblings. Commit Phase (synchronous) — applies minimal DOM mutations. React Fiber (v16+) splits work into units that can be paused/prioritized for Concurrent Features.",
+          "analogy": "The Virtual DOM is like editing a draft of a document before printing: React compares the new draft with the old one and only re-prints the lines that actually changed, instead of reprinting the whole page.",
+          "keyPoints": [
+            "React diffs a new Fiber tree against the old one with an O(n) heuristic.",
+            "Render phase is async/interruptible; commit phase is synchronous.",
+            "Different element type → replace; same type → update props.",
+            "Lists need stable keys so React can match items across renders.",
+            "Fiber (v16+) splits work into pausable units → enables Concurrent features."
+          ],
           "imageUrl": "https://miro.medium.com/v2/resize:fit:1400/1*cxHRBHBbB8Dl7IxnCW8NZQ.png",
           "imageCaption": "React Fiber — splits reconciliation into interruptible work units, enabling Concurrent Mode",
           "code": "// Keys matter for reconciliation:\n// BAD — React can't track items, re-creates on reorder\n{items.map((item, i) => <Item key={i} />)}\n\n// GOOD — stable identity, React updates in-place\n{items.map(item => <Item key={item.id} />)}\n\n// React Fiber Commit phases:\n// 1. BeforeMutation — read DOM before changes\n// 2. Mutation — insert/update/delete DOM nodes\n// 3. Layout — useLayoutEffect fires here (after DOM, before paint)",
@@ -28,6 +36,14 @@
           "title": "JSX & React Elements",
           "summary": "JSX compiles to React.createElement() — understand what it produces.",
           "explanation": "JSX is syntactic sugar. Babel compiles '<Button color=\"blue\">Click</Button>' to 'React.createElement(Button, { color: \"blue\" }, \"Click\")'. This returns a plain JS object (React element): { type: Button, props: { color: 'blue', children: 'Click' }, key: null, ref: null }. React elements are immutable descriptions — they describe what to render, not the rendered output. React 17+ introduced the automatic JSX transform (no need to import React for JSX).",
+          "analogy": "JSX is a shorthand the way emoji shortcodes are: ':smile:' becomes 😄. '<Button/>' is just sugar that Babel turns into a plain React.createElement(...) object describing what to render.",
+          "keyPoints": [
+            "JSX compiles to React.createElement(type, props, children).",
+            "An element is a plain, immutable object — a description, not the rendered DOM.",
+            "{ type, props, key, ref } is its shape.",
+            "React 17+ auto JSX transform — no need to import React for JSX.",
+            "Elements describe WHAT to render; React decides HOW."
+          ],
           "code": "// JSX:\nconst el = <Button color=\"blue\" onClick={fn}>Click me</Button>;\n\n// Compiles to (React 16):\nconst el = React.createElement(Button, { color: 'blue', onClick: fn }, 'Click me');\n\n// The element is just a plain object:\n// { type: Button, props: { color: 'blue', onClick: fn, children: 'Click me' } }\n\n// React 17+ automatic transform (no React import needed):\nimport { jsx as _jsx } from 'react/jsx-runtime';\nconst el = _jsx(Button, { color: 'blue', children: 'Click me' });",
           "situations": [
             {
@@ -41,6 +57,14 @@
           "title": "Error Boundaries",
           "summary": "Class components catching render-time errors — show fallback UI per widget.",
           "explanation": "Error Boundaries catch JavaScript errors in their child tree during rendering, lifecycle methods, and constructors. They cannot catch: event handler errors (use try/catch), async errors, SSR errors, or their own errors. Use react-error-boundary library for a functional approach with a resetKeys prop to auto-recover. Pattern: wrap every independent section (widget, route, feature) in its own boundary for granular recovery. React 19 adds support for async error boundaries.",
+          "analogy": "An Error Boundary is a circuit breaker per room: if one appliance shorts out, only that room loses power and shows a fallback, instead of the whole house going dark.",
+          "keyPoints": [
+            "Catch render/lifecycle/constructor errors in their child tree.",
+            "Do NOT catch event-handler, async, or SSR errors — handle those manually.",
+            "Wrap each independent widget/route in its own boundary for isolation.",
+            "react-error-boundary adds a clean functional API with resetKeys.",
+            "Always keep a top-level boundary as a last resort."
+          ],
           "code": "// Using react-error-boundary (recommended library)\nimport { ErrorBoundary } from 'react-error-boundary';\n\nfunction ErrorFallback({ error, resetErrorBoundary }) {\n  return (\n    <div role=\"alert\">\n      <p>Something went wrong:</p>\n      <pre>{error.message}</pre>\n      <button onClick={resetErrorBoundary}>Try again</button>\n    </div>\n  );\n}\n\n// Granular boundaries per feature\n<ErrorBoundary\n  FallbackComponent={ErrorFallback}\n  onError={(error, info) => logToSentry(error, info)}\n  resetKeys={[userId]} // Auto-reset when user changes\n>\n  <UserDashboard />\n</ErrorBoundary>",
           "situations": [
             {
@@ -61,6 +85,14 @@
           "title": "useState",
           "summary": "Local state. Batched async updates. Functional updates for derived state.",
           "explanation": "useState returns [value, setter]. Updates are asynchronous and batched in React 18+. Key: the setter can take a value OR a function — always use the functional form when new state depends on previous state to avoid stale closures. Lazy initialization: pass a function to useState to run initialization only once. React compares with Object.is() — same value reference bails out of re-render.",
+          "analogy": "useState is a labeled box React keeps for your component between renders: you read what's in it and hand React a new value, and React re-renders to show it.",
+          "keyPoints": [
+            "Returns [value, setter]; updates are async and batched (React 18+).",
+            "Use the functional form setX(prev => …) when new state depends on old.",
+            "Pass a function for lazy init — it runs only once on mount.",
+            "React bails out of re-render if the new value is Object.is-equal.",
+            "For objects/arrays you must spread manually — state is immutable."
+          ],
           "code": "const [count, setCount] = useState(0);\n\n// Direct update\nsetCount(10);\n\n// Functional update — safe for concurrent updates\nsetCount(prev => prev + 1);\n\n// Object state — must spread manually\nconst [form, setForm] = useState({ name: '', email: '' });\nsetForm(prev => ({ ...prev, name: 'Abhishek' }));\n\n// Lazy initialization — fn runs ONCE on mount\nconst [data, setData] = useState(() => JSON.parse(localStorage.getItem('data') || '[]'));"
         },
         {
@@ -68,6 +100,14 @@
           "title": "useEffect",
           "summary": "Side effects after paint. Runs after DOM update. Cleanup on unmount/re-run.",
           "explanation": "Runs after every render by default. Dependency array: [] = mount only, [deps] = when deps change. Cleanup function runs before the next effect AND on unmount — critical for unsubscribing, canceling fetches, clearing timers. React 18 Strict Mode double-invokes effects in development to expose missing cleanups. Rule: if you read a value inside useEffect, it must be in the deps array (ESLint react-hooks/exhaustive-deps enforces this).",
+          "analogy": "useEffect is a chore you do AFTER the room is painted (rendered): sync with the outside world (fetch, subscribe, timers), and the cleanup function is putting your tools away before you redo the chore or leave.",
+          "keyPoints": [
+            "Runs after paint; deps array controls when it re-runs ([] = mount only).",
+            "Cleanup runs before the next effect AND on unmount.",
+            "Every value you read inside must be in the deps (exhaustive-deps).",
+            "Strict Mode double-invokes in dev to expose missing cleanup.",
+            "Use for side effects, not for deriving values during render."
+          ],
           "code": "useEffect(() => {\n  const controller = new AbortController();\n  \n  fetch('/api/data', { signal: controller.signal })\n    .then(r => r.json())\n    .then(setData)\n    .catch(err => { if (err.name !== 'AbortError') setError(err); });\n  \n  return () => controller.abort(); // Cleanup on unmount\n}, [userId]); // Re-run when userId changes",
           "situations": [
             {
@@ -81,6 +121,14 @@
           "title": "useContext",
           "summary": "Consume context without prop drilling. Re-renders ALL consumers on value change.",
           "explanation": "useContext subscribes a component to a context. The component re-renders EVERY time the context value changes — even if the component only uses a tiny part of it. This is why context splitting matters: separate AuthContext, ThemeContext, CartContext so unrelated consumers don't re-render together. Combine with useMemo for the context value to prevent spurious re-renders when the Provider re-renders.",
+          "analogy": "Context is a building-wide intercom: instead of passing a message person-to-person (prop drilling), you broadcast it and any room can tune in — but everyone tuned in re-hears it whenever it changes.",
+          "keyPoints": [
+            "Reads a context value without prop drilling.",
+            "EVERY consumer re-renders when the value changes — even partial users.",
+            "Split contexts by concern (Auth/Theme/Cart) to limit re-renders.",
+            "Memoize the Provider value to avoid spurious re-renders.",
+            "For high-frequency updates, prefer Zustand/Jotai (atomic subscriptions)."
+          ],
           "code": "const ThemeCtx = createContext('light');\nconst UserCtx = createContext(null);\n\n// Provider — memoize value to prevent re-renders\nfunction App() {\n  const [user, setUser] = useState(null);\n  const userValue = useMemo(() => ({ user, setUser }), [user]);\n  return (\n    <UserCtx.Provider value={userValue}>\n      <ThemeCtx.Provider value=\"dark\">\n        <Main />\n      </ThemeCtx.Provider>\n    </UserCtx.Provider>\n  );\n}\n\n// Consumer\nfunction Avatar() {\n  const { user } = useContext(UserCtx);\n  return <img src={user?.avatar} />;\n}",
           "situations": [
             {
@@ -94,6 +142,14 @@
           "title": "useReducer",
           "summary": "State machine pattern. Complex state logic. dispatch(action) → new state.",
           "explanation": "Alternative to useState for complex state logic. Pure reducer function (state, action) => newState. Dispatch actions with descriptive types — makes state transitions explicit and testable. useReducer + useContext = lightweight global state management (like Redux without the boilerplate). useReducer is preferred when: next state depends on multiple sub-values, you want a predictable audit trail of changes, or state logic is complex enough to test separately.",
+          "analogy": "useReducer is a vending machine for state: you press a labeled button (dispatch an action) and a pure function decides exactly what comes out (the next state) — predictable and testable.",
+          "keyPoints": [
+            "(state, action) => newState — a pure, testable reducer.",
+            "Better than useState when state is complex or transitions are many.",
+            "Actions make state changes explicit and auditable.",
+            "useReducer + Context ≈ lightweight Redux without the library.",
+            "dispatch identity is stable — safe to omit from deps."
+          ],
           "code": "type Action = \n  | { type: 'INCREMENT' }\n  | { type: 'DECREMENT' }\n  | { type: 'RESET'; payload: number };\n\nfunction reducer(state: number, action: Action): number {\n  switch (action.type) {\n    case 'INCREMENT': return state + 1;\n    case 'DECREMENT': return state - 1;\n    case 'RESET': return action.payload;\n    default: throw new Error('Unknown action: ' + action.type);\n  }\n}\n\nconst [count, dispatch] = useReducer(reducer, 0);\ndispatch({ type: 'INCREMENT' });\ndispatch({ type: 'RESET', payload: 10 });"
         },
         {
@@ -101,6 +157,14 @@
           "title": "useMemo",
           "summary": "Cache expensive computation result. Recompute only when deps change.",
           "explanation": "useMemo caches the return VALUE of a function between renders. Recomputes when deps change. Use for: expensive computations (filter/sort large lists), stable object/array references passed as props or context values, avoiding redundant calculations. Don't use for: trivial computations, preventing renders (use React.memo for that). Overhead: each render compares deps with Object.is() — for cheap computations the comparison cost > recomputation cost.",
+          "analogy": "useMemo is keeping the result of a slow calculation on a sticky note: as long as the inputs haven't changed, hand back the note instead of recalculating.",
+          "keyPoints": [
+            "Caches a computed VALUE between renders; recomputes when deps change.",
+            "Use for expensive computations and stable object/array references.",
+            "Don't use for trivial work — the deps comparison can cost more.",
+            "Pair with React.memo when passing memoized props down.",
+            "Not a correctness tool — React may discard the cache."
+          ],
           "code": "// Expensive computation\nconst sortedProducts = useMemo(() =>\n  [...products]\n    .filter(p => p.category === cat)\n    .sort((a, b) => a.price - b.price),\n  [products, cat]\n);\n\n// Stable object reference for context\nconst ctxValue = useMemo(() => ({ user, login, logout }), [user]);\n\n// Stable array for dependency elsewhere\nconst ids = useMemo(() => users.map(u => u.id), [users]);"
         },
         {
@@ -108,6 +172,14 @@
           "title": "useCallback",
           "summary": "Cache function reference. Prevents memo'd children from re-rendering.",
           "explanation": "useCallback(fn, deps) is equivalent to useMemo(() => fn, deps). Returns the same function reference unless deps change. Critical when: passing callbacks to React.memo'd child components, using functions as useEffect dependencies, or passing handlers to deeply nested trees. Without useCallback, every parent render creates a new function reference, breaking React.memo's shallow prop comparison.",
+          "analogy": "useCallback is useMemo for functions: it hands back the SAME function instance between renders, so memoized children don't think they got a new prop and re-render.",
+          "keyPoints": [
+            "useCallback(fn, deps) ≡ useMemo(() => fn, deps).",
+            "Returns a stable function reference unless deps change.",
+            "Only helps when the child is React.memo'd (shallow prop compare).",
+            "Also useful when a function is a useEffect dependency.",
+            "Without it, every render makes a new function, breaking memoization."
+          ],
           "code": "// Stable callback for memo'd child\nconst handleAdd = useCallback((item) => {\n  dispatch({ type: 'ADD_ITEM', payload: item });\n}, [dispatch]); // dispatch from useReducer is stable\n\n// MUST pair with React.memo to be effective:\nconst ProductList = React.memo(({ onAdd }) => (\n  <ul>{products.map(p => <li key={p.id} onClick={() => onAdd(p)}>{p.name}</li>)}</ul>\n));"
         },
         {
@@ -115,6 +187,14 @@
           "title": "useRef",
           "summary": "Mutable .current box — DOM access, timer IDs, previous values. No re-render.",
           "explanation": "useRef returns a mutable object { current: initialValue } that persists across renders WITHOUT triggering re-renders. Two primary uses: 1) DOM access — pass as ref prop to get the actual DOM element. 2) Mutable instance variable — store timer IDs, previous prop values, AbortControllers, or the 'latest' version of a prop/state (useLatesRef pattern). Mutating .current is synchronous and immediate, unlike setState.",
+          "analogy": "useRef is a pocket your component carries across renders: you can stash things in it (a DOM node, a timer id, the latest value) and changing what's inside doesn't trigger a re-render.",
+          "keyPoints": [
+            "Returns a mutable { current } that persists across renders.",
+            "Changing .current does NOT cause a re-render.",
+            "Use for DOM access and mutable instance values (timers, controllers).",
+            "The 'latest ref' pattern keeps a fresh value inside stable callbacks.",
+            "Mutations are synchronous, unlike setState."
+          ],
           "code": "// DOM access\nconst inputRef = useRef<HTMLInputElement>(null);\nuseEffect(() => inputRef.current?.focus(), []);\n\n// Store timer without causing re-render\nconst timerRef = useRef<ReturnType<typeof setInterval> | null>(null);\nconst start = () => { timerRef.current = setInterval(tick, 1000); };\nconst stop = () => { clearInterval(timerRef.current!); };\n\n// useLatesRef — always-current value in callbacks\nconst latestCallback = useRef(callback);\nuseEffect(() => { latestCallback.current = callback; }, [callback]);\n// Use latestCallback.current inside stable callbacks"
         },
         {
@@ -122,6 +202,14 @@
           "title": "useLayoutEffect",
           "summary": "Like useEffect but fires synchronously after DOM mutations, before paint.",
           "explanation": "useLayoutEffect runs AFTER the DOM is updated but BEFORE the browser paints. Blocks the paint until it completes. Use when: you need to read DOM measurements (element dimensions, scroll position) and update state/DOM before the user sees anything — prevents visual flicker. For most cases, useEffect is correct and preferable (non-blocking). useLayoutEffect on the server (SSR) causes a warning — guard with 'typeof window !== undefined'.",
+          "analogy": "useLayoutEffect is measuring and adjusting furniture BEFORE the guests see the room: it runs after the DOM updates but before paint, so you can fix positions without any visible flicker.",
+          "keyPoints": [
+            "Runs synchronously after DOM mutation, before the browser paints.",
+            "Blocks paint — use only when you must measure/adjust to avoid flicker.",
+            "Default to useEffect (non-blocking) for almost everything.",
+            "Common use: tooltip/positioning that reads getBoundingClientRect.",
+            "Warns during SSR — guard with an isomorphic effect helper."
+          ],
           "code": "// Tooltip positioning — must measure BEFORE paint to avoid flicker\nconst tooltipRef = useRef(null);\nconst [position, setPosition] = useState({ top: 0, left: 0 });\n\nuseLayoutEffect(() => {\n  // Measure DOM synchronously after DOM update\n  const { top, left, height } = tooltipRef.current.getBoundingClientRect();\n  setPosition({ top: top + height, left }); // Adjust position\n  // Paint happens AFTER this — no flicker\n}, [anchorElement]);\n\n// SSR-safe version:\nconst useIsomorphicLayoutEffect = typeof window !== 'undefined'\n  ? useLayoutEffect : useEffect;"
         },
         {
@@ -129,6 +217,14 @@
           "title": "useImperativeHandle",
           "summary": "Customize what's exposed via ref to parent components. Use with forwardRef.",
           "explanation": "useImperativeHandle customizes the ref object exposed to the parent when using forwardRef (or the new ref-as-prop in React 19). Instead of exposing the entire DOM node, you expose only specific methods. This keeps the component's internal implementation hidden while providing a clean imperative API. Common use: custom input components with focus(), reset(), select() methods; video players with play(), pause(); modals with open(), close().",
+          "analogy": "useImperativeHandle is a remote control with only the buttons you choose: instead of handing the parent your whole DOM node, you expose a tidy API like focus(), clear(), play().",
+          "keyPoints": [
+            "Customizes what a ref exposes to the parent.",
+            "Used with forwardRef (or ref-as-prop in React 19).",
+            "Expose specific methods, hiding internal implementation.",
+            "Great for inputs (focus/clear), players (play/pause), modals (open/close).",
+            "Keep deps empty/stable so the handle reference is consistent."
+          ],
           "code": "// Child component\nconst FancyInput = forwardRef(function FancyInput(props, ref) {\n  const inputRef = useRef(null);\n  \n  useImperativeHandle(ref, () => ({\n    focus: () => inputRef.current.focus(),\n    clear: () => { inputRef.current.value = ''; },\n    getValue: () => inputRef.current.value,\n  }), []); // Empty deps = stable\n  \n  return <input ref={inputRef} {...props} />;\n});\n\n// Parent\nconst inputRef = useRef(null);\nreturn (\n  <>\n    <FancyInput ref={inputRef} />\n    <button onClick={() => inputRef.current.focus()}>Focus</button>\n    <button onClick={() => inputRef.current.clear()}>Clear</button>\n  </>\n);"
         },
         {
@@ -136,6 +232,14 @@
           "title": "useId",
           "summary": "Generate stable unique IDs for accessibility — safe for SSR hydration.",
           "explanation": "useId generates a unique, stable ID that is consistent between server and client renders — solving the SSR hydration mismatch problem that random IDs (Math.random(), UUID) cause. The ID is stable across re-renders of the component. Use for: form label/input pairing (htmlFor + id), aria-labelledby, aria-describedby. Don't use as list keys — it's not designed for that.",
+          "analogy": "useId is a name-tag machine that prints the SAME tag on both the server and the client, so your accessibility wiring (label↔input) doesn't break during hydration the way random IDs would.",
+          "keyPoints": [
+            "Generates a unique ID stable across SSR and client hydration.",
+            "Solves hydration mismatches caused by Math.random()/UUID.",
+            "Use for label/input pairing, aria-labelledby, aria-describedby.",
+            "Stable across re-renders of the same component.",
+            "Don't use it as a list key."
+          ],
           "code": "function FormField({ label, type = 'text' }) {\n  const id = useId(); // ':r1:', ':r2:', etc. — stable across SSR/hydration\n  \n  return (\n    <div>\n      <label htmlFor={id}>{label}</label>\n      <input id={id} type={type} />\n    </div>\n  );\n}\n\n// Multiple IDs from one useId call:\nfunction Checkbox() {\n  const id = useId();\n  return (\n    <>\n      <input type=\"checkbox\" id={id + '-checkbox'} aria-describedby={id + '-hint'} />\n      <label htmlFor={id + '-checkbox'}>Accept</label>\n      <p id={id + '-hint'}>Check to accept terms</p>\n    </>\n  );\n}"
         },
         {
@@ -143,6 +247,14 @@
           "title": "useTransition",
           "summary": "Mark updates as non-urgent. Keeps UI responsive during heavy re-renders.",
           "explanation": "useTransition returns [isPending, startTransition]. State updates inside startTransition are marked as non-urgent — React can interrupt them to process urgent updates (typing, clicking). isPending is true while the transition is in progress — use to show a loading indicator. The non-urgent update may be deferred by multiple frames. Critical for: search filtering large lists, tab switching, page transitions. Combined with Suspense for data fetching.",
+          "analogy": "useTransition is letting someone with one urgent item skip ahead of your big cart: typing stays instant (urgent) while the heavy re-render waits its turn and can be interrupted.",
+          "keyPoints": [
+            "Returns [isPending, startTransition].",
+            "Updates inside startTransition are non-urgent and interruptible.",
+            "isPending lets you show a subtle loading state.",
+            "Great for filtering big lists, tab switches, page transitions.",
+            "Wraps the UPDATER (vs useDeferredValue which wraps the value)."
+          ],
           "code": "const [isPending, startTransition] = useTransition();\nconst [query, setQuery] = useState('');\nconst [results, setResults] = useState(allItems);\n\nfunction handleSearch(e) {\n  const q = e.target.value;\n  setQuery(q); // Urgent — input updates immediately\n  \n  startTransition(() => {\n    // Non-urgent — can be interrupted by next keystroke\n    setResults(filterHugeList(allItems, q));\n  });\n}\n\n// Show pending state while filtering\n{isPending && <Spinner />}\n<ResultList items={results} className={isPending ? 'opacity-50' : ''} />",
           "situations": [
             {
@@ -156,6 +268,14 @@
           "title": "useDeferredValue",
           "summary": "Defer rendering an expensive computation — shows stale content during update.",
           "explanation": "useDeferredValue accepts a value and returns a deferred version. During an urgent update, the deferred value stays stale while the urgent part renders. Once React has time, it re-renders with the latest deferred value. Different from useTransition: useTransition wraps the UPDATER, useDeferredValue wraps the VALUE. Use when you don't control the state update source (e.g., the value comes from props or an external store).",
+          "analogy": "useDeferredValue is showing yesterday's newspaper until today's is printed: the expensive view keeps the slightly-stale value while urgent updates (typing) stay snappy, then catches up.",
+          "keyPoints": [
+            "Returns a deferred copy of a value that lags during urgent updates.",
+            "Keeps the UI responsive while expensive renders catch up.",
+            "Wraps the VALUE (vs useTransition which wraps the updater).",
+            "Use when you don't control where the value comes from (props/store).",
+            "Compare value !== deferredValue to show a 'stale' indicator."
+          ],
           "code": "function SearchResults({ query }) {\n  // Defer the expensive render — shows stale results during typing\n  const deferredQuery = useDeferredValue(query);\n  \n  // This expensive memo only re-runs with deferredQuery (deferred)\n  const results = useMemo(() => filterItems(allItems, deferredQuery), [deferredQuery]);\n  \n  const isStale = query !== deferredQuery; // Currently deferred?\n  \n  return (\n    <div style={{ opacity: isStale ? 0.5 : 1 }}>\n      {results.map(item => <Item key={item.id} item={item} />)}\n    </div>\n  );\n}"
         },
         {
@@ -163,6 +283,14 @@
           "title": "useSyncExternalStore",
           "summary": "Subscribe to external stores (Redux, Zustand, browser APIs) — tearing-safe.",
           "explanation": "The correct way to subscribe to external data stores in React 18 Concurrent Mode. Prevents 'tearing' — where different components see different versions of the same external state during a concurrent render. Every state management library (Redux, Zustand, Jotai) uses this internally. You can use it directly to subscribe to browser APIs (window.online, localStorage, document.visibilityState).",
+          "analogy": "useSyncExternalStore is a single official scoreboard everyone reads: it guarantees every component sees the same external value at once, so no two parts of the UI 'tear' apart with mismatched data.",
+          "keyPoints": [
+            "The correct way to subscribe to external stores in Concurrent React.",
+            "Prevents 'tearing' (components seeing different versions mid-render).",
+            "Takes subscribe, getSnapshot, and getServerSnapshot.",
+            "Redux/Zustand/Jotai use it internally.",
+            "Use it directly for browser APIs (online status, visibility)."
+          ],
           "code": "// Subscribe to browser online status\nfunction useOnlineStatus() {\n  return useSyncExternalStore(\n    // subscribe — called when store changes\n    (callback) => {\n      window.addEventListener('online', callback);\n      window.addEventListener('offline', callback);\n      return () => {\n        window.removeEventListener('online', callback);\n        window.removeEventListener('offline', callback);\n      };\n    },\n    // getSnapshot — current value (client)\n    () => navigator.onLine,\n    // getServerSnapshot — SSR value\n    () => true\n  );\n}\n\n// Usage\nconst isOnline = useOnlineStatus();\n// React guarantees all components see the same value — no tearing"
         },
         {
@@ -170,6 +298,14 @@
           "title": "useDebugValue",
           "summary": "Label custom hooks in React DevTools for easier debugging.",
           "explanation": "useDebugValue displays a label in React DevTools next to a custom hook. Only visible in DevTools — no effect on production. Accept a formatter function as second argument for expensive formatting that only runs when DevTools is open. Use in any custom hook to make it easily identifiable in DevTools.",
+          "analogy": "useDebugValue is a name label you stick on a custom hook so it's recognizable in the React DevTools toolbox — purely for your debugging convenience.",
+          "keyPoints": [
+            "Shows a label next to a custom hook in React DevTools.",
+            "DevTools-only — zero effect in production.",
+            "Pass a formatter as the 2nd arg to defer expensive formatting.",
+            "Use inside reusable custom hooks for clarity.",
+            "Never affects rendering or behavior."
+          ],
           "code": "function useAuth() {\n  const [user, setUser] = useState(null);\n  \n  // Shows in DevTools: useAuth: \"Abhishek (admin)\"\n  useDebugValue(\n    user,\n    user => user ? `${user.name} (${user.role})` : 'Not logged in'\n    // Formatter runs only when DevTools is open — no perf cost\n  );\n  \n  return { user, login, logout };\n}"
         }
       ]
@@ -184,6 +320,14 @@
           "title": "Actions (React 19)",
           "summary": "Async functions as form actions — automatic pending, error, and optimistic state.",
           "explanation": "React 19 introduces Actions — async functions that handle data mutations. When you pass an async function to a form's action prop or use startTransition, React automatically manages: pending state, error handling, and optimistic updates. This replaces the common useState(isLoading) + try/catch pattern. Works with both client-side and server-side mutations (Server Actions in Next.js).",
+          "analogy": "Actions are an autopilot for form submissions: hand React an async function and it automatically flies the pending spinner, error handling, and optimistic updates for you.",
+          "keyPoints": [
+            "Async functions wired to a form's action prop or startTransition.",
+            "React auto-manages pending, error, and optimistic state.",
+            "Replaces the manual isLoading + try/catch + setError pattern.",
+            "Works with client and server (Next.js Server Actions) mutations.",
+            "Pairs with useActionState and useOptimistic."
+          ],
           "code": "// React 19 Actions with useActionState\nimport { useActionState } from 'react';\n\nasync function updateName(prevState, formData) {\n  const name = formData.get('name');\n  try {\n    await api.updateUser({ name });\n    return { success: true, name };\n  } catch (err) {\n    return { error: err.message };\n  }\n}\n\nfunction NameForm() {\n  const [state, formAction, isPending] = useActionState(updateName, null);\n  \n  return (\n    <form action={formAction}>\n      <input name=\"name\" />\n      <button type=\"submit\" disabled={isPending}>\n        {isPending ? 'Saving...' : 'Save'}\n      </button>\n      {state?.error && <p>{state.error}</p>}\n      {state?.success && <p>Saved: {state.name}</p>}\n    </form>\n  );\n}",
           "situations": [
             {
@@ -197,6 +341,14 @@
           "title": "useActionState (React 19)",
           "summary": "Replaces useState + isPending + error pattern for form mutations.",
           "explanation": "useActionState(action, initialState, permalink?) returns [state, formAction, isPending]. The action receives previous state + FormData. React automatically handles pending state — isPending is true while the async action runs. Errors in the action are caught and returned as state. Works with both client actions and server actions (Next.js). Replaces the common 'isLoading + error + success' triple useState pattern.",
+          "analogy": "useActionState bundles the three things every form needs — is it submitting, did it error, what's the result — into one tidy package, instead of juggling three separate useState calls.",
+          "keyPoints": [
+            "Returns [state, formAction, isPending].",
+            "The action receives (prevState, formData).",
+            "isPending is managed automatically while the action runs.",
+            "Errors returned from the action become state.",
+            "Works with both client and server actions."
+          ],
           "code": "import { useActionState } from 'react'; // React 19\n\nasync function submitForm(prevState, formData) {\n  const data = Object.fromEntries(formData);\n  // Validation\n  if (!data.email.includes('@')) {\n    return { error: 'Invalid email' };\n  }\n  await registerUser(data);\n  return { success: true };\n}\n\nfunction RegisterForm() {\n  const [state, action, isPending] = useActionState(submitForm, null);\n  return (\n    <form action={action}>\n      <input name=\"email\" type=\"email\" />\n      <input name=\"password\" type=\"password\" />\n      <button disabled={isPending}>\n        {isPending ? 'Registering...' : 'Register'}\n      </button>\n      {state?.error && <span className=\"error\">{state.error}</span>}\n      {state?.success && <span>Welcome!</span>}\n    </form>\n  );\n}"
         },
         {
@@ -204,6 +356,14 @@
           "title": "useOptimistic (React 19)",
           "summary": "Show immediate UI feedback before server response. Auto-reverts on failure.",
           "explanation": "useOptimistic(state, updateFn) returns [optimisticState, addOptimistic]. When you call addOptimistic(optimisticValue), it immediately applies the updateFn to create an optimistic (predicted) state shown to the user. When the async action completes: if successful, the real state takes over. If failed, the optimistic state is automatically discarded and the original state is shown. This creates the 'instant feedback, eventual consistency' UX pattern used by Twitter/X likes, Instagram reactions.",
+          "analogy": "useOptimistic is showing a 'sent' message the instant you hit send (like chat apps): the UI updates immediately, and if the server later fails, React quietly rolls it back.",
+          "keyPoints": [
+            "Returns [optimisticState, addOptimistic].",
+            "Instantly shows a predicted state before the server responds.",
+            "Auto-reverts to real state on success or failure.",
+            "Creates the 'instant feedback, eventual consistency' UX.",
+            "Pairs with Actions / form submissions."
+          ],
           "code": "import { useOptimistic } from 'react';\n\nfunction MessageList({ messages, sendMessage }) {\n  const [optimisticMessages, addOptimisticMessage] = useOptimistic(\n    messages,\n    // Reducer: how to apply optimistic update\n    (currentMessages, newText) => [\n      ...currentMessages,\n      { id: crypto.randomUUID(), text: newText, sending: true }\n    ]\n  );\n  \n  async function handleSend(formData) {\n    const text = formData.get('text');\n    addOptimisticMessage(text); // Show immediately!\n    await sendMessage(text); // Real request\n    // On success: real messages prop updates, optimistic removed\n    // On failure: optimistic removed, error shown\n  }\n  \n  return (\n    <>\n      {optimisticMessages.map(msg => (\n        <p key={msg.id} style={{ opacity: msg.sending ? 0.5 : 1 }}>\n          {msg.text} {msg.sending && '⏳'}\n        </p>\n      ))}\n      <form action={handleSend}>\n        <input name=\"text\" />\n        <button type=\"submit\">Send</button>\n      </form>\n    </>\n  );\n}"
         },
         {
@@ -211,6 +371,14 @@
           "title": "use() Hook (React 19)",
           "summary": "Unwrap Promises and Context inside conditions/loops — breaks Rules of Hooks.",
           "explanation": "The 'use' hook is unique — it can be called inside conditionals, loops, and early returns (unlike other hooks). It can: 1) Unwrap a Promise — suspends the component until the promise resolves (pairs with Suspense). 2) Read context like useContext but conditionally. When use(promise) suspends, the nearest Suspense boundary shows its fallback. On rejection, the nearest ErrorBoundary catches it.",
+          "analogy": "use() is the rule-breaker hook: unlike the others it can sit inside ifs and loops. Give it a Promise and the component politely 'pauses' (suspends) until the data arrives.",
+          "keyPoints": [
+            "Can be called conditionally / in loops (unlike other hooks).",
+            "use(promise) suspends until it resolves (pairs with Suspense).",
+            "use(Context) reads context, even after an early return.",
+            "Rejected promises bubble to the nearest Error Boundary.",
+            "Enables clean data-reading in modern React."
+          ],
           "code": "import { use, Suspense } from 'react';\n\n// Unwrap a Promise — component suspends until resolved\nfunction UserProfile({ userPromise }) {\n  const user = use(userPromise); // Suspends here if not resolved\n  return <h1>{user.name}</h1>;\n}\n\n// Usage with Suspense\nfunction App() {\n  const userPromise = fetch('/api/user').then(r => r.json());\n  return (\n    <Suspense fallback={<Skeleton />}>\n      <UserProfile userPromise={userPromise} />\n    </Suspense>\n  );\n}\n\n// Use in conditionals — impossible with useContext:\nfunction AdminPanel({ isAdmin }) {\n  if (!isAdmin) return null; // Early return!\n  const adminData = use(AdminContext); // OK — use CAN be after conditions\n  return <Admin data={adminData} />;\n}"
         },
         {
@@ -218,6 +386,14 @@
           "title": "useFormStatus (React 19)",
           "summary": "Access parent form's pending state from child components — no prop drilling.",
           "explanation": "useFormStatus() returns { pending, data, method, action } — reads the status of the nearest parent form. The key insight: you don't need to pass 'isLoading' down as a prop — any child component inside the form can call useFormStatus() to know if the form is submitting. Particularly useful for Submit button components that need to know when to disable.",
+          "analogy": "useFormStatus is a child checking the parent form's pulse directly: a submit button deep inside the form can ask 'are we submitting?' without anyone passing it a prop.",
+          "keyPoints": [
+            "Returns { pending, data, method, action } of the nearest form.",
+            "Lets child components read submit state without prop drilling.",
+            "Perfect for reusable Submit buttons that self-disable.",
+            "Imported from react-dom (not react).",
+            "Works automatically inside any <form action={…}>."
+          ],
           "code": "import { useFormStatus } from 'react-dom'; // Note: react-dom, not react\n\n// Reusable Submit button that knows its form's state\nfunction SubmitButton({ children }) {\n  const { pending } = useFormStatus(); // Reads parent form state!\n  return (\n    <button\n      type=\"submit\"\n      disabled={pending}\n      className={pending ? 'opacity-50 cursor-not-allowed' : ''}\n    >\n      {pending ? '⏳ Saving...' : children}\n    </button>\n  );\n}\n\n// Works automatically inside any form with an action:\nfunction ProfileForm() {\n  return (\n    <form action={updateProfile}>\n      <input name=\"name\" />\n      <SubmitButton>Update Profile</SubmitButton>\n      {/* No need to pass isPending prop! */}\n    </form>\n  );\n}"
         },
         {
@@ -225,6 +401,14 @@
           "title": "ref as a Prop (React 19)",
           "summary": "No more forwardRef — pass ref like any other prop in React 19.",
           "explanation": "In React 19, 'ref' is treated as a regular prop for function components. You no longer need forwardRef() to pass refs to child components. This simplifies component APIs and removes the extra wrapper. The old forwardRef API still works but is deprecated. This change also enables TypeScript to properly type ref props without the forwardRef generic gymnastics.",
+          "analogy": "In React 19, ref grew up: it's now just a normal prop you can pass straight to a function component — no more wrapping everything in forwardRef.",
+          "keyPoints": [
+            "Function components can accept ref as a regular prop.",
+            "forwardRef is no longer required (and is now deprecated).",
+            "Simplifies component APIs and TypeScript typing.",
+            "Usage at the call site is unchanged.",
+            "Old forwardRef code still works during migration."
+          ],
           "code": "// OLD way (React 18 and before):\nconst MyInput = forwardRef(function MyInput({ label, ...props }, ref) {\n  return <input ref={ref} {...props} />;\n});\n\n// NEW way (React 19) — ref is just a prop!\nfunction MyInput({ label, ref, ...props }) {\n  return <input ref={ref} {...props} />;\n}\n\n// Usage is identical:\nconst inputRef = useRef(null);\n<MyInput ref={inputRef} label=\"Name\" />"
         },
         {
@@ -232,6 +416,14 @@
           "title": "React Server Components (RSC)",
           "summary": "Render on server only — async by default, zero client JS, direct DB access.",
           "explanation": "RSC are components that render only on the server. Zero client-side JS footprint — their code never ships to the browser. They can: be async functions (await DB/API calls at the top level), import server-only packages (credentials stay safe), access file system. They CANNOT: use state, effects, browser APIs, event handlers. In Next.js App Router, all components are Server Components by default. Mark client components with 'use client'. Pass data from RSC to Client Components via props.",
+          "analogy": "Server Components are a chef who cooks in the kitchen and sends out finished plates: they run only on the server (with direct DB access), and the browser receives ready HTML with zero JS shipped for them.",
+          "keyPoints": [
+            "Render only on the server — their code never ships to the browser.",
+            "Can be async and access DB/filesystem/secrets directly.",
+            "Cannot use state, effects, browser APIs, or event handlers.",
+            "Default in Next.js App Router; mark interactivity with 'use client'.",
+            "Pass data to Client Components via props."
+          ],
           "code": "// Server Component — runs on server, zero client JS\nasync function ProductPage({ id }) {\n  // Direct DB access — no useEffect, no loading spinner!\n  const [product, reviews] = await Promise.all([\n    db.product.findUnique({ where: { id } }),\n    db.review.findMany({ where: { productId: id } }),\n  ]);\n  \n  return (\n    <main>\n      <ProductDetails product={product} />\n      {/* Client component nested in server component */}\n      <AddToCartButton productId={id} />\n      <ReviewList reviews={reviews} />\n    </main>\n  );\n}\n\n// Client Component — 'use client' marks the boundary\n'use client';\nfunction AddToCartButton({ productId }) {\n  const [added, setAdded] = useState(false);\n  return <button onClick={() => addToCart(productId)}>{added ? '✓' : 'Add'}</button>;\n}",
           "situations": [
             {
@@ -252,6 +444,14 @@
           "title": "When to Use What — Decision Framework",
           "summary": "Local state → useState. Shared simple state → Context. Complex/global → Zustand/Redux.",
           "explanation": "Choose based on scope, complexity, and performance: Local state (single component) → useState or useReducer. Shared state (parent + 2-3 children, low-frequency updates) → Context + useReducer. Global state (many components, frequent updates, complex logic) → Zustand or Redux Toolkit. Server state (API data, caching, sync) → TanStack Query or SWR — NEVER store server state in Redux. Form state → React Hook Form. URL state (filters, pagination) → URL search params.",
+          "analogy": "Choosing state is like choosing storage: a backpack for what's on you (local useState), a shared shelf for the household (Context), a warehouse for everyone (Zustand/Redux), and a fridge for perishable server data (TanStack Query).",
+          "keyPoints": [
+            "Local → useState/useReducer; shared & simple → Context.",
+            "Global, frequent, complex → Zustand or Redux Toolkit.",
+            "Server data → TanStack Query/SWR (never store it in Redux).",
+            "Form state → React Hook Form; URL state → search params.",
+            "Separate server state from UI state, and frequent from rare updates."
+          ],
           "code": "// Decision tree:\n// 1. Is it server/API data? → TanStack Query\n// 2. Is it form state? → React Hook Form\n// 3. Is it URL state? → useSearchParams / router\n// 4. Is it local to one component? → useState\n// 5. Shared by 2-5 components, low update frequency? → Context\n// 6. Global, high frequency updates, complex logic? → Zustand\n// 7. Large team, strict structure, time-travel debug? → Redux Toolkit\n\n// Anti-patterns:\n// ❌ Putting server data in Redux (you're duplicating TanStack Query's job)\n// ❌ Using Context for high-frequency updates (causes re-render storms)\n// ❌ Redux for small apps (massive overhead for a shopping cart)",
           "situations": [
             {
@@ -265,6 +465,14 @@
           "title": "Redux Toolkit (RTK)",
           "summary": "Slices, createAsyncThunk, RTK Query — the modern way to use Redux.",
           "explanation": "Redux Toolkit (RTK) is the official, recommended way to write Redux. Eliminates boilerplate: createSlice auto-generates action creators + reducers + action types. Uses Immer internally — write 'mutating' code that's actually immutable. createAsyncThunk handles async actions with pending/fulfilled/rejected states. RTK Query is a powerful data fetching and caching solution integrated with Redux. Use Redux/RTK when: large team (strict conventions help), complex cross-feature interactions, need time-travel debugging, or the app already uses Redux.",
+          "analogy": "Redux Toolkit is Redux with the paperwork pre-filled: createSlice writes the actions and reducers for you, and Immer lets you 'mutate' state that's actually updated immutably under the hood.",
+          "keyPoints": [
+            "Official, boilerplate-free way to write Redux.",
+            "createSlice auto-generates actions + reducers + types.",
+            "Immer lets you write mutating-looking, truly-immutable updates.",
+            "createAsyncThunk handles pending/fulfilled/rejected.",
+            "RTK Query handles data fetching + caching; best for large/structured apps."
+          ],
           "code": "import { createSlice, createAsyncThunk, configureStore } from '@reduxjs/toolkit';\n\n// Async thunk for API calls\nexport const fetchUser = createAsyncThunk('user/fetch', async (id) => {\n  const res = await fetch(`/api/users/${id}`);\n  return res.json();\n});\n\n// Slice — defines state, reducers, and actions together\nconst userSlice = createSlice({\n  name: 'user',\n  initialState: { data: null, loading: false, error: null },\n  reducers: {\n    clearUser: (state) => { state.data = null; }, // Immer — looks mutable, IS immutable\n    updateName: (state, action) => { state.data.name = action.payload; },\n  },\n  extraReducers: (builder) => {\n    builder\n      .addCase(fetchUser.pending, (state) => { state.loading = true; })\n      .addCase(fetchUser.fulfilled, (state, action) => {\n        state.loading = false;\n        state.data = action.payload;\n      })\n      .addCase(fetchUser.rejected, (state, action) => {\n        state.loading = false;\n        state.error = action.error.message;\n      });\n  },\n});"
         },
         {
@@ -272,6 +480,14 @@
           "title": "Zustand",
           "summary": "Minimal, hook-based store. Atomic selectors. No Provider needed.",
           "explanation": "Zustand is a small (~1KB) state management library. No Provider wrapper needed — store is external. Components subscribe via selector hooks — only re-renders when the selected slice changes. Supports: middleware (persist, devtools, immer), async actions, derived state. Perfect for small-to-medium apps or when Redux is overkill. Can be combined with TanStack Query for server state.",
+          "analogy": "Zustand is a shared whiteboard anyone can read or write without a Provider wrapper: components subscribe to just the lines they care about, so only they re-render when those change.",
+          "keyPoints": [
+            "Tiny (~1KB) store with no Provider needed.",
+            "Selector hooks re-render only on the slice you select.",
+            "Middleware: persist, devtools, immer.",
+            "Great for small-to-medium global UI state.",
+            "Combine with TanStack Query for server state."
+          ],
           "code": "import { create } from 'zustand';\nimport { persist, devtools } from 'zustand/middleware';\n\nconst useCartStore = create(\n  devtools(\n    persist(\n      (set, get) => ({\n        items: [],\n        total: 0,\n        addItem: (item) =>\n          set(state => ({\n            items: [...state.items, item],\n            total: state.total + item.price,\n          })),\n        removeItem: (id) =>\n          set(state => ({\n            items: state.items.filter(i => i.id !== id),\n            total: state.total - (state.items.find(i => i.id === id)?.price || 0),\n          })),\n        clearCart: () => set({ items: [], total: 0 }),\n      }),\n      { name: 'cart-storage' } // Persists to localStorage\n    )\n  )\n);\n\n// Atomic selectors — only re-renders when count changes\nconst cartCount = useCartStore(state => state.items.length);\nconst addItem = useCartStore(state => state.addItem); // Stable reference!"
         },
         {
@@ -279,6 +495,14 @@
           "title": "TanStack Query (React Query)",
           "summary": "Server state: caching, dedup, background refresh, pagination — replaces useEffect + fetch.",
           "explanation": "TanStack Query manages server state: async data fetching, caching, deduplication, background refetching, and mutation handling. Key concepts: queryKey (cache identity), queryFn (fetch function), staleTime (how long cached data is fresh), gcTime (how long unused data stays in cache). Mutations with useMutation + onSuccess cache invalidation. Optimistic updates built-in. Replaces: useEffect data fetching, manual loading/error states, manual cache management. Works perfectly alongside Zustand (UI state) and Redux (app state).",
+          "analogy": "TanStack Query is a smart fridge for server data: it remembers what you fetched, knows when it's stale, restocks in the background, and avoids buying the same thing twice (dedup).",
+          "keyPoints": [
+            "Manages server state: caching, dedup, background refetch, mutations.",
+            "Key concepts: queryKey, queryFn, staleTime, gcTime.",
+            "Replaces useEffect fetching and manual loading/error state.",
+            "Built-in optimistic updates and cache invalidation.",
+            "Pairs with Zustand (UI state) — they solve different problems."
+          ],
           "code": "import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';\n\n// Fetch with caching\nconst { data: user, isLoading, error } = useQuery({\n  queryKey: ['user', userId], // Cache key\n  queryFn: () => fetch(`/api/users/${userId}`).then(r => r.json()),\n  staleTime: 5 * 60 * 1000, // 5 mins — don't refetch if fresh\n  retry: 3, // Retry on failure\n});\n\n// Mutation with cache invalidation\nconst queryClient = useQueryClient();\nconst { mutate: updateUser } = useMutation({\n  mutationFn: (data) => fetch(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),\n  onSuccess: () => {\n    // Invalidate and refetch the user query\n    queryClient.invalidateQueries({ queryKey: ['user', userId] });\n  },\n  onMutate: async (newData) => {\n    // Optimistic update\n    await queryClient.cancelQueries({ queryKey: ['user', userId] });\n    const prev = queryClient.getQueryData(['user', userId]);\n    queryClient.setQueryData(['user', userId], old => ({ ...old, ...newData }));\n    return { prev }; // For rollback\n  },\n  onError: (err, newData, context) => {\n    queryClient.setQueryData(['user', userId], context.prev); // Rollback\n  },\n});"
         }
       ]
@@ -293,6 +517,14 @@
           "title": "Code Splitting & Lazy Loading",
           "summary": "Split JS bundle by route/feature. React.lazy + Suspense for component-level splitting.",
           "explanation": "A large monolithic JS bundle delays Time to Interactive (TTI). Code splitting breaks it into smaller chunks — each route or feature loads only what it needs. React.lazy() + Suspense handles component-level splitting. Webpack/Vite split based on dynamic import() calls. Three strategies: Route-based (most impactful), Component-based (modals, heavy components), Library-based (split heavy dependencies like charts, maps).",
+          "analogy": "Code splitting is packing for a trip one bag per activity instead of one giant suitcase: users only carry (download) the code for the screen they're on, loading the rest on demand.",
+          "keyPoints": [
+            "Breaks one big bundle into chunks loaded on demand.",
+            "React.lazy + Suspense splits at the component level.",
+            "Route-based splitting is the highest-impact strategy.",
+            "Also split heavy libraries (charts, editors) into their own chunk.",
+            "Prefetch the next likely chunk on hover to hide load latency."
+          ],
           "code": "// Route-based splitting — each route is a separate chunk\nconst Dashboard = React.lazy(() => import('./pages/Dashboard'));\nconst Profile = React.lazy(() => import('./pages/Profile'));\nconst Analytics = React.lazy(() => import('./pages/Analytics'));\n\nfunction App() {\n  return (\n    <Suspense fallback={<PageSkeleton />}>\n      <Routes>\n        <Route path=\"/dashboard\" element={<Dashboard />} />\n        <Route path=\"/profile\" element={<Profile />} />\n        <Route path=\"/analytics\" element={<Analytics />} />\n      </Routes>\n    </Suspense>\n  );\n}\n\n// Prefetch next route on hover\nconst prefetchDashboard = () => import('./pages/Dashboard');\n<Link to=\"/dashboard\" onMouseEnter={prefetchDashboard}>Dashboard</Link>\n\n// Vite config for manual chunking\nbuild: {\n  rollupOptions: {\n    output: {\n      manualChunks: { vendor: ['react', 'react-dom'] }\n    }\n  }\n}",
           "situations": [
             {
@@ -306,6 +538,14 @@
           "title": "React Rendering Performance",
           "summary": "Memo, useCallback, virtualization — measure first with React Profiler.",
           "explanation": "Over-rendering is the most common React performance issue. Toolbox: React.memo (skip child re-render on unchanged props), useCallback (stable function references), useMemo (stable computed values/objects), virtualization (react-window — only render visible rows), key stability (prevent unnecessary unmount/remount). Critical: MEASURE before optimizing — React DevTools Profiler shows exactly which components render and why.",
+          "analogy": "Fixing React perf is like fixing a noisy office: first find WHO is talking too much (Profiler), then quiet unnecessary re-renders (memo) and only show the rows on screen (virtualization).",
+          "keyPoints": [
+            "Over-rendering is the most common React perf problem.",
+            "Tools: React.memo, useCallback, useMemo, key stability.",
+            "Virtualize long lists (react-window) — render only visible rows.",
+            "ALWAYS measure with the Profiler before optimizing.",
+            "Memoization only helps if props are actually stable."
+          ],
           "code": "// Virtualized list for 10,000 items — only renders ~15 DOM nodes\nimport { FixedSizeList } from 'react-window';\nimport AutoSizer from 'react-virtualized-auto-sizer';\n\nconst Row = React.memo(({ index, style, data }) => (\n  <div style={style}>\n    <ProductCard product={data[index]} />\n  </div>\n));\n\nfunction VirtualProductList({ products }) {\n  return (\n    <AutoSizer>\n      {({ height, width }) => (\n        <FixedSizeList\n          height={height}\n          width={width}\n          itemCount={products.length}\n          itemSize={80}       // Fixed row height — no measurement\n          itemData={products}  // Stable data reference\n        >\n          {Row}\n        </FixedSizeList>\n      )}\n    </AutoSizer>\n  );\n}"
         },
         {
@@ -313,6 +553,14 @@
           "title": "Core Web Vitals Optimization",
           "summary": "LCP < 2.5s, CLS < 0.1, INP < 200ms — each requires specific techniques.",
           "explanation": "Core Web Vitals directly impact SEO (Google ranking factor) and user experience. LCP (Largest Contentful Paint): optimize the hero image — preload, WebP, fetchpriority='high', CDN. CLS (Cumulative Layout Shift): always set width/height on images, reserve space for dynamic content, use font-display: swap. INP (Interaction to Next Paint): break up long tasks with scheduler.yield(), move non-UI work to Web Workers, use startTransition for heavy re-renders. TTFB: server caching, edge computing, ISR.",
+          "analogy": "Core Web Vitals are a health check for your page: LCP = how fast the main content appears, CLS = how much the page jumps around, INP = how snappy it feels when tapped.",
+          "keyPoints": [
+            "LCP <2.5s: preload hero image, WebP, fetchpriority, CDN.",
+            "CLS <0.1: set image width/height, reserve space, font-display: swap.",
+            "INP <200ms: break long tasks (scheduler.yield), workers, startTransition.",
+            "They're a Google SEO ranking factor.",
+            "Measure real users with the web-vitals library."
+          ],
           "code": "// LCP optimization — preload the hero image\n<link rel=\"preload\" as=\"image\" href=\"/hero.webp\" fetchpriority=\"high\">\n<img src=\"/hero.webp\" fetchpriority=\"high\" width=\"1200\" height=\"600\" />\n\n// CLS — always reserve space for images and async content\n.image-wrapper {\n  aspect-ratio: 16/9;  /* Prevents layout shift */\n  background: #f0f0f0; /* Placeholder color */\n}\n\n// INP — break up long task\nasync function handleClick() {\n  processFirstBatch();\n  await scheduler.yield(); // Yield to browser\n  processSecondBatch();\n  await scheduler.yield();\n  renderResults();\n}\n\n// Measure with web-vitals library\nimport { onLCP, onCLS, onINP } from 'web-vitals';\nonLCP(metric => sendToAnalytics('LCP', metric.value));"
         }
       ]
@@ -327,6 +575,14 @@
           "title": "XSS — Cross-Site Scripting",
           "summary": "Stored, Reflected, DOM-based. React escapes by default. Sanitize dangerouslySetInnerHTML.",
           "explanation": "XSS allows attackers to inject malicious scripts. Three types: Stored XSS (injected into DB, served to all visitors), Reflected XSS (via URL params), DOM-based XSS (client-side DOM manipulation without proper escaping). React escapes all JSX expressions by default. dangerouslySetInnerHTML bypasses this — always sanitize with DOMPurify before using. Content Security Policy (CSP) is the defense-in-depth — prevents execution of injected scripts even if XSS occurs.",
+          "analogy": "XSS is a forged note that the page reads aloud as code. React's default is to treat everything as plain text; dangerouslySetInnerHTML removes that safety net, so you must sanitize first.",
+          "keyPoints": [
+            "Three types: Stored, Reflected, DOM-based.",
+            "React auto-escapes {expressions} by default.",
+            "dangerouslySetInnerHTML bypasses escaping — sanitize with DOMPurify.",
+            "Sanitize on both save and render (defense in depth).",
+            "Add a Content-Security-Policy as a last line of defense."
+          ],
           "code": "// React is safe by default:\n<div>{userInput}</div> // Auto-escaped — cannot execute scripts\n\n// DANGEROUS — bypass protection:\n<div dangerouslySetInnerHTML={{ __html: userInput }} /> // XSS vulnerability!\n\n// SAFE — sanitize first:\nimport DOMPurify from 'dompurify';\n<div dangerouslySetInnerHTML={{\n  __html: DOMPurify.sanitize(userInput, {\n    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p'],\n    ALLOWED_ATTR: [] // No attributes allowed\n  })\n}} />\n\n// CSP Header — even if XSS occurs, scripts can't run:\n// Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-abc123'\n// script-src 'unsafe-inline' ← NEVER use this!",
           "situations": [
             {
@@ -340,6 +596,14 @@
           "title": "CSRF — Cross-Site Request Forgery",
           "summary": "Attacker makes authenticated requests on user's behalf. CSRF tokens + SameSite cookies.",
           "explanation": "CSRF tricks a user's browser into making authenticated requests to your server from a malicious site. The browser automatically sends cookies, so the request appears legitimate. Prevention: 1) SameSite=Strict/Lax cookies — browser only sends cookies on same-origin requests. 2) CSRF tokens — random token in form/header that server validates. 3) Verify Origin/Referer headers. 4) Use custom request headers (X-Requested-With) — cross-origin JS can't set custom headers without CORS. Modern apps using JWT in Authorization header (not cookies) are immune to CSRF.",
+          "analogy": "CSRF is a stranger mailing a withdrawal slip using your pre-signed signature (your cookie): the bank sees your signature and complies. Defenses prove the request really came from your app.",
+          "keyPoints": [
+            "Tricks the browser into sending authenticated requests cross-site.",
+            "Cookies are sent automatically, making forged requests look legit.",
+            "Defenses: SameSite=Strict/Lax cookies + CSRF tokens.",
+            "Custom headers (X-Requested-With) can't be set cross-origin without CORS.",
+            "Tokens in the Authorization header (not cookies) are immune to CSRF."
+          ],
           "code": "// Prevention 1: SameSite cookie attribute\nSet-Cookie: session=abc123; SameSite=Strict; Secure; HttpOnly\n// SameSite=Strict: cookie never sent cross-site\n// SameSite=Lax: cookie sent on top-level navigation GET only\n\n// Prevention 2: CSRF token (server renders it into the page)\nconst csrfToken = document.querySelector('meta[name=\"csrf-token\"]').content;\nfetch('/api/update', {\n  method: 'POST',\n  headers: { 'X-CSRF-Token': csrfToken }, // Verify server-side\n  body: JSON.stringify(data)\n});\n\n// Prevention 3: Custom header (SPA APIs)\n// Cross-origin JS cannot set custom headers without CORS permission\nfetch('/api/update', {\n  headers: { 'X-Requested-With': 'XMLHttpRequest' } // Impossible from cross-origin\n});"
         },
         {
@@ -347,6 +611,14 @@
           "title": "Content Security Policy (CSP)",
           "summary": "HTTP header that whitelists allowed content sources — last line of defense vs XSS.",
           "explanation": "CSP is an HTTP response header that tells the browser which content sources are trusted. Even if XSS occurs, CSP prevents the injected script from executing. Directives: script-src (JS sources), style-src (CSS), img-src, connect-src (fetch/XHR), font-src. 'nonce' approach: server generates random nonce per request, adds to trusted scripts — only scripts with matching nonce execute. Report-only mode: 'Content-Security-Policy-Report-Only' logs violations without blocking — use to test before enforcing.",
+          "analogy": "CSP is a guest list for your page's bouncer: even if an attacker sneaks a script in, the browser checks the list and refuses to run anything not from an approved source.",
+          "keyPoints": [
+            "An HTTP header whitelisting trusted content sources.",
+            "Blocks injected scripts from executing even if XSS occurs.",
+            "Directives: script-src, style-src, img-src, connect-src, frame-ancestors.",
+            "Nonce/hash approach allows only specifically-trusted inline scripts.",
+            "Use Report-Only mode to test before enforcing."
+          ],
           "code": "// Strong CSP header:\nContent-Security-Policy:\n  default-src 'self';          /* Default: only same origin */\n  script-src 'self' 'nonce-{random}' cdn.trusted.com;  /* Specific scripts */\n  style-src 'self' 'unsafe-inline' fonts.googleapis.com;\n  img-src 'self' data: https:;    /* Images from anywhere HTTPS */\n  connect-src 'self' api.myapp.com; /* Fetch/XHR only to these */\n  font-src 'self' fonts.gstatic.com;\n  object-src 'none';           /* No plugins */\n  frame-ancestors 'none';      /* Prevent iframe embedding (clickjacking) */\n  upgrade-insecure-requests;   /* Force HTTPS */\n\n// Nonce approach for inline scripts:\n// Server: generate random nonce per request\nconst nonce = crypto.randomBytes(16).toString('base64');\nres.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);\n// HTML: <script nonce=\"{nonce}\">/* this executes */</script>"
         },
         {
@@ -354,6 +626,14 @@
           "title": "Authentication & Authorization Security",
           "summary": "JWT storage, token refresh, HTTPS-only cookies, RBAC in frontend.",
           "explanation": "JWT Storage: localStorage is accessible to JS (XSS vulnerable). httpOnly cookies are inaccessible to JS (XSS safe but CSRF risk — mitigate with SameSite). Best practice for SPAs: store access token in memory (short-lived, 15min), refresh token in httpOnly SameSite=Strict cookie. Frontend Authorization: never trust client-side role checks for security — they're only for UX. Always verify on the server. Route guards in React (ProtectedRoute) only prevent navigation, not API access.",
+          "analogy": "Token storage is choosing where to keep your house key: in your hand (memory — safest, lost on refresh) vs a tamper-proof lockbox the browser holds (httpOnly cookie). Either way, the real lock is on the server.",
+          "keyPoints": [
+            "localStorage is XSS-readable; httpOnly cookies aren't (but need CSRF defense).",
+            "SPA best practice: access token in memory + refresh token in httpOnly cookie.",
+            "Keep access tokens short-lived (≈15 min).",
+            "Frontend role checks are UX only — enforce authz on the server.",
+            "Route guards prevent navigation, not API access."
+          ],
           "code": "// JWT storage strategy:\n// Option 1: Memory (safest from XSS, lost on refresh)\nlet accessToken = null;\nconst setToken = (token) => { accessToken = token; };\nconst getToken = () => accessToken;\n\n// Option 2: httpOnly cookie (XSS safe, CSRF needs SameSite)\nSet-Cookie: refresh_token=...; HttpOnly; Secure; SameSite=Strict; Path=/api/refresh\n\n// Protected Route — UX only, NOT security:\nfunction ProtectedRoute({ children }) {\n  const { user, isLoading } = useAuth();\n  if (isLoading) return <Spinner />;\n  if (!user) return <Navigate to=\"/login\" replace />;\n  return children;\n}\n\n// Role-based UI (cosmetic only — server must also check):\nfunction AdminPanel() {\n  const { user } = useAuth();\n  if (user.role !== 'admin') return <Forbidden />; // UX gate\n  // Still verify on every API call server-side!\n}"
         },
         {
@@ -361,6 +641,14 @@
           "title": "Environment Variables & Configuration",
           "summary": "VITE_/REACT_APP_ prefix for client exposure. Never commit secrets. Use .env files.",
           "explanation": "Environment variables control app behavior across environments (dev/staging/prod). In Create React App: only variables prefixed REACT_APP_ are bundled into client JS (everything else is ignored). In Vite: only VITE_ prefixed variables are exposed. NEVER put secrets (API keys, DB passwords) in REACT_APP_/VITE_ variables — they're embedded in the JS bundle and visible to anyone. Use .env.local for local overrides (gitignored), .env.production for prod values (or CI/CD secrets).",
+          "analogy": "Client env vars are printed on the outside of the package (the JS bundle) — anyone can read them. So only put non-secrets there (a URL is fine), and keep real secrets server-side.",
+          "keyPoints": [
+            "Only VITE_/REACT_APP_/NEXT_PUBLIC_ vars reach the client bundle.",
+            "Anything in the client bundle is PUBLIC — never put secrets there.",
+            "Secrets live in server env / CI-CD secret stores.",
+            ".env.local is gitignored for local dev overrides.",
+            "If a secret is committed, rotate it immediately and purge history."
+          ],
           "code": "// .env.local (gitignored — local developer secrets)\nVITE_API_URL=http://localhost:3001\nSECRET_API_KEY=super-secret   # NOT prefixed → NOT in bundle (server-only)\n\n// .env.production\nVITE_API_URL=https://api.myapp.com\n\n// Access in React (Vite):\nconst apiUrl = import.meta.env.VITE_API_URL; // ✅ Safe — just a URL\n// import.meta.env.SECRET_API_KEY → undefined (not VITE_ prefixed)\n\n// Access in React (CRA):\nconst apiUrl = process.env.REACT_APP_API_URL;\n\n// Runtime config for server-injected vars (avoid VITE_ limitation):\n// public/config.js (not bundled, loaded at runtime):\nwindow.APP_CONFIG = { apiUrl: '__API_URL__' }; // CI replaces __API_URL__\n\n// Next.js:\n// NEXT_PUBLIC_ prefix → client-side\n// No prefix → server-only (safe for secrets in getServerSideProps/RSC)",
           "situations": [
             {
@@ -383,6 +671,14 @@
           "title": "React Scheduler & Priority Lanes",
           "summary": "React's internal scheduler assigns priority lanes — user input > animations > data updates.",
           "explanation": "React's Concurrent Mode uses a priority-based scheduler. Each update gets a 'lane' — a bitmask representing its priority: SyncLane (highest, user input), InputContinuousLane (drag, scroll), DefaultLane (setState), TransitionLane (startTransition), IdleLane (lowest). The scheduler yields to higher-priority work between renders using requestAnimationFrame and postMessage-based task scheduling. This is what makes React Concurrent mode feel instant: user typing always preempts data fetching re-renders.",
+          "analogy": "React's scheduler is an ER triage nurse: a typing keystroke is a critical patient seen instantly, while a background data re-render waits and can be bumped when something more urgent arrives.",
+          "keyPoints": [
+            "Each update gets a priority 'lane' (Sync, InputContinuous, Default, Transition, Idle).",
+            "Higher-priority work preempts lower-priority renders.",
+            "User input (SyncLane) beats data updates and transitions.",
+            "The scheduler yields between work units to stay responsive.",
+            "useTransition/useDeferredValue/Suspense all build on lanes."
+          ],
           "code": "// Lanes in practice:\n\n// HIGH PRIORITY (SyncLane) — runs before paint, never interrupted:\ndocument.addEventListener('click', () => {\n  // Click handlers run in SyncLane context\n  setIsMenuOpen(true); // Guaranteed to run before next frame\n});\n\n// DEFAULT priority — can be interrupted:\nfetch('/api/data').then(data => {\n  setData(data); // DefaultLane — may be interrupted by user input\n});\n\n// TRANSITION priority — intentionally deferrable:\nstartTransition(() => {\n  setSearchResults(filterItems(all, query)); // TransitionLane — lowest priority work\n});\n\n// IDLE priority:\nconst [output] = useDeferredValue(expensiveCompute); // Runs in idle time\n\n// Concurrent feature dependencies:\n// useTransition, useDeferredValue, Suspense data fetching\n// all depend on React's priority lane system",
           "situations": [
             {
@@ -400,6 +696,14 @@
           "title": "React Compiler (React Forget)",
           "summary": "Auto-memoization compiler — eliminates manual useMemo/useCallback.",
           "explanation": "React Compiler (previously 'React Forget') is a build-time compiler that automatically adds memoization to React components. It analyzes your component's code statically, determines which values can be memoized, and inserts the equivalent of useMemo/useCallback/React.memo automatically. This means you write plain JavaScript and the compiler optimizes re-renders. Available in React 19, enabled with the Babel plugin. Caveat: components must follow the Rules of Hooks and must be pure (no side effects in render). Components that break these rules won't be optimized.",
+          "analogy": "React Compiler is an autopilot for memoization: instead of hand-placing useMemo/useCallback everywhere, you write plain components and the compiler inserts the optimal memoization at build time.",
+          "keyPoints": [
+            "Build-time compiler that auto-memoizes components.",
+            "Removes most manual useMemo/useCallback/React.memo.",
+            "Requires pure components that follow the Rules of Hooks.",
+            "Available with React 19 via a Babel plugin.",
+            "Migrate gradually; verify with the Profiler before deleting manual memo."
+          ],
           "code": "// BEFORE React Compiler: manual memoization\nconst UserDashboard = React.memo(({ userId, data }) => {\n  const sortedData = useMemo(() => data.sort(byDate), [data]);\n  const handleClick = useCallback((id) => {\n    updateUser(id);\n  }, []);\n\n  return <UserList data={sortedData} onSelect={handleClick} />;\n});\n\n// AFTER React Compiler: just write plain components\n// The compiler automatically inserts memoization!\nfunction UserDashboard({ userId, data }) {\n  const sortedData = data.sort(byDate); // Compiler knows to memoize this\n  \n  function handleClick(id) { // Compiler knows to memoize this too\n    updateUser(id);\n  }\n\n  return <UserList data={sortedData} onSelect={handleClick} />;\n}\n// Compiler output is equivalent to the manual version above\n// but with correct dependency tracking automatically",
           "situations": [
             {
@@ -420,6 +724,14 @@
           "title": "Compound Components & Render Props",
           "summary": "Flexible, inversion-of-control component APIs — Radix UI, Headless UI patterns.",
           "explanation": "Compound Components expose multiple related sub-components that work together via shared implicit state (Context). The parent manages state, children access it via useContext. This gives consumers total control over layout and composition while the library manages behavior. Used by Radix UI, Headless UI, React Select. Render Props (deprecated by hooks but still seen) pass render functions as props for inversion of control. The key design principle: separate behavior from presentation.",
+          "analogy": "Compound Components are like LEGO sets: the box (parent) holds the shared studs (Context/state) and you snap together pieces (<Select.Option>) however you like — you control layout, the kit controls behavior.",
+          "keyPoints": [
+            "Related sub-components share implicit state via Context.",
+            "Parent manages behavior; consumer controls layout/markup.",
+            "Powers Radix UI, Headless UI, React Select.",
+            "Core principle: separate behavior from presentation (headless).",
+            "Radix's asChild prop lets consumers supply their own element."
+          ],
           "code": "// Compound Component Pattern\nconst SelectContext = createContext(null);\n\nfunction Select({ children, value, onChange }) {\n  return (\n    <SelectContext.Provider value={{ value, onChange }}>\n      <div role=\"listbox\">{children}</div>\n    </SelectContext.Provider>\n  );\n}\n\nSelect.Option = function Option({ value, children }) {\n  const { value: selected, onChange } = useContext(SelectContext);\n  const isSelected = selected === value;\n  \n  return (\n    <div\n      role=\"option\"\n      aria-selected={isSelected}\n      onClick={() => onChange(value)}\n      className={isSelected ? 'selected' : ''}\n    >\n      {children}\n    </div>\n  );\n};\n\n// Flexible consumer API:\n<Select value={country} onChange={setCountry}>\n  <Select.Option value=\"in\">India 🇮🇳</Select.Option>\n  <Select.Option value=\"us\">USA 🇺🇸</Select.Option>\n  {/* Consumer controls layout, library controls behavior */}\n</Select>",
           "situations": [
             {
@@ -433,6 +745,14 @@
           "title": "Micro-Frontends",
           "summary": "Module Federation, iframes, Web Components — team independence at scale.",
           "explanation": "Micro-frontends extend microservice thinking to the frontend: different teams own different UI sections independently. Approaches: 1) Module Federation (Webpack 5 / Rspack): remote bundles loaded at runtime, share React instances to avoid duplicate React. 2) iframes: true isolation, poor DX, complex communication. 3) Web Components: framework-agnostic, encapsulated. 4) Single-SPA: orchestrator that mounts/unmounts apps. Senior engineers understand the tradeoffs: MFEs solve team scaling but add: network latency (multiple bundles), version coordination, shared state complexity, increased testing surface.",
+          "analogy": "Micro-frontends are a food court: each stall (team) runs independently with its own kitchen, but they share the seating and entrance (shell). Great for many teams, but you pay for the extra coordination.",
+          "keyPoints": [
+            "Independent teams own independent UI sections, deployed separately.",
+            "Module Federation loads remote bundles at runtime.",
+            "Share React as a singleton to avoid duplicate copies.",
+            "Costs: version coordination, shared state, latency, testing surface.",
+            "For small teams, a modular monorepo is usually simpler."
+          ],
           "code": "// Webpack Module Federation config (webpack.config.js)\n// HOST app:\nnew ModuleFederationPlugin({\n  name: 'host',\n  remotes: {\n    checkout: 'checkout@https://checkout.myapp.com/remoteEntry.js',\n    catalog: 'catalog@https://catalog.myapp.com/remoteEntry.js',\n  },\n  shared: {\n    react: { singleton: true, requiredVersion: '^18.0.0' },\n    'react-dom': { singleton: true, requiredVersion: '^18.0.0' },\n    // Singleton = only one React instance, shared across all remotes\n  }\n});\n\n// REMOTE app (checkout):  \nnew ModuleFederationPlugin({\n  name: 'checkout',\n  filename: 'remoteEntry.js',\n  exposes: {\n    './CheckoutFlow': './src/CheckoutFlow', // What host can import\n  },\n  shared: { react: { singleton: true } }\n});\n\n// Host usage:\nconst CheckoutFlow = React.lazy(() => import('checkout/CheckoutFlow'));\n// Loaded at RUNTIME from checkout.myapp.com — no static dependency!",
           "situations": [
             {
@@ -446,6 +766,14 @@
           "title": "Advanced Custom Hooks Design",
           "summary": "Hooks as abstractions — reusable stateful logic with clean APIs and proper cleanup.",
           "explanation": "Expert-level custom hooks encapsulate complex stateful logic with clean external APIs. Key principles: single responsibility, proper cleanup, TypeScript generics for reusability, controlled/uncontrolled variants, and suspense compatibility. Patterns: useControllable (manages state that can be either controlled by parent or internal), useEventCallback (stable callback reference that always calls latest version), useIsomorphicLayoutEffect (SSR-safe), usePrevious (track previous value).",
+          "analogy": "Advanced custom hooks are like well-designed kitchen appliances: they hide complex machinery (state, cleanup, race handling) behind one or two simple buttons (a clean API).",
+          "keyPoints": [
+            "Encapsulate complex stateful logic behind a clean API.",
+            "Principles: single responsibility, proper cleanup, TS generics.",
+            "useEventCallback: stable reference that always calls the latest fn.",
+            "useControllable: supports controlled and uncontrolled usage.",
+            "A real useFetch is basically TanStack Query — prefer the library."
+          ],
           "code": "// useEventCallback — stable reference, always fresh value\nfunction useEventCallback<T extends (...args: any[]) => any>(fn: T): T {\n  const ref = useRef<T>(fn);\n  useLayoutEffect(() => { ref.current = fn; }); // Always sync\n  return useCallback((...args) => ref.current(...args), []) as T;\n}\n\n// useControllable — works as controlled OR uncontrolled\nfunction useControllable<T>(\n  controlledValue: T | undefined,\n  onChange: ((v: T) => void) | undefined,\n  defaultValue: T\n): [T, (v: T) => void] {\n  const [internal, setInternal] = useState(defaultValue);\n  const isControlled = controlledValue !== undefined;\n  const value = isControlled ? controlledValue : internal;\n  \n  const setValue = useEventCallback((next: T) => {\n    if (!isControlled) setInternal(next);\n    onChange?.(next);\n  });\n  \n  return [value, setValue];\n}\n\n// Usage in a component that works both ways:\nfunction Toggle({ checked, onCheckedChange, defaultChecked = false }) {\n  const [isOn, setIsOn] = useControllable(checked, onCheckedChange, defaultChecked);\n  return <button onClick={() => setIsOn(!isOn)}>{isOn ? 'ON' : 'OFF'}</button>;\n}",
           "situations": [
             {
@@ -466,6 +794,14 @@
           "title": "SSR Internals & Hydration",
           "summary": "renderToString vs renderToPipeableStream. Hydration mismatches. Selective hydration.",
           "explanation": "Classic SSR (renderToString): renders the entire React tree to a string on the server, sends it to the client, then React 'hydrates' — attaches event handlers by reconciling the HTML with a re-render. Blocking — the browser waits for the full string. Streaming SSR (renderToPipeableStream, React 18): sends HTML chunks as they're ready, enabling progressive rendering. The browser starts parsing and rendering before the full response arrives. Selective hydration: Suspense boundaries can defer hydration — user-visible parts hydrate first, offscreen parts hydrate later.",
+          "analogy": "Streaming SSR is serving a meal course by course instead of waiting for everything at once: the browser shows the ready parts immediately while slower sections stream in behind a Suspense placeholder.",
+          "keyPoints": [
+            "renderToString blocks until the whole tree renders.",
+            "renderToPipeableStream streams HTML chunks progressively.",
+            "Hydration attaches event handlers to server HTML.",
+            "Suspense enables selective/progressive hydration.",
+            "Hydration mismatches come from non-deterministic render (dates, random, window)."
+          ],
           "code": "// Classic renderToString (blocking):\nimport { renderToString } from 'react-dom/server';\nconst html = renderToString(<App />); // Blocks until entire tree renders\nres.send(`<html><body>${html}</body></html>`);\n\n// Streaming SSR (React 18+):\nimport { renderToPipeableStream } from 'react-dom/server';\n\nconst { pipe, abort } = renderToPipeableStream(<App />, {\n  // Critical JS chunks to load first:\n  bootstrapScripts: ['/static/js/main.js'],\n  \n  // Once the shell (above all Suspense boundaries) is ready:\n  onShellReady() {\n    res.statusCode = 200;\n    res.setHeader('Content-Type', 'text/html');\n    pipe(res); // Stream HTML directly to response!\n  },\n  \n  onError(error) {\n    console.error(error);\n    res.statusCode = 500;\n  }\n});\n\n// In your component tree, Suspense enables streaming:\nfunction Page() {\n  return (\n    <main>\n      <Header /> {/* Sends immediately */}\n      <Suspense fallback={<Skeleton />}>\n        <SlowDataComponent /> {/* Streams when data is ready */}\n      </Suspense>\n    </main>\n  );\n}",
           "situations": [
             {
@@ -483,6 +819,14 @@
           "title": "ISR & On-Demand Revalidation",
           "summary": "Stale-while-revalidate at the infrastructure level — Next.js ISR mechanics.",
           "explanation": "ISR (Incremental Static Regeneration) combines static generation's speed with SSR's freshness. Pages are pre-built statically but revalidated at a configurable interval (revalidate seconds). The first request after expiry triggers background regeneration while serving the stale page (stale-while-revalidate CDN pattern). On-demand ISR: trigger revalidation via a webhook (revalidatePath, revalidateTag) when data actually changes. React 19 extends this via fetch() cache: 'force-cache' with next.tags for granular tag-based invalidation.",
+          "analogy": "ISR is a bakery that sells the loaf already on the shelf (fast/static) but quietly bakes a fresh one in the background once it's gone stale — so customers get speed and reasonable freshness.",
+          "keyPoints": [
+            "Combines static speed with periodic background freshness.",
+            "revalidate seconds = how long a page stays cached before regenerating.",
+            "First request after expiry serves stale while regenerating.",
+            "On-demand: revalidatePath/revalidateTag via a webhook when data changes.",
+            "Tag-based invalidation gives granular cache control."
+          ],
           "code": "// Next.js App Router: time-based revalidation\nasync function ProductPage({ params }) {\n  // Revalidate every 60 seconds (ISR):\n  const product = await fetch(`/api/products/${params.id}`, {\n    next: { revalidate: 60 } // CDN caches for 60s\n  }).then(r => r.json());\n  \n  return <Product data={product} />;\n}\n\n// Tag-based invalidation (on-demand ISR):\nasync function getProduct(id) {\n  return fetch(`/api/products/${id}`, {\n    next: { tags: [`product-${id}`, 'products'] } // Cache tags\n  });\n}\n\n// Webhook route (called when product updates in CMS):\nexport async function POST(request) {\n  const { productId } = await request.json();\n  \n  // Invalidate just this product's cache:\n  revalidateTag(`product-${productId}`);\n  \n  // OR invalidate all products:\n  revalidatePath('/products', 'layout');\n  \n  return Response.json({ revalidated: true });\n}",
           "situations": [
             {
@@ -503,6 +847,14 @@
           "title": "ARIA Patterns & WAI-ARIA Spec",
           "summary": "Roles, states, properties — ARIA Live Regions, focus management, keyboard navigation.",
           "explanation": "Senior engineers implement ARIA beyond basic alt text. Key patterns: 1) Composite widgets (combobox, tree, grid) require roving tabindex for keyboard navigation. 2) ARIA Live Regions (aria-live, aria-atomic, aria-relevant) announce dynamic content to screen readers. 3) Focus management: trap focus in modals (focus-trap-react), return focus on close. 4) Keyboard patterns: arrow keys navigate within widgets, Escape closes overlays, Enter/Space activate. WAI-ARIA Authoring Practices Guide is the specification for these patterns.",
+          "analogy": "ARIA is the labeling and wiring that lets a screen reader 'see' your custom widgets: roles say what something is, states say what it's doing, and focus management guides the keyboard user through it.",
+          "keyPoints": [
+            "Composite widgets need roving tabindex / aria-activedescendant for keyboard nav.",
+            "ARIA live regions announce dynamic content to screen readers.",
+            "Trap focus in modals; return focus to the trigger on close.",
+            "Keyboard: arrows navigate, Escape closes, Enter/Space activate.",
+            "Follow the WAI-ARIA Authoring Practices Guide; test with real screen readers."
+          ],
           "code": "// Focus trap in Modal (accessibility requirement):\nimport { createFocusTrap } from 'focus-trap';\n\nfunction Modal({ isOpen, onClose, children }) {\n  const modalRef = useRef(null);\n  \n  useEffect(() => {\n    if (!isOpen) return;\n    // Trap focus inside modal\n    const trap = createFocusTrap(modalRef.current, {\n      onDeactivate: onClose,\n      initialFocus: '.modal-title', // Focus first meaningful element\n    });\n    trap.activate();\n    return () => trap.deactivate(); // Release on close\n  }, [isOpen]);\n  \n  return (\n    <div\n      ref={modalRef}\n      role=\"dialog\"\n      aria-modal=\"true\"\n      aria-labelledby=\"modal-title\"\n    >\n      <h2 id=\"modal-title\" className=\"modal-title\">Confirm Action</h2>\n      {children}\n      <button onClick={onClose}>Cancel</button>\n    </div>\n  );\n}\n\n// ARIA Live Region for toast notifications:\nfunction ToastContainer({ toasts }) {\n  return (\n    <div\n      aria-live=\"polite\"  // 'assertive' for errors\n      aria-atomic=\"false\" // Announce each toast individually\n      className=\"visually-hidden\" // Off-screen, screen reader only\n    >\n      {toasts.map(t => <p key={t.id}>{t.message}</p>)}\n    </div>\n  );\n}",
           "situations": [
             {
@@ -523,6 +875,14 @@
           "title": "Testing Patterns & Anti-patterns",
           "summary": "Test behavior not implementation. MSW for network. Playwright for E2E.",
           "explanation": "Expert React testing follows 'test behavior, not implementation': query by role/text (not testId), test what users see and do (not state values), use MSW for network layer. Anti-patterns: testing implementation details (useState values, component class names), testing library components you didn't write, over-mocking (mocking fetch module instead of using MSW). Senior engineers also set up Playwright for critical user journeys and use Testing Library's accessibility-first queries.",
+          "analogy": "Good React tests act like a real user, not an X-ray: they click and read the screen (by role/text) rather than poking at internal state — so they keep passing through refactors that don't change behavior.",
+          "keyPoints": [
+            "Test behavior, not implementation details.",
+            "Query by role/text; avoid testId and internal state.",
+            "Mock the network at the boundary with MSW, not the fetch module.",
+            "Avoid over-mocking and testing third-party components.",
+            "Add Playwright for a few critical end-to-end journeys."
+          ],
           "code": "// BAD: Testing implementation details\nit('should set loading state', () => {\n  render(<UserProfile />);\n  expect(component.state('isLoading')).toBe(true); // Never do this\n  expect(wrapper.find('.loading-spinner')).toHaveLength(1); // Fragile\n});\n\n// GOOD: Test user-observable behavior\nit('shows spinner while loading user profile', async () => {\n  server.use(\n    http.get('/api/user', () => new Promise(() => {})) // Never resolves\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(screen.getByRole('progressbar')).toBeInTheDocument();\n});\n\nit('shows user name after successful load', async () => {\n  server.use(\n    http.get('/api/user', () =>\n      HttpResponse.json({ name: 'Abhishek', email: 'a@b.com' })\n    )\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(await screen.findByText('Abhishek')).toBeInTheDocument();\n});\n\nit('shows error when API fails', async () => {\n  server.use(\n    http.get('/api/user', () => new HttpResponse(null, { status: 500 }))\n  );\n  render(<UserProfile userId=\"1\" />);\n  expect(await screen.findByRole('alert')).toHaveTextContent(/failed to load/i);\n});",
           "situations": [
             {
@@ -536,6 +896,14 @@
           "title": "Playwright E2E Testing",
           "summary": "Cross-browser E2E. Parallel execution. Component testing. Network interception.",
           "explanation": "Playwright is the modern E2E testing framework. Advantages over Cypress: multi-browser (Chrome, Firefox, WebKit), multiple tabs/windows, native mobile emulation, better parallel execution, and network interception that works across all browsers. For React: Playwright Component Testing allows rendering components in a real browser without a full app server. Key patterns: locators (get by role, text, label for accessibility-aware querying), network mocking, visual regression testing, auth state sharing.",
+          "analogy": "Playwright is a robot that drives real browsers like a user — clicking, typing, navigating across Chrome/Firefox/WebKit — to verify the whole app actually works end to end.",
+          "keyPoints": [
+            "Modern cross-browser E2E (Chromium, Firefox, WebKit) with mobile emulation.",
+            "Accessibility-aware locators (getByRole/Label/Text).",
+            "Built-in network interception and parallel execution.",
+            "Share auth via storageState so tests don't re-login.",
+            "Use trace/screenshot on failure for fast debugging."
+          ],
           "code": "// playwright.config.ts\nexport default defineConfig({\n  testDir: './e2e',\n  fullyParallel: true, // Run all tests in parallel\n  forbidOnly: !!process.env.CI, // Fail if test.only left in code\n  retries: process.env.CI ? 2 : 0, // Retry on CI\n  workers: process.env.CI ? '50%' : undefined,\n  reporter: 'html',\n  use: {\n    baseURL: 'http://localhost:3000',\n    trace: 'on-first-retry', // Record trace on failure\n    screenshot: 'only-on-failure',\n  },\n  projects: [\n    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },\n    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },\n    { name: 'mobile', use: { ...devices['iPhone 13'] } },\n  ],\n});\n\n// Test: checkout flow with network mocking\ntest('complete checkout flow', async ({ page, context }) => {\n  // Mock payment API\n  await context.route('**/api/payment', route =>\n    route.fulfill({ json: { success: true, orderId: 'ord_123' } })\n  );\n  \n  await page.goto('/cart');\n  await page.getByRole('button', { name: 'Checkout' }).click();\n  await page.getByLabel('Card number').fill('4242424242424242');\n  await page.getByRole('button', { name: 'Pay now' }).click();\n  \n  await expect(page.getByRole('heading', { name: 'Order confirmed' })).toBeVisible();\n  await expect(page.getByText('ord_123')).toBeVisible();\n});",
           "situations": [
             {
