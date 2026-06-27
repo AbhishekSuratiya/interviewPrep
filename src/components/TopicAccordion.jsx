@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ReadAloudPlayer } from './ReadAloudPlayer';
 
 export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
   const [open, setOpen] = useState(false);
@@ -54,24 +55,30 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
               <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-blue-600' : 'text-blue-400'}`}>
                 Explanation
               </div>
-              <p className={`text-sm leading-relaxed whitespace-pre-line ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
-                {topic.explanation}
-              </p>
+              <ReadAloudPlayer
+                text={topic.explanation}
+                isLight={isLight}
+                textClassName={isLight ? 'text-gray-700' : 'text-white/70'}
+                compact
+              />
             </div>
 
-            {/* Analogy — plain-language intuition */}
+            {/* Analogy */}
             {topic.analogy && (
               <div className={`rounded-xl p-4 border ${isLight ? 'bg-teal-50 border-teal-100' : 'bg-teal-500/5 border-teal-500/15'}`}>
                 <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-teal-700' : 'text-teal-400'}`}>
                   🧠 In Simple Terms
                 </div>
-                <p className={`text-sm leading-relaxed ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
-                  {topic.analogy}
-                </p>
+                <ReadAloudPlayer
+                  text={topic.analogy}
+                  isLight={isLight}
+                  textClassName={isLight ? 'text-gray-700' : 'text-white/70'}
+                  compact
+                />
               </div>
             )}
 
-            {/* Key Points — quick revision */}
+            {/* Key Points */}
             {topic.keyPoints?.length > 0 && (
               <div>
                 <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-green-600' : 'text-green-400'}`}>
@@ -115,7 +122,6 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
             {topic.code && (
               <div>
                 <div className={`rounded-xl overflow-hidden border ${isLight ? 'border-gray-200' : 'border-white/8'}`}>
-                  {/* Code header */}
                   <div className={`flex items-center justify-between px-4 py-2.5 border-b ${isLight ? 'bg-gray-50 border-gray-200' : 'bg-white/3 border-white/6'}`}>
                     <div className="flex items-center gap-3">
                       <div className="flex gap-1.5">
@@ -137,7 +143,6 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
                       ⤢ Expand
                     </button>
                   </div>
-                  {/* Code body */}
                   <div className={`p-4 overflow-auto max-h-72 ${isLight ? 'bg-gray-50' : 'bg-[#0d0d0d]'}`}>
                     <pre className={`text-xs leading-relaxed ${isLight ? 'text-gray-800' : 'text-[#e2e8f0]'}`}>{topic.code}</pre>
                   </div>
@@ -161,9 +166,14 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
                         <span className="flex-shrink-0">💬</span>
                         <span>{s.question}</span>
                       </div>
-                      <p className={`text-sm leading-relaxed pl-6 ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
-                        {s.answer}
-                      </p>
+                      <div className="pl-6">
+                        <ReadAloudPlayer
+                          text={s.answer}
+                          isLight={isLight}
+                          textClassName={isLight ? 'text-gray-600' : 'text-white/60'}
+                          compact
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

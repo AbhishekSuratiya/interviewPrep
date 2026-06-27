@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ReadAloudPlayer } from './ReadAloudPlayer';
 
 function BehavioralCard({ q, index, isLight }) {
   const [open, setOpen] = useState(false);
@@ -31,9 +32,13 @@ function BehavioralCard({ q, index, isLight }) {
 
       {open && (
         <div className={`px-5 pb-5 border-t ${isLight ? 'border-amber-200 bg-white' : 'border-amber-500/10 bg-black/10'}`}>
-          <p className={`text-sm leading-relaxed mt-4 ${isLight ? 'text-gray-700' : 'text-white/70'}`}>
-            {q.answer}
-          </p>
+          <div className="mt-4">
+            <ReadAloudPlayer
+              text={q.answer}
+              isLight={isLight}
+              textClassName={isLight ? 'text-gray-700' : 'text-white/70'}
+            />
+          </div>
         </div>
       )}
     </div>
