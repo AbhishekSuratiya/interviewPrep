@@ -328,17 +328,6 @@ export default function CodePractice({ isLight }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, activeQ, codes]);
 
-  // Auto-run + auto-format 500ms after the user stops typing (JS questions only)
-  useEffect(() => {
-    if (!activeQ || activeQ.type === 'react') return;
-    if (activeCode === undefined) return;
-    const timer = setTimeout(() => {
-      formatActiveEditor();
-      runCode(activeCode);
-    }, 500);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCode, activeId]);
 
   const toggleSolution = () => {
     setShowSolution(prev => ({ ...prev, [activeId]: !prev[activeId] }));
@@ -534,8 +523,8 @@ export default function CodePractice({ isLight }) {
               <span style={{
                 fontSize: 10, fontWeight: 600, color: isLight ? '#94a3b8' : '#64748b',
                 display: 'flex', alignItems: 'center', gap: 4, marginRight: 2,
-              }} title="Your code auto-saves, formats, and runs 500ms after you stop typing">
-                ⚡ Auto-run, format & save
+              }} title="Press Cmd/Ctrl+S to format and run your code">
+                ⚡ Run on Cmd+S
               </span>
               <button onClick={resetCode} style={{
                 padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
