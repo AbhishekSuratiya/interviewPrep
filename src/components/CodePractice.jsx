@@ -275,31 +275,61 @@ export default function CodePractice({ isLight }) {
   }, [codes]);
 
   const runCode = (codeArg) => {
-    const code = codeArg ?? codes[activeId] ?? '';
-    const logs = [];
-    const fakeConsole = {
-      log: (...args) => logs.push(args.map(a => {
-        if (Array.isArray(a)) return '[' + a.join(', ') + ']';
-        if (typeof a === 'object' && a !== null) return JSON.stringify(a);
-        return String(a);
-      }).join(' ')),
-      error: (...args) => logs.push('ERROR: ' + args.join(' ')),
-      warn: (...args) => logs.push('WARN: ' + args.join(' ')),
+    const code = (typeof codeArg === 'string' ? codeArg : null) ?? codes[activeId] ?? '';
+    const activeIdSnapshot = activeId;
+
+    const workerSrc = `
+      self.onmessage = function(e) {
+        var logs = [];
+        var fakeConsole = {
+          log: function() {
+            var args = Array.prototype.slice.call(arguments);
+            logs.push(args.map(function(a) {
+              if (Array.isArray(a)) return '[' + a.join(', ') + ']';
+              if (typeof a === 'object' && a !== null) { try { return JSON.stringify(a); } catch(_) { return String(a); } }
+              return String(a);
+            }).join(' '));
+          },
+          error: function() { logs.push('ERROR: ' + Array.prototype.slice.call(arguments).join(' ')); },
+          warn: function() { logs.push('WARN: ' + Array.prototype.slice.call(arguments).join(' ')); },
+        };
+        try {
+          new Function('console', e.data)(fakeConsole);
+          self.postMessage({ ok: true, logs: logs });
+        } catch(err) {
+          self.postMessage({ ok: false, error: err.name + ': ' + err.message });
+        }
+      };
+    `;
+    const blob = new Blob([workerSrc], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+
+    const timeout = setTimeout(() => {
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      setOutputs(prev => ({ ...prev, [activeIdSnapshot]: '❌ Timed out: possible infinite loop (>5s)' }));
+    }, 5000);
+
+    worker.onmessage = (e) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      const { ok, logs, error } = e.data;
+      setOutputs(prev => ({
+        ...prev,
+        [activeIdSnapshot]: ok ? (logs.length ? logs.join('\n') : '(no output)') : `❌ ${error}`,
+      }));
     };
 
-    try {
-      // eslint-disable-next-line no-new-func
-      new Function('console', code)(fakeConsole);
-      setOutputs(prev => ({
-        ...prev,
-        [activeId]: logs.length ? logs.join('\n') : '(no output)',
-      }));
-    } catch (err) {
-      setOutputs(prev => ({
-        ...prev,
-        [activeId]: `❌ ${err.name}: ${err.message}`,
-      }));
-    }
+    worker.onerror = (e) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      setOutputs(prev => ({ ...prev, [activeIdSnapshot]: `❌ ${e.message}` }));
+    };
+
+    worker.postMessage(code);
   };
 
   // Format the editable Monaco document via its built-in formatter
@@ -542,7 +572,7 @@ export default function CodePractice({ isLight }) {
               }}>
                 {showSolution[activeId] ? '👁 Hide Solution' : '✨ Show Solution'}
               </button>
-              <button onClick={runCode} style={{
+              <button onClick={() => runCode()} style={{
                 padding: '7px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                 border: 'none',
                 background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
