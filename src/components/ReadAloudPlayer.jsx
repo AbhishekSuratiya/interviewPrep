@@ -24,11 +24,14 @@ function AnswerWithHighlight({ text, highlightIndex, className }) {
   );
 }
 
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
 // textClassName — applied to the text paragraph (pass existing text color classes)
 // compact — smaller button strip, used inline in dense layouts
 export function ReadAloudPlayer({ text, isLight, textClassName = '', compact = false }) {
   const [status, setStatus] = useState('idle');
   const [wordIndex, setWordIndex] = useState(-1);
+  const [speed, setSpeed] = useState(1);
   const charOffsetsRef = useRef([]);
 
   const buildOffsets = useCallback(() => {
@@ -39,10 +42,10 @@ export function ReadAloudPlayer({ text, isLight, textClassName = '', compact = f
     charOffsetsRef.current = offsets;
   }, [text]);
 
-  const createUtterance = useCallback(() => {
+  const createUtterance = useCallback((rate) => {
     buildOffsets();
     const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.95;
+    u.rate = rate;
 
     u.onboundary = (e) => {
       if (e.name !== 'word') return;
@@ -60,20 +63,27 @@ export function ReadAloudPlayer({ text, isLight, textClassName = '', compact = f
     return u;
   }, [text, buildOffsets]);
 
-  const play = () => {
+  const play = (rate = speed) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(createUtterance());
+    window.speechSynthesis.speak(createUtterance(rate));
     setStatus('playing');
   };
 
   const pause = () => { window.speechSynthesis.pause(); setStatus('paused'); };
   const resume = () => { window.speechSynthesis.resume(); setStatus('playing'); };
   const stop = () => { window.speechSynthesis.cancel(); setStatus('idle'); setWordIndex(-1); };
-  const restart = () => {
+  const restart = (rate = speed) => {
     window.speechSynthesis.cancel();
     setWordIndex(-1);
-    setTimeout(() => { window.speechSynthesis.speak(createUtterance()); setStatus('playing'); }, 80);
+    setTimeout(() => { window.speechSynthesis.speak(createUtterance(rate)); setStatus('playing'); }, 80);
+  };
+
+  const changeSpeed = (newSpeed) => {
+    setSpeed(newSpeed);
+    if (status === 'playing' || status === 'paused') {
+      restart(newSpeed);
+    }
   };
 
   const sz = compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-xs';
@@ -90,21 +100,38 @@ export function ReadAloudPlayer({ text, isLight, textClassName = '', compact = f
 
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         {status === 'idle' && (
-          <button onClick={play} className={`${base} ${primary}`}>▶ Read Aloud</button>
+          <button onClick={() => play()} className={`${base} ${primary}`}>▶ Read Aloud</button>
         )}
         {status === 'playing' && (<>
-          <button onClick={pause}   className={`${base} ${secondary}`}>⏸ Pause</button>
-          <button onClick={restart} className={`${base} ${secondary}`}>↺ Restart</button>
-          <button onClick={stop}    className={`${base} ${danger}`}>⏹ Stop</button>
+          <button onClick={pause}       className={`${base} ${secondary}`}>⏸ Pause</button>
+          <button onClick={() => restart()} className={`${base} ${secondary}`}>↺ Restart</button>
+          <button onClick={stop}        className={`${base} ${danger}`}>⏹ Stop</button>
         </>)}
         {status === 'paused' && (<>
-          <button onClick={resume}  className={`${base} ${primary}`}>▶ Continue</button>
-          <button onClick={restart} className={`${base} ${secondary}`}>↺ Restart</button>
-          <button onClick={stop}    className={`${base} ${danger}`}>⏹ Stop</button>
+          <button onClick={resume}      className={`${base} ${primary}`}>▶ Continue</button>
+          <button onClick={() => restart()} className={`${base} ${secondary}`}>↺ Restart</button>
+          <button onClick={stop}        className={`${base} ${danger}`}>⏹ Stop</button>
         </>)}
         {status === 'done' && (
-          <button onClick={restart} className={`${base} ${secondary}`}>↺ Read Again</button>
+          <button onClick={() => restart()} className={`${base} ${secondary}`}>↺ Read Again</button>
         )}
+
+        {/* Speed control */}
+        <div className="flex items-center gap-1 ml-1">
+          {SPEED_OPTIONS.map(s => (
+            <button
+              key={s}
+              onClick={() => changeSpeed(s)}
+              className={`rounded-md font-semibold transition-colors ${compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'} ${
+                speed === s
+                  ? isLight ? 'bg-amber-400 text-white' : 'bg-amber-500/50 text-amber-200'
+                  : isLight ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-white/5 text-white/35 hover:bg-white/10'
+              }`}
+            >
+              {s}x
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
