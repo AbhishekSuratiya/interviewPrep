@@ -8,6 +8,7 @@ import SectionCard from './components/SectionCard';
 import CodeModal from './components/CodeModal';
 import CodePractice from './components/CodePractice';
 import BehavioralSection from './components/BehavioralSection';
+import PersonalBehavioralSection from './components/PersonalBehavioralSection';
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -15,6 +16,7 @@ export default function App() {
 
   const [activeSkill, setActiveSkill] = useState('javascript');
   const isCodePractice = activeSkill === 'code-practice';
+  const isPersonalBehavioral = activeSkill === 'personal-behavioral';
   const sidebarW = 56; // always collapsed — sidebar expands on hover as an overlay
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // { title, code }
@@ -94,7 +96,7 @@ export default function App() {
                   <SkillHero data={data} config={config} isLight={isLight} />
 
                   {/* No search results */}
-                  {q && visibleSections.length === 0 && (
+                  {q && visibleSections.length === 0 && !data?.personalSection && (
                     <div className={`text-center py-20 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
                       <div className="text-4xl mb-3">🔍</div>
                       <h3 className="font-semibold mb-1">No topics found</h3>
@@ -139,6 +141,15 @@ export default function App() {
                       search={q}
                     />
                   ))}
+
+                  {/* Personal Behavioral section */}
+                  {data?.personalSection && (
+                    <PersonalBehavioralSection
+                      section={data.personalSection}
+                      isLight={isLight}
+                      search={q}
+                    />
+                  )}
 
                   {/* Behavioral section */}
                   {data?.behavioralSection && (

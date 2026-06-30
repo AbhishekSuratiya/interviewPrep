@@ -224,7 +224,7 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           Skills
         </div>
 
-        {SKILLS.map(skill => (
+        {SKILLS.filter(s => s.id !== 'personal-behavioral').map(skill => (
           <NavItem
             key={skill.id}
             id={skill.id}
@@ -264,6 +264,42 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           onClick={() => onSelect('code-practice')}
           icon={<PuzzleIcon size={18} color={activeSkill === 'code-practice' ? CODE_PRACTICE_ITEM.color : (isLight ? '#6b7280' : 'rgba(255,255,255,0.45)')} />}
         />
+
+        {/* Divider */}
+        <div style={{
+          margin: expanded ? '10px 8px' : '10px 4px',
+          height: 1,
+          background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)',
+        }} />
+
+        {/* MY PERSONAL section label */}
+        <div style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.25)',
+          padding: '2px 10px 8px',
+          opacity: expanded ? 1 : 0,
+          maxHeight: expanded ? 30 : 0,
+          overflow: 'hidden',
+          transition: 'opacity 0.18s, max-height 0.18s',
+        }}>
+          My Personal
+        </div>
+
+        {SKILLS.filter(s => s.id === 'personal-behavioral').map(skill => (
+          <NavItem
+            key={skill.id}
+            id={skill.id}
+            label={skill.label}
+            color={skill.color}
+            isActive={activeSkill === skill.id}
+            onClick={() => onSelect(skill.id)}
+            icon={
+              <span style={{ fontSize: 17, lineHeight: 1, display: 'block' }}>
+                {skill.icon}
+              </span>
+            }
+          />
+        ))}
       </nav>
 
       {/* Footer: theme toggle */}

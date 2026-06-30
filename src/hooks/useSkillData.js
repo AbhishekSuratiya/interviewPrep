@@ -6,7 +6,8 @@ const SKILLS = [
   { id: 'react-native', file: '/data/react-native.json',  icon: '📱',  color: '#a78bfa', label: 'React Native' },
   { id: 'typescript',   file: '/data/typescript.json',    icon: 'TS',  color: '#3b82f6', label: 'TypeScript' },
   { id: 'senior',       file: '/data/senior.json',        icon: '🎯',  color: '#f59e0b', label: 'Senior Topics' },
-  { id: 'behavioral',   file: '/data/behavioral.json',    icon: '🤝',  color: '#f59e0b', label: 'Behavioral' },
+  { id: 'behavioral',        file: '/data/behavioral.json',         icon: '🤝',  color: '#f59e0b', label: 'Behavioral' },
+  { id: 'personal-behavioral', file: '/data/personal-behavioral.json', icon: '👤',  color: '#ec4899', label: 'My Personal' },
 ];
 
 export function useSkillData(skillId) {
