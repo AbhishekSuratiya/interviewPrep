@@ -7,8 +7,9 @@ import SkillHero from './components/SkillHero';
 import SectionCard from './components/SectionCard';
 import CodeModal from './components/CodeModal';
 import CodePractice from './components/CodePractice';
-import BehavioralSection from './components/BehavioralSection';
+import Checklist from './components/Checklist';
 import PersonalBehavioralSection from './components/PersonalBehavioralSection';
+import BehavioralSection from './components/BehavioralSection';
 
 export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -16,8 +17,10 @@ export default function App() {
 
   const [activeSkill, setActiveSkill] = useState('javascript');
   const isCodePractice = activeSkill === 'code-practice';
+  const isChecklist = activeSkill === 'checklist';
   const isPersonalBehavioral = activeSkill === 'personal-behavioral';
-  const sidebarW = 56; // always collapsed — sidebar expands on hover as an overlay
+  const [sidebarPinned, setSidebarPinned] = useState(false);
+  const sidebarW = sidebarPinned ? 256 : 56;
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // { title, code }
 
@@ -53,15 +56,17 @@ export default function App() {
         onSelect={handleSelectSkill}
         theme={theme}
         onThemeToggle={toggleTheme}
+        pinned={sidebarPinned}
+        onPinToggle={() => setSidebarPinned(p => !p)}
       />
 
       <div style={{ paddingLeft: sidebarW, transition: 'padding-left 0.22s cubic-bezier(0.4,0,0.2,1)' }}>
         <TopBar
-          skillName={isCodePractice ? 'Code Practice' : (data?.skill || '…')}
-          search={isCodePractice ? '' : search}
-          onSearch={isCodePractice ? () => {} : setSearch}
+          skillName={isCodePractice ? 'Code Practice' : isChecklist ? 'Topic Checklist' : (data?.skill || '…')}
+          search={isCodePractice || isChecklist ? '' : search}
+          onSearch={isCodePractice || isChecklist ? () => { } : setSearch}
           isLight={isLight}
-          hideSearch={isCodePractice}
+          hideSearch={isCodePractice || isChecklist}
         />
 
         <main className="min-h-screen">
@@ -70,8 +75,13 @@ export default function App() {
             <CodePractice isLight={isLight} />
           )}
 
+          {/* Topic Checklist view */}
+          {isChecklist && (
+            <Checklist isLight={isLight} />
+          )}
+
           {/* Normal skill view */}
-          {!isCodePractice && (
+          {!isCodePractice && !isChecklist && (
             <div className="max-w-4xl mx-auto px-6 py-8">
               {/* Loading */}
               {loading && (

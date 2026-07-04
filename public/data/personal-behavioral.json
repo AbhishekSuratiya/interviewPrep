@@ -1,0 +1,110 @@
+{
+  "skill": "My Personal",
+  "icon": "👤",
+  "color": "#ec4899",
+  "description": "Personal behavioral interview questions with your own response hints and feedback notes.",
+  "personalSection": {
+    "id": "personal-behavioral",
+    "title": "My Personal Behavioral Questions",
+    "emoji": "👤",
+    "description": "React Native / Frontend Developer — behavioral interview practice with personal response hints.",
+    "questions": [
+      {
+        "id": 1,
+        "question": "Tell me about a time you fixed a production bug affecting users.",
+        "response_hints": "WhatsApp OTP attack, bill spiked, fixed with CAPTCHA + rate limiting.",
+        "feedback": "Tighten the ending with a crisp lesson statement."
+      },
+      {
+        "id": 2,
+        "question": "Tell me about a time you disagreed with a manager.",
+        "response_hints": "Dashboard in 2 days; negotiated scope, shipped essentials only.",
+        "feedback": "Emphasize WHY you pushed back — business impact."
+      },
+      {
+        "id": 3,
+        "question": "Tell me about a time you learned something new at work.",
+        "response_hints": "Built shared UI library; learned TurboRepo and package publishing.",
+        "feedback": "Lead with the learning part, not the solution."
+      },
+      {
+        "id": 4,
+        "question": "Tell me about a mistake you made at work.",
+        "response_hints": "Test credentials leaked; locked testers out; gave access to DevOps only.",
+        "feedback": "Explain WHY DevOps — security best practice framing."
+      },
+      {
+        "id": 5,
+        "question": "Tell me about a conflict with a teammate.",
+        "response_hints": "Backend dev refused roles API; explained maintenance burden; he agreed.",
+        "feedback": "Frame as collaborative, not convincing."
+      },
+      {
+        "id": 6,
+        "question": "Tell me about a time you learned from a failure.",
+        "response_hints": "Missing trailing slash hurt SEO; learned to get PRs reviewed.",
+        "feedback": "Wrap up with a tighter closing lesson."
+      },
+      {
+        "id": 7,
+        "question": "Tell me about communicating technical info to non-technical people.",
+        "response_hints": "Explains in benefits and cost terms, not technical internals.",
+        "feedback": "Add a concrete example where PM made a faster decision."
+      },
+      {
+        "id": 8,
+        "question": "Tell me about a project you weren't excited about.",
+        "response_hints": "Repetitive app setup; turned boredom into improving login flow.",
+        "feedback": "Lean into the improvement initiative angle."
+      },
+      {
+        "id": 9,
+        "question": "Tell me about working with limited resources.",
+        "response_hints": "Unblocks devs first, then production, then own coding.",
+        "feedback": "State priority order in one clean decisive sentence."
+      },
+      {
+        "id": 10,
+        "question": "Tell me about an achievement you're proud of.",
+        "response_hints": "React Native upgrade improved performance by ~70%.",
+        "feedback": "Go deep on one — versions, specific wins, business impact."
+      },
+      {
+        "id": 11,
+        "question": "Describe your ideal work environment.",
+        "response_hints": "Collaborative, learning-focused, hybrid, quiet workspace, ~8 hours.",
+        "feedback": "Add WHY each preference impacts your performance."
+      },
+      {
+        "id": 12,
+        "question": "Tell me about adapting to a significant change.",
+        "response_hints": "Learned Tailwind from scratch; recognized pattern after few days.",
+        "feedback": "Show your learning process — needs more depth."
+      },
+      {
+        "id": 13,
+        "question": "Tell me about prioritizing quality vs speed.",
+        "response_hints": "Quality first; cut scope on tight deadlines, ship rest later.",
+        "feedback": "Anchor with the 2-day investor dashboard example."
+      },
+      {
+        "id": 14,
+        "question": "Tell me about receiving critical feedback.",
+        "response_hints": "Wrong interface placement in PR; learned codebase conventions.",
+        "feedback": "Emphasize what changed in your behaviour after."
+      },
+      {
+        "id": 15,
+        "question": "Tell me about mentoring a junior developer.",
+        "response_hints": "Teaches devs to debug independently; shows tools on calls.",
+        "feedback": "Add a concrete outcome — a mentee's specific improvement."
+      },
+      {
+        "id": 16,
+        "question": "Tell me about dealing with unclear requirements.",
+        "response_hints": "Creates wireframe and design prototype before coding starts.",
+        "feedback": "Explain WHY — ambiguity wastes dev time."
+      }
+    ]
+  }
+}

@@ -20,14 +20,28 @@ const CODE_PRACTICE_ITEM = {
   label: 'Code Practice',
 };
 
-// Inline SVG for Code Practice (no devicon equivalent)
-function PuzzleIcon({ size = 20, color = '#34d399' }) {
+// Inline SVG for Code Practice — code brackets icon
+function CodePracticeIcon({ size = 20, color = '#34d399' }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V5H19C19.5523 5 20 5.44772 20 6V8H22C22.5523 8 23 8.44772 23 9V15C23 15.5523 22.5523 16 22 16H20V18C20 18.5523 19.5523 19 19 19H17V21C17 21.5523 16.5523 22 16 22H8C7.44772 22 7 21.5523 7 21V19H5C4.44772 19 4 18.5523 4 18V16H2C1.44772 16 1 15.5523 1 15V9C1 8.44772 1.44772 8 2 8H4V6C4 5.44772 4.44772 5 5 5H7V3Z" fill={color} opacity="0.9"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+      <line x1="14" y1="4" x2="10" y2="20" opacity="0.5" />
     </svg>
   );
 }
+
+// Inline SVG for Checklist — checklist / tasks icon
+function ChecklistIcon({ size = 20, color = '#f472b6' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 11 12 14 20 6" />
+      <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+    </svg>
+  );
+}
+
+const CHECKLIST_COLOR = '#f472b6';
 
 // Tooltip shown in icon-only mode
 function Tooltip({ children, label, isLight, expanded }) {
@@ -57,12 +71,12 @@ function Tooltip({ children, label, isLight, expanded }) {
   );
 }
 
-export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle }) {
+export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle, pinned = false, onPinToggle }) {
   const isLight = theme === 'light';
   const [hovered, setHovered] = useState(false);
 
-  // expanded = hovered; collapsed = !hovered
-  const expanded = hovered;
+  // expanded = hovered OR pinned
+  const expanded = hovered || pinned;
   const w = expanded ? 256 : 68;
 
   const renderIcon = (skill, size = 20) => {
@@ -202,10 +216,40 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           maxWidth: expanded ? 160 : 0,
           transition: 'opacity 0.18s, max-width 0.18s',
           overflow: 'hidden',
+          flex: 1,
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: isLight ? '#111827' : '#f1f5f9' }}>PrepDocs</div>
           <div style={{ fontSize: 10, color: isLight ? '#9ca3af' : 'rgba(255,255,255,0.3)' }}>Interview Prep</div>
         </div>
+
+        {/* Pin / Unpin toggle button */}
+          {hovered && <button
+              onClick={onPinToggle}
+              title={pinned ? 'Collapse sidebar' : 'Pin sidebar open'}
+              style={{
+                  width: 28, height: 28, borderRadius: 7,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none', cursor: 'pointer', flexShrink: 0,
+                  background: pinned
+                      ? (isLight ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.2)')
+                      : (isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)'),
+                  color: pinned
+                      ? '#818cf8'
+                      : (isLight ? '#6b7280' : 'rgba(255,255,255,0.45)'),
+                  opacity: expanded ? 1 : 0,
+                  pointerEvents: expanded ? 'auto' : 'none',
+                  transition: 'opacity 0.18s, background 0.15s, color 0.15s, transform 0.2s',
+                  transform: pinned ? 'rotate(0deg)' : 'rotate(180deg)',
+              }}
+          >
+              {/* Sidebar pin / chevron icon */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                   strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                  <polyline points="14 9 17 12 14 15"/>
+              </svg>
+          </button>}
       </div>
 
       {/* Nav */}
@@ -262,7 +306,16 @@ export default function Sidebar({ activeSkill, onSelect, theme, onThemeToggle })
           color={CODE_PRACTICE_ITEM.color}
           isActive={activeSkill === 'code-practice'}
           onClick={() => onSelect('code-practice')}
-          icon={<PuzzleIcon size={18} color={activeSkill === 'code-practice' ? CODE_PRACTICE_ITEM.color : (isLight ? '#6b7280' : 'rgba(255,255,255,0.45)')} />}
+          icon={<CodePracticeIcon size={18} color={activeSkill === 'code-practice' ? CODE_PRACTICE_ITEM.color : (isLight ? '#6b7280' : 'rgba(255,255,255,0.45)')} />}
+        />
+
+        <NavItem
+          id="checklist"
+          label="Topic Checklist"
+          color={CHECKLIST_COLOR}
+          isActive={activeSkill === 'checklist'}
+          onClick={() => onSelect('checklist')}
+          icon={<ChecklistIcon size={18} color={activeSkill === 'checklist' ? CHECKLIST_COLOR : (isLight ? '#6b7280' : 'rgba(255,255,255,0.45)')} />}
         />
 
         {/* Divider */}

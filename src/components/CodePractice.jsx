@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { codingQuestions, reactQuestions } from '../data/codePractice';
 import ReactIDE from './ReactIDE';
@@ -17,7 +17,7 @@ const CATEGORY_COLORS = {
   React:  { bg: 'rgba(34,211,238,0.12)',  text: '#22d3ee'  },
 };
 
-function CodeEditor({ value, onChange, readOnly = false, height = 320, onReady, onSave }) {
+function CodeEditor({ value, onChange, readOnly = false, height = 320, onReady, onSave, path }) {
   const editorRef = useRef(null);
 
   function handleMount(editor, monaco) {
@@ -40,6 +40,9 @@ function CodeEditor({ value, onChange, readOnly = false, height = 320, onReady, 
       target: monaco.languages.typescript.ScriptTarget.ES2020,
       allowNonTsExtensions: true,
       checkJs: true,
+      jsx: monaco.languages.typescript.JsxEmit.React,
+      jsxFactory: 'React.createElement',
+      allowJs: true,
     });
 
     // Focus editor on mount if editable
@@ -111,6 +114,7 @@ function CodeEditor({ value, onChange, readOnly = false, height = 320, onReady, 
       <Editor
         height={height}
         language="javascript"
+        path={path}
         value={value}
         theme={monacoTheme}
         beforeMount={beforeMount}
@@ -234,8 +238,332 @@ function QuestionCard({ q, isLight, isActive, onClick }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Playground — a plain editor for experimenting with JS / React
+   ═══════════════════════════════════════════════════════════════ */
+const PG_STORAGE_KEY = 'codePractice:playground';
+
+const JS_STARTER = `// JavaScript Playground — experiment freely!
+console.log('Hello, world!');
+`;
+
+const REACT_STARTER = `// React Playground — write any component!
+export default function App() {
+  const [count, setCount] = React.useState(0);
+
+  return (
+    <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
+      <h2>\u{1F680} React Playground</h2>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(c => c + 1)}>Increment</button>
+    </div>
+  );
+}
+`;
+
+function Playground({ isLight }) {
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem(PG_STORAGE_KEY + ':lang') || 'javascript'; } catch { return 'javascript'; }
+  });
+  const [jsCode, setJsCode] = useState(() => {
+    try { return localStorage.getItem(PG_STORAGE_KEY + ':js') || JS_STARTER; } catch { return JS_STARTER; }
+  });
+  const [reactCode, setReactCode] = useState(() => {
+    try { return localStorage.getItem(PG_STORAGE_KEY + ':react') || REACT_STARTER; } catch { return REACT_STARTER; }
+  });
+  const [jsOutput, setJsOutput] = useState(null);
+  const iframeRef = useRef(null);
+  const editorRef = useRef(null);
+
+  // Persist to localStorage
+  useEffect(() => {
+    try { localStorage.setItem(PG_STORAGE_KEY + ':lang', lang); } catch {}
+  }, [lang]);
+  useEffect(() => {
+    try { localStorage.setItem(PG_STORAGE_KEY + ':js', jsCode); } catch {}
+  }, [jsCode]);
+  useEffect(() => {
+    try { localStorage.setItem(PG_STORAGE_KEY + ':react', reactCode); } catch {}
+  }, [reactCode]);
+
+  const code = lang === 'javascript' ? jsCode : reactCode;
+  const setCode = lang === 'javascript' ? setJsCode : setReactCode;
+
+  // Run JS in a Web Worker
+  const runJs = useCallback(() => {
+    const workerSrc = `
+      self.onmessage = function(e) {
+        var logs = [];
+        var fakeConsole = {
+          log: function() {
+            var args = Array.prototype.slice.call(arguments);
+            logs.push(args.map(function(a) {
+              if (Array.isArray(a)) return '[' + a.join(', ') + ']';
+              if (typeof a === 'object' && a !== null) { try { return JSON.stringify(a, null, 2); } catch(_) { return String(a); } }
+              return String(a);
+            }).join(' '));
+          },
+          error: function() { logs.push('ERROR: ' + Array.prototype.slice.call(arguments).join(' ')); },
+          warn: function() { logs.push('WARN: ' + Array.prototype.slice.call(arguments).join(' ')); },
+        };
+        try {
+          new Function('console', e.data)(fakeConsole);
+          self.postMessage({ ok: true, logs: logs });
+        } catch(err) {
+          self.postMessage({ ok: false, error: err.name + ': ' + err.message });
+        }
+      };
+    `;
+    const blob = new Blob([workerSrc], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    const timeout = setTimeout(() => {
+      worker.terminate(); URL.revokeObjectURL(url);
+      setJsOutput('❌ Timed out: possible infinite loop (>5s)');
+    }, 5000);
+    worker.onmessage = (e) => {
+      clearTimeout(timeout); worker.terminate(); URL.revokeObjectURL(url);
+      const { ok, logs, error } = e.data;
+      setJsOutput(ok ? (logs.length ? logs.join('\n') : '(no output)') : `❌ ${error}`);
+    };
+    worker.onerror = (e) => {
+      clearTimeout(timeout); worker.terminate(); URL.revokeObjectURL(url);
+      setJsOutput(`❌ ${e.message}`);
+    };
+    worker.postMessage(jsCode);
+  }, [jsCode]);
+
+  // Run React in sandboxed iframe
+  const runReact = useCallback(() => {
+    if (!iframeRef.current) return;
+    const encoded = JSON.stringify(reactCode);
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8" />
+<style>* { box-sizing: border-box; } body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+</head><body><div id="root"></div>
+<script>
+['useState','useEffect','useRef','useCallback','useMemo','useReducer',
+ 'useContext','createContext','Fragment','memo','forwardRef'
+].forEach(function(h) { if (React[h] !== undefined) window[h] = React[h]; });
+function _send(level, args) {
+  window.parent.postMessage({ type: 'pg-console', level, text: Array.from(args).map(a => {
+    if (a === null) return 'null'; if (a === undefined) return 'undefined';
+    if (typeof a === 'object') { try { return JSON.stringify(a,null,2); } catch(e) { return String(a); } }
+    return String(a);
+  }).join(' ') }, '*');
+}
+console.log = (...a) => { _send('log', a); };
+console.error = (...a) => { _send('error', a); };
+console.warn = (...a) => { _send('warn', a); };
+window.onerror = (msg,s,l,c,err) => { _send('error', [err?(err.stack||err.toString()):msg]); return true; };
+window.addEventListener('load', function() {
+  var src = ${encoded};
+  try {
+    var result = Babel.transform(src, { presets: [['react',{runtime:'classic'}]], plugins:['transform-modules-commonjs'], filename:'app.jsx' });
+    var mod = { exports: {} };
+    new Function('module','exports','require','React','ReactDOM', result.code)(mod, mod.exports, function(m){ if(m==='react') return React; if(m==='react-dom'||m==='react-dom/client') return ReactDOM; return {}; }, React, ReactDOM);
+    var Comp = mod.exports.default || (typeof mod.exports === 'function' ? mod.exports : null);
+    if (!Comp) { var _k = Object.keys(mod.exports); for (var i=0;i<_k.length;i++) { if (typeof mod.exports[_k[i]] === 'function') { Comp = mod.exports[_k[i]]; break; } } }
+    if (typeof Comp === 'function') { ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Comp)); }
+    else { document.getElementById('root').innerHTML = '<p style="color:#94a3b8;padding:20px;font-size:14px;">Tip: use <code>export default function App()</code> to render your component.</p>'; }
+  } catch(err) { _send('error', [err.stack||err.toString()]); document.getElementById('root').innerHTML='<pre style="color:#ef4444;padding:20px;white-space:pre-wrap;">' + (err.stack||err.message) + '</pre>'; }
+});
+<\/script></body></html>`;
+    iframeRef.current.srcdoc = html;
+  }, [reactCode]);
+
+  // Auto-run React on code change (debounced)
+  useEffect(() => {
+    if (lang !== 'react') return;
+    const t = setTimeout(runReact, 800);
+    return () => clearTimeout(t);
+  }, [reactCode, lang, runReact]);
+
+  // Cmd+S handler
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (lang === 'javascript') runJs();
+        else runReact();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [lang, runJs, runReact]);
+
+  // Listen for console messages from React iframe
+  const [reactLogs, setReactLogs] = useState([]);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === 'pg-console') {
+        setReactLogs(prev => [...prev.slice(-49), { level: e.data.level, text: e.data.text }]);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const clearPlayground = () => {
+    if (lang === 'javascript') { setJsCode(JS_STARTER); setJsOutput(null); }
+    else { setReactCode(REACT_STARTER); setReactLogs([]); }
+  };
+
+  const langTabs = [
+    { id: 'javascript', label: 'JavaScript', icon: '⚡', color: '#facc15' },
+    { id: 'react', label: 'React', icon: '⚛️', color: '#60a5fa' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+      {/* Toolbar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '10px 24px', flexShrink: 0,
+        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+      }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: isLight ? '#1e293b' : '#f1f5f9', marginRight: 8 }}>
+          🧪 Playground
+        </span>
+
+        {/* Language tabs */}
+        {langTabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setLang(t.id)}
+            style={{
+              padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+              border: `1px solid ${lang === t.id ? t.color : isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+              background: lang === t.id ? `${t.color}22` : 'transparent',
+              color: lang === t.id ? t.color : isLight ? '#64748b' : '#94a3b8',
+              cursor: 'pointer', transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+
+        <div style={{ flex: 1 }} />
+
+        <button onClick={clearPlayground} style={{
+          padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+          border: `1px solid ${isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
+          background: 'transparent', color: isLight ? '#64748b' : '#94a3b8',
+          cursor: 'pointer', transition: 'all 0.15s',
+        }}>↺ Reset</button>
+
+        {lang === 'javascript' && (
+          <button onClick={runJs} style={{
+            padding: '5px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+            border: 'none', background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+            color: '#fff', cursor: 'pointer', transition: 'all 0.15s',
+            boxShadow: '0 2px 12px rgba(99,102,241,0.35)',
+          }}>▶ Run</button>
+        )}
+        {lang === 'react' && (
+          <button onClick={runReact} style={{
+            padding: '5px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+            border: 'none', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+            color: '#fff', cursor: 'pointer', transition: 'all 0.15s',
+            boxShadow: '0 2px 12px rgba(6,182,212,0.35)',
+          }}>▶ Run</button>
+        )}
+      </div>
+
+      {/* Editor + Output */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Editor pane */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}` }}>
+          <CodeEditor
+            key={`playground-${lang}`}
+            value={code}
+            onChange={val => setCode(val)}
+            height="100%"
+            path={lang === 'react' ? 'playground.jsx' : 'playground.js'}
+            onReady={editor => { editorRef.current = editor; }}
+            onSave={() => { lang === 'javascript' ? runJs() : runReact(); }}
+          />
+        </div>
+
+        {/* Output pane */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {lang === 'javascript' ? (
+            /* JS output */
+            <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                color: isLight ? '#64748b' : '#64748b', marginBottom: 12,
+              }}>
+                📟 Console Output
+              </div>
+              {jsOutput ? (
+                <pre style={{
+                  margin: 0, padding: 16, borderRadius: 10,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: 13, lineHeight: 1.7,
+                  background: jsOutput.startsWith('❌') ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.06)',
+                  border: `1px solid ${jsOutput.startsWith('❌') ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.2)'}`,
+                  color: jsOutput.startsWith('❌') ? '#fca5a5' : '#86efac',
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                }}>{jsOutput}</pre>
+              ) : (
+                <div style={{
+                  color: isLight ? '#94a3b8' : '#475569', fontSize: 13, marginTop: 40, textAlign: 'center',
+                }}>
+                  Click <strong>▶ Run</strong> or press <strong>Cmd+S</strong> to see output
+                </div>
+              )}
+            </div>
+          ) : (
+            /* React preview */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{
+                padding: '8px 16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.05em', color: '#22d3ee', flexShrink: 0,
+                borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+              }}>
+                ⚛️ Live Preview
+              </div>
+              <iframe
+                ref={iframeRef}
+                title="React Playground"
+                sandbox="allow-scripts allow-modals"
+                style={{
+                  flex: 1, width: '100%', border: 'none',
+                  background: '#fff', borderRadius: 0,
+                }}
+              />
+              {reactLogs.length > 0 && (
+                <div style={{
+                  maxHeight: 140, overflowY: 'auto', flexShrink: 0,
+                  borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`,
+                  padding: '8px 12px',
+                  background: isLight ? '#f8fafc' : 'rgba(0,0,0,0.3)',
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+                }}>
+                  {reactLogs.map((log, i) => (
+                    <div key={i} style={{
+                      color: log.level === 'error' ? '#ef4444' : log.level === 'warn' ? '#f59e0b' : (isLight ? '#374151' : '#94a3b8'),
+                      lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    }}>{log.level === 'error' ? '❌ ' : log.level === 'warn' ? '⚠️ ' : '› '}{log.text}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function CodePractice({ isLight }) {
   const STORAGE_KEY = 'codePractice:codes';
+  const [mode, setMode] = useState('problems'); // 'problems' | 'playground'
   const [activeId, setActiveId] = useState(1);
   const [codes, setCodes] = useState(() => {
     const defaults = Object.fromEntries(allQuestions.map(q => [q.id, q.starterCode]));
@@ -368,8 +696,45 @@ export default function CodePractice({ isLight }) {
     setOutputs(prev => ({ ...prev, [activeId]: null }));
   };
 
+  const modeTabs = [
+    { id: 'problems', label: '🧩 Problems', color: '#34d399' },
+    { id: 'playground', label: '🧪 Playground', color: '#818cf8' },
+  ];
+
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', paddingLeft: !listCollapsed ? '16px' : '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+
+      {/* Mode switcher bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        padding: '8px 24px', flexShrink: 0,
+        borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+        background: isLight ? '#f8fafc' : 'rgba(255,255,255,0.02)',
+      }}>
+        {modeTabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setMode(t.id)}
+            style={{
+              padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              border: mode === t.id
+                ? `1.5px solid ${t.color}`
+                : `1.5px solid transparent`,
+              background: mode === t.id ? `${t.color}18` : 'transparent',
+              color: mode === t.id ? t.color : isLight ? '#64748b' : '#94a3b8',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {mode === 'playground' ? (
+        <Playground isLight={isLight} />
+      ) : (
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', paddingLeft: !listCollapsed ? '16px' : '12px' }}>
 
       {/* ── Question List Sidebar ── */}
       {listCollapsed ? (
@@ -661,6 +1026,9 @@ export default function CodePractice({ isLight }) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
         </div>
       )}
 
