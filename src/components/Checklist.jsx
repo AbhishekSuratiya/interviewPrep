@@ -41,6 +41,81 @@ function Checkbox({ checked, color, isLight }) {
   );
 }
 
+// Copy icon — separate from the dropdown toggle, just copies the topic text.
+function CopyButton({ topic, isLight, copied, onCopied }) {
+  const handleClick = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(topic);
+    } catch {
+      /* clipboard unavailable */
+    }
+    onCopied();
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      title="Copy topic text"
+      aria-label={`Copy "${topic}"`}
+      style={{
+        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: 'none', cursor: 'pointer',
+        background: 'transparent',
+        color: copied ? '#22c55e' : isLight ? '#94a3b8' : '#64748b',
+        transition: 'background 0.12s, color 0.12s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      {copied ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+// Opens a Google AI Mode search for the topic in a new tab.
+function SearchButton({ topic, sectionLabel, isLight }) {
+  const handleClick = (e) => {
+    e.stopPropagation();
+    const query = `${sectionLabel} ${topic}`;
+    // udm=50 routes the query to Google's AI Mode instead of classic web results.
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&udm=50`, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      title="Search this topic on Google AI Mode"
+      aria-label={`Search "${topic}" on Google AI Mode`}
+      style={{
+        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: 'none', cursor: 'pointer',
+        background: 'transparent',
+        color: isLight ? '#94a3b8' : '#64748b',
+        transition: 'background 0.12s, color 0.12s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </button>
+  );
+}
+
 function ProgressBar({ done, total, color, isLight }) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
@@ -68,6 +143,12 @@ export default function Checklist({ isLight }) {
   const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState({}); // group title -> bool
   const [hideKnown, setHideKnown] = useState(false);
+  const [copiedId, setCopiedId] = useState(null); // topic id whose copy icon shows a checkmark
+
+  const flashCopied = (id) => {
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
+  };
 
   // Persist to localStorage
   useEffect(() => {
@@ -303,13 +384,19 @@ export default function Checklist({ isLight }) {
                         const id = topicId(section.id, t);
                         const checked = !!known[id];
                         return (
-                          <button
+                          <div
                             key={id}
                             onClick={() => toggleTopic(id)}
+                            role="checkbox"
+                            aria-checked={checked}
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleTopic(id); }
+                            }}
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
                               padding: '10px 16px', textAlign: 'left', cursor: 'pointer',
-                              background: 'transparent', border: 'none',
+                              background: 'transparent',
                               borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
                               transition: 'background 0.12s',
                             }}
@@ -318,6 +405,7 @@ export default function Checklist({ isLight }) {
                           >
                             <Checkbox checked={checked} color={section.color} isLight={isLight} />
                             <span style={{
+                              flex: 1,
                               fontSize: 13.5, lineHeight: 1.5,
                               color: checked
                                 ? isLight ? '#94a3b8' : '#64748b'
@@ -326,7 +414,18 @@ export default function Checklist({ isLight }) {
                             }}>
                               {t}
                             </span>
-                          </button>
+                            <CopyButton
+                              topic={t}
+                              isLight={isLight}
+                              copied={copiedId === id}
+                              onCopied={() => flashCopied(id)}
+                            />
+                            <SearchButton
+                              topic={t}
+                              sectionLabel={section.label}
+                              isLight={isLight}
+                            />
+                          </div>
                         );
                       })}
                     </div>
