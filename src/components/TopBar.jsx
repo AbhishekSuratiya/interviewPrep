@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
-export default function TopBar({ skillName, search, onSearch, isLight, hideSearch }) {
+export default function TopBar({ skillName, search, onSearch, isLight, hideSearch, onShowAuth }) {
+  const { user, logout } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -72,9 +75,12 @@ export default function TopBar({ skillName, search, onSearch, isLight, hideSearc
           </span>
         </nav>
 
+        {/* ── Right: Search + User ── */}
+        <div className="flex-1 flex items-center justify-end gap-3">
+
         {/* ── Search ── */}
         {!hideSearch && (
-          <div className="flex-1 flex justify-end">
+          <div className="flex justify-end">
             <div className="relative w-[264px]">
 
               {/* Search icon */}
@@ -128,6 +134,83 @@ export default function TopBar({ skillName, search, onSearch, isLight, hideSearc
             </div>
           </div>
         )}
+
+        {/* ── Sign In button (guest mode) ── */}
+        {user === null && (
+          <button
+            onClick={onShowAuth}
+            style={{
+              flexShrink: 0, padding: '7px 14px', borderRadius: 8,
+              fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#6366f1,#818cf8)',
+              color: '#fff', boxShadow: '0 0 12px rgba(99,102,241,0.35)',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            Sign In
+          </button>
+        )}
+
+        {/* ── User avatar / login indicator ── */}
+        {user && (
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowMenu(m => !m)}
+              title={user.email}
+              style={{
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'linear-gradient(135deg,#6366f1,#818cf8)',
+                border: 'none', cursor: 'pointer', color: '#fff',
+                fontSize: 13, fontWeight: 700,
+                boxShadow: '0 0 0 2px rgba(99,102,241,0.35)',
+              }}
+            >
+              {user.email[0].toUpperCase()}
+            </button>
+
+            {showMenu && (
+              <div
+                style={{
+                  position: 'absolute', top: 42, right: 0, zIndex: 100,
+                  minWidth: 200, borderRadius: 12, padding: '8px',
+                  background: isLight ? '#fff' : '#1e293b',
+                  border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                }}
+              >
+                <p style={{ margin: '6px 10px 10px', fontSize: 12, color: isLight ? '#64748b' : '#94a3b8', wordBreak: 'break-all' }}>
+                  {user.email}
+                </p>
+                <button
+                  onClick={() => { logout(); setShowMenu(false); }}
+                  style={{
+                    width: '100%', padding: '9px 10px', borderRadius: 8,
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    textAlign: 'left', fontSize: 13, fontWeight: 600,
+                    color: '#f87171',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+
+            {/* Close menu on outside click */}
+            {showMenu && (
+              <div
+                style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                onClick={() => setShowMenu(false)}
+              />
+            )}
+          </div>
+        )}
+
+        </div>{/* end right group */}
       </div>
 
       {/* Bottom gradient accent line */}

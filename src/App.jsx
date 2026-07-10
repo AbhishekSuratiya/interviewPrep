@@ -10,8 +10,26 @@ import CodePractice from './components/CodePractice';
 import Checklist from './components/Checklist';
 import PersonalBehavioralSection from './components/PersonalBehavioralSection';
 import BehavioralSection from './components/BehavioralSection';
+import AuthModal from './components/AuthModal';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-export default function App() {
+function AppShell() {
+  const { user, logout } = useAuth();
+  // undefined = still loading auth state, null = guest/skipped, object = logged in
+  const [skipped, setSkipped] = useState(() => !!localStorage.getItem('auth:skipped'));
+  const showAuthModal = user === undefined ? false : (user === null && !skipped);
+
+  const handleSkip = () => {
+    localStorage.setItem('auth:skipped', '1');
+    setSkipped(true);
+  };
+
+  // When user logs in, clear the skipped flag
+  if (user && skipped) {
+    localStorage.removeItem('auth:skipped');
+    setSkipped(false);
+  }
+
   const { theme, toggle: toggleTheme } = useTheme();
   const isLight = theme === 'light';
 
@@ -67,6 +85,7 @@ export default function App() {
           onSearch={isCodePractice || isChecklist ? () => { } : setSearch}
           isLight={isLight}
           hideSearch={isCodePractice || isChecklist}
+          onShowAuth={() => setSkipped(false)}
         />
 
         <main className="min-h-screen">
@@ -199,6 +218,19 @@ export default function App() {
           isLight={isLight}
         />
       )}
+
+      {/* Auth Modal — shown on first visit until user logs in or skips */}
+      {showAuthModal && (
+        <AuthModal isLight={isLight} onSkip={handleSkip} />
+      )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
   );
 }

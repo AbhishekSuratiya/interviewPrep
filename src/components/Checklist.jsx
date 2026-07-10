@@ -1,5 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
 import { checklistSections } from '../data/checklistTopics';
+import { reactNativeQuestions } from '../data/reactNativeQuestions';
+import { javascriptQuestions } from '../data/javascriptQuestions';
+import { typescriptQuestions } from '../data/typescriptQuestions';
+import { reactQuestions } from '../data/reactQuestions';
+import { nextjsQuestions } from '../data/nextjsQuestions';
+import { essentialsQuestions } from '../data/essentialsQuestions';
+
+const QUESTION_BANKS = {
+  javascript: javascriptQuestions,
+  typescript: typescriptQuestions,
+  react: reactQuestions,
+  nextjs: nextjsQuestions,
+  'react-native': reactNativeQuestions,
+  essentials: essentialsQuestions,
+};
 
 const STORAGE_KEY = 'checklist:known';
 
@@ -41,12 +59,12 @@ function Checkbox({ checked, color, isLight }) {
   );
 }
 
-// Copy icon — separate from the dropdown toggle, just copies the topic text.
-function CopyButton({ topic, isLight, copied, onCopied }) {
+// Copy icon — separate from the dropdown toggle, just copies the given text.
+function CopyButton({ text, isLight, copied, onCopied }) {
   const handleClick = async (e) => {
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(topic);
+      await navigator.clipboard.writeText(text);
     } catch {
       /* clipboard unavailable */
     }
@@ -56,8 +74,8 @@ function CopyButton({ topic, isLight, copied, onCopied }) {
   return (
     <button
       onClick={handleClick}
-      title="Copy topic text"
-      aria-label={`Copy "${topic}"`}
+      title="Copy text"
+      aria-label={`Copy "${text}"`}
       style={{
         width: 28, height: 28, borderRadius: 7, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -83,11 +101,11 @@ function CopyButton({ topic, isLight, copied, onCopied }) {
   );
 }
 
-// Opens a Google AI Mode search for the topic in a new tab.
-function SearchButton({ topic, sectionLabel, isLight }) {
+// Opens a Google AI Mode search for the given text in a new tab.
+function SearchButton({ text, sectionLabel, isLight }) {
   const handleClick = (e) => {
     e.stopPropagation();
-    const query = `${sectionLabel} ${topic}`;
+    const query = `${sectionLabel} ${text}`;
     // udm=50 routes the query to Google's AI Mode instead of classic web results.
     window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&udm=50`, '_blank', 'noopener,noreferrer');
   };
@@ -96,7 +114,7 @@ function SearchButton({ topic, sectionLabel, isLight }) {
     <button
       onClick={handleClick}
       title="Search this topic on Google AI Mode"
-      aria-label={`Search "${topic}" on Google AI Mode`}
+      aria-label={`Search "${text}" on Google AI Mode`}
       style={{
         width: 28, height: 28, borderRadius: 7, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -138,28 +156,61 @@ function ProgressBar({ done, total, color, isLight }) {
 }
 
 export default function Checklist({ isLight }) {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState(checklistSections[0].id);
   const [known, setKnown] = useState(loadState);
   const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState({}); // group title -> bool
   const [hideKnown, setHideKnown] = useState(false);
   const [copiedId, setCopiedId] = useState(null); // topic id whose copy icon shows a checkmark
+  const [expanded, setExpanded] = useState({}); // topic id -> bool, shows its question list
+  const [syncing, setSyncing] = useState(false);
+  // Track whether we've loaded from Firestore for this user session
+  const loadedForUser = useRef(null);
 
   const flashCopied = (id) => {
     setCopiedId(id);
     setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
   };
 
-  // Persist to localStorage
+  // When user logs in, load their progress from Firestore
+  useEffect(() => {
+    if (!user || loadedForUser.current === user.uid) return;
+    loadedForUser.current = user.uid;
+    setSyncing(true);
+    getDoc(doc(db, 'users', user.uid))
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data().known || {};
+          setKnown(data);
+        }
+        // If no doc yet, keep current localStorage state so nothing is lost
+      })
+      .catch(() => { /* network issue — stay on localStorage */ })
+      .finally(() => setSyncing(false));
+  }, [user]);
+
+  // When user logs out, reset to localStorage data
+  useEffect(() => {
+    if (user === null) {
+      loadedForUser.current = null;
+      setKnown(loadState());
+    }
+  }, [user]);
+
+  // Persist: Firestore if logged in, localStorage always as backup
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(known));
-    } catch {
-      /* storage unavailable — ignore */
+    } catch { /* ignore */ }
+
+    if (user) {
+      setDoc(doc(db, 'users', user.uid), { known }, { merge: true }).catch(() => {});
     }
-  }, [known]);
+  }, [known, user]);
 
   const section = checklistSections.find((s) => s.id === activeSection);
+  const questionBank = QUESTION_BANKS[activeSection] || {};
   const q = search.trim().toLowerCase();
 
   const toggleTopic = (id) =>
@@ -257,7 +308,11 @@ export default function Checklist({ isLight }) {
             {section.icon} {section.label}
           </span>
           <span style={{ fontSize: 11, color: isLight ? '#94a3b8' : '#64748b' }}>
-            Tick off each topic as you learn it — progress saves automatically.
+            {user
+              ? syncing
+                ? '⏳ Syncing your progress…'
+                : `✓ Synced to ${user.email}`
+              : 'Progress saves locally. Sign in to sync across devices.'}
           </span>
         </div>
 
@@ -383,48 +438,116 @@ export default function Checklist({ isLight }) {
                       {group.topics.map((t) => {
                         const id = topicId(section.id, t);
                         const checked = !!known[id];
+                        const questions = questionBank[t];
+                        const hasQuestions = !!questions && questions.length > 0;
+                        const isExpanded = !!expanded[id];
                         return (
-                          <div
-                            key={id}
-                            onClick={() => toggleTopic(id)}
-                            role="checkbox"
-                            aria-checked={checked}
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleTopic(id); }
-                            }}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                              padding: '10px 16px', textAlign: 'left', cursor: 'pointer',
-                              background: 'transparent',
-                              borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
-                              transition: 'background 0.12s',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            <Checkbox checked={checked} color={section.color} isLight={isLight} />
-                            <span style={{
-                              flex: 1,
-                              fontSize: 13.5, lineHeight: 1.5,
-                              color: checked
-                                ? isLight ? '#94a3b8' : '#64748b'
-                                : isLight ? '#334155' : '#cbd5e1',
-                              textDecoration: checked ? 'line-through' : 'none',
-                            }}>
-                              {t}
-                            </span>
-                            <CopyButton
-                              topic={t}
-                              isLight={isLight}
-                              copied={copiedId === id}
-                              onCopied={() => flashCopied(id)}
-                            />
-                            <SearchButton
-                              topic={t}
-                              sectionLabel={section.label}
-                              isLight={isLight}
-                            />
+                          <div key={id}>
+                            <div
+                              onClick={() => toggleTopic(id)}
+                              role="checkbox"
+                              aria-checked={checked}
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleTopic(id); }
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                                padding: '10px 16px', textAlign: 'left', cursor: 'pointer',
+                                background: 'transparent',
+                                borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
+                                transition: 'background 0.12s',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.03)')}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                            >
+                              <Checkbox checked={checked} color={section.color} isLight={isLight} />
+                              <span style={{
+                                flex: 1,
+                                fontSize: 13.5, lineHeight: 1.5,
+                                color: checked
+                                  ? isLight ? '#94a3b8' : '#64748b'
+                                  : isLight ? '#334155' : '#cbd5e1',
+                                textDecoration: checked ? 'line-through' : 'none',
+                              }}>
+                                {t}
+                              </span>
+                              {hasQuestions && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpanded((p) => ({ ...p, [id]: !p[id] }));
+                                  }}
+                                  title={isExpanded ? 'Hide questions' : 'Show questions'}
+                                  aria-label={isExpanded ? 'Hide questions' : 'Show questions'}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    border: 'none', cursor: 'pointer',
+                                    background: 'transparent',
+                                    color: isLight ? '#94a3b8' : '#64748b',
+                                  }}
+                                >
+                                  <span style={{
+                                    fontSize: 12,
+                                    transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                    transition: 'transform 0.15s',
+                                    display: 'inline-block',
+                                  }}>▼</span>
+                                </button>
+                              )}
+                              <CopyButton
+                                text={t}
+                                isLight={isLight}
+                                copied={copiedId === id}
+                                onCopied={() => flashCopied(id)}
+                              />
+                              <SearchButton
+                                text={t}
+                                sectionLabel={section.label}
+                                isLight={isLight}
+                              />
+                            </div>
+
+                            {hasQuestions && isExpanded && (
+                              <div style={{
+                                padding: '4px 16px 10px 46px',
+                                borderTop: `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
+                                background: isLight ? 'rgba(0,0,0,0.015)' : 'rgba(255,255,255,0.015)',
+                              }}>
+                                {questions.map((question, qi) => {
+                                  const qid = `${id}::q${qi}`;
+                                  return (
+                                    <div
+                                      key={qid}
+                                      style={{
+                                        display: 'flex', alignItems: 'flex-start', gap: 6,
+                                        padding: '7px 0',
+                                        borderTop: qi === 0 ? 'none' : `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
+                                      }}
+                                    >
+                                      <span style={{
+                                        flex: 1, fontSize: 12.5, lineHeight: 1.5, paddingTop: 4,
+                                        color: isLight ? '#475569' : '#94a3b8',
+                                      }}>
+                                        {question}
+                                      </span>
+                                      <CopyButton
+                                        text={question}
+                                        isLight={isLight}
+                                        copied={copiedId === qid}
+                                        onCopied={() => flashCopied(qid)}
+                                      />
+                                      <SearchButton
+                                        text={question}
+                                        sectionLabel={section.label}
+                                        isLight={isLight}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
