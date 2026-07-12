@@ -164,9 +164,14 @@ export default function Checklist({ isLight }) {
   const [hideKnown, setHideKnown] = useState(false);
   const [copiedId, setCopiedId] = useState(null); // topic id whose copy icon shows a checkmark
   const [expanded, setExpanded] = useState({}); // topic id -> bool, shows its question list
+  const [answerShown, setAnswerShown] = useState({}); // question id -> bool, shows its answer
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(false);
   // Track whether we've loaded from Firestore for this user session
   const loadedForUser = useRef(null);
+  // Guards the persist effect from writing stale/empty local state over
+  // real Firestore data before the initial load for this user has resolved.
+  const hydratedRef = useRef(true);
 
   const flashCopied = (id) => {
     setCopiedId(id);
@@ -177,7 +182,9 @@ export default function Checklist({ isLight }) {
   useEffect(() => {
     if (!user || loadedForUser.current === user.uid) return;
     loadedForUser.current = user.uid;
+    hydratedRef.current = false; // block the persist effect until the fetch below resolves
     setSyncing(true);
+    setSyncError(false);
     getDoc(doc(db, 'users', user.uid))
       .then((snap) => {
         if (snap.exists()) {
@@ -186,26 +193,40 @@ export default function Checklist({ isLight }) {
         }
         // If no doc yet, keep current localStorage state so nothing is lost
       })
-      .catch(() => { /* network issue — stay on localStorage */ })
-      .finally(() => setSyncing(false));
+      .catch((err) => {
+        console.error('Failed to load checklist progress from Firestore:', err);
+        setSyncError(true);
+      })
+      .finally(() => {
+        hydratedRef.current = true;
+        setSyncing(false);
+      });
   }, [user]);
 
   // When user logs out, reset to localStorage data
   useEffect(() => {
     if (user === null) {
       loadedForUser.current = null;
+      hydratedRef.current = true;
       setKnown(loadState());
     }
   }, [user]);
 
-  // Persist: Firestore if logged in, localStorage always as backup
+  // Persist: Firestore if logged in, localStorage always as backup.
+  // Skipped while hydratedRef is false (i.e. mid-way through loading this
+  // user's remote data) so we never clobber it with stale local state.
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(known));
     } catch { /* ignore */ }
 
-    if (user) {
-      setDoc(doc(db, 'users', user.uid), { known }, { merge: true }).catch(() => {});
+    if (user && hydratedRef.current) {
+      setDoc(doc(db, 'users', user.uid), { known }, { merge: true })
+        .then(() => setSyncError(false))
+        .catch((err) => {
+          console.error('Failed to save checklist progress to Firestore:', err);
+          setSyncError(true);
+        });
     }
   }, [known, user]);
 
@@ -307,11 +328,13 @@ export default function Checklist({ isLight }) {
           <span style={{ fontSize: 15, fontWeight: 800, color: isLight ? '#1e293b' : '#f1f5f9' }}>
             {section.icon} {section.label}
           </span>
-          <span style={{ fontSize: 11, color: isLight ? '#94a3b8' : '#64748b' }}>
+          <span style={{ fontSize: 11, color: syncError ? '#f87171' : isLight ? '#94a3b8' : '#64748b' }}>
             {user
-              ? syncing
-                ? '⏳ Syncing your progress…'
-                : `✓ Synced to ${user.email}`
+              ? syncError
+                ? '⚠ Sync failed — check your connection or Firestore permissions'
+                : syncing
+                  ? '⏳ Syncing your progress…'
+                  : `✓ Synced to ${user.email}`
               : 'Progress saves locally. Sign in to sync across devices.'}
           </span>
         </div>
@@ -517,32 +540,74 @@ export default function Checklist({ isLight }) {
                               }}>
                                 {questions.map((question, qi) => {
                                   const qid = `${id}::q${qi}`;
+                                  // Support both the newer { q, a } shape and the older plain-string shape.
+                                  const questionText = typeof question === 'string' ? question : question.q;
+                                  const answerText = typeof question === 'string' ? null : question.a;
+                                  const hasAnswer = !!answerText;
+                                  const isAnswerShown = !!answerShown[qid];
                                   return (
                                     <div
                                       key={qid}
                                       style={{
-                                        display: 'flex', alignItems: 'flex-start', gap: 6,
                                         padding: '7px 0',
                                         borderTop: qi === 0 ? 'none' : `1px solid ${isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'}`,
                                       }}
                                     >
-                                      <span style={{
-                                        flex: 1, fontSize: 12.5, lineHeight: 1.5, paddingTop: 4,
-                                        color: isLight ? '#475569' : '#94a3b8',
-                                      }}>
-                                        {question}
-                                      </span>
-                                      <CopyButton
-                                        text={question}
-                                        isLight={isLight}
-                                        copied={copiedId === qid}
-                                        onCopied={() => flashCopied(qid)}
-                                      />
-                                      <SearchButton
-                                        text={question}
-                                        sectionLabel={section.label}
-                                        isLight={isLight}
-                                      />
+                                      <div
+                                        onClick={hasAnswer ? () => setAnswerShown((p) => ({ ...p, [qid]: !p[qid] })) : undefined}
+                                        role={hasAnswer ? 'button' : undefined}
+                                        tabIndex={hasAnswer ? 0 : undefined}
+                                        onKeyDown={hasAnswer ? (e) => {
+                                          if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setAnswerShown((p) => ({ ...p, [qid]: !p[qid] })); }
+                                        } : undefined}
+                                        style={{
+                                          display: 'flex', alignItems: 'flex-start', gap: 6,
+                                          cursor: hasAnswer ? 'pointer' : 'default',
+                                        }}
+                                      >
+                                        {hasAnswer && (
+                                          <span style={{
+                                            fontSize: 11, color: isLight ? '#94a3b8' : '#64748b', paddingTop: 5,
+                                            transform: isAnswerShown ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                            transition: 'transform 0.15s', flexShrink: 0,
+                                          }}>▼</span>
+                                        )}
+                                        <span style={{
+                                          flex: 1, fontSize: 12.5, lineHeight: 1.5, paddingTop: 4,
+                                          fontWeight: hasAnswer ? 600 : 400,
+                                          color: isLight ? '#475569' : '#94a3b8',
+                                        }}>
+                                          {questionText}
+                                        </span>
+                                        <CopyButton
+                                          text={questionText}
+                                          isLight={isLight}
+                                          copied={copiedId === qid}
+                                          onCopied={() => flashCopied(qid)}
+                                        />
+                                        <SearchButton
+                                          text={questionText}
+                                          sectionLabel={section.label}
+                                          isLight={isLight}
+                                        />
+                                      </div>
+
+                                      {hasAnswer && isAnswerShown && (
+                                        <div style={{
+                                          margin: '6px 0 4px 18px',
+                                          padding: '10px 12px',
+                                          borderRadius: 10,
+                                          borderLeft: `2.5px solid ${section.color}`,
+                                          background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)',
+                                        }}>
+                                          <p style={{
+                                            margin: 0, fontSize: 12.5, lineHeight: 1.65,
+                                            color: isLight ? '#334155' : '#cbd5e1',
+                                          }}>
+                                            {answerText}
+                                          </p>
+                                        </div>
+                                      )}
                                     </div>
                                   );
                                 })}

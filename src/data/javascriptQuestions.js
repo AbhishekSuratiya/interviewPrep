@@ -1,730 +1,729 @@
+// Interview questions + answers per JavaScript checklist topic.
+// Keyed by the exact topic string used in checklistTopics.js (section id: 'javascript').
+// Each entry is { q, a } — q is the question, a is a senior-level answer covering the key points.
 export const javascriptQuestions = {
   // Language Fundamentals & Syntax
   'How JavaScript runs: engines (V8, SpiderMonkey), interpreter + JIT compilation': [
-    'Walk me through what happens from the moment you run a JS file to when your first function executes.',
-    'What is JIT compilation and how does it differ from ahead-of-time compilation?',
-    'What is an "inline cache" in V8 and why does changing object shapes hurt performance?',
-    'How does V8\'s "hidden class" optimization work?',
+    { q: 'Walk me through what happens from the moment you run a JS file to when your first function executes.', a: 'The engine parses the source into an AST, does a quick initial compile to unoptimized bytecode (V8\'s Ignition interpreter), and begins executing that bytecode immediately for fast startup. As functions run repeatedly ("hot" code), the engine\'s JIT compiler (TurboFan in V8) profiles their behavior and recompiles them into optimized machine code, falling back to the interpreter (deoptimizing) if runtime assumptions made during optimization turn out to be wrong.' },
+    { q: 'What is JIT compilation and how does it differ from ahead-of-time compilation?', a: 'JIT (Just-In-Time) compilation compiles code to machine code during execution, based on real runtime profiling data (which functions are hot, what shapes objects actually have) — letting it make highly targeted optimizations. Ahead-of-time (AOT) compilation compiles everything to machine code before execution begins, with no runtime profiling data available, so it must be more conservative/general-purpose since it can\'t know actual runtime behavior in advance.' },
+    { q: 'What is an "inline cache" in V8 and why does changing object shapes hurt performance?', a: 'An inline cache remembers the "shape" (hidden class) of objects seen at a particular property access site, letting subsequent accesses with the same shape skip the full property lookup and go directly to a cached memory offset. If objects with different shapes hit the same access site (e.g. sometimes an object has property `a` then `b`, sometimes `b` then `a`), the inline cache becomes "polymorphic" or "megamorphic," losing its fast-path optimization and falling back to slower generic lookups.' },
+    { q: 'How does V8\'s "hidden class" optimization work?', a: 'V8 assigns objects with the same set of properties (added in the same order) a shared internal "hidden class," letting it optimize property access as if objects were more like fixed-layout C structs rather than dynamic hash maps — mutating an object\'s shape (adding/deleting properties dynamically, or adding properties in inconsistent order) causes V8 to create new hidden classes and transition between them, which is more expensive than reusing a stable, consistent hidden class across many object instances.' },
   ],
   'Statements vs expressions': [
-    'What is the difference between a statement and an expression in JavaScript?',
-    'Why can\'t you use an if-statement where a value is expected (e.g. inside JSX)?',
-    'Is `x = 5` a statement or an expression? Does it produce a value?',
+    { q: 'What is the difference between a statement and an expression in JavaScript?', a: 'An expression is any piece of code that evaluates to a value (`5 + 3`, `foo()`, `a ? b : c`). A statement is an instruction that performs an action but doesn\'t itself produce a value to be used elsewhere (an if-statement, a for-loop, a variable declaration) — statements are the building blocks of a program\'s structure, while expressions are the values/computations used within them.' },
+    { q: "Why can't you use an if-statement where a value is expected (e.g. inside JSX)?", a: 'Because JSX (and any expression position in JS) requires something that evaluates to a value, and an if-statement produces no value at all — it\'s purely control flow. This is why JSX uses the ternary operator or `&&` (both expressions) for conditional rendering instead of if-statements, and why arrow function bodies without braces must be a single expression, not a statement.' },
+    { q: 'Is `x = 5` a statement or an expression? Does it produce a value?', a: 'It\'s actually an assignment expression — it does produce a value (the assigned value, 5), which is why you can chain assignments (`a = b = 5`) or use an assignment inside another expression (`if ((x = getValue()))`). It becomes an "expression statement" when used on its own line followed by a semicolon, but the assignment itself is fundamentally an expression, not a pure statement.' },
   ],
   'Automatic Semicolon Insertion (ASI) and its pitfalls': [
-    'In which situations does JavaScript automatically insert a semicolon?',
-    'Give a real example where missing a semicolon causes a bug due to ASI.',
-    'Why does a return statement followed by a newline and a value silently return undefined?',
+    { q: 'In which situations does JavaScript automatically insert a semicolon?', a: 'ASI inserts a semicolon at a line break when the next line otherwise couldn\'t be parsed as valid continuation of the current statement, before a closing `}`, and at the end of the input — it\'s a fallback error-recovery mechanism, not a general "add semicolons wherever convenient" system, so its exact rules produce some surprising edge cases.' },
+    { q: 'Give a real example where missing a semicolon causes a bug due to ASI.', a: 'A line starting with `(` or `[` can accidentally be parsed as a continuation of the previous line: `const a = b\\n(function() {})()` gets parsed as `const a = b(function(){})()`, calling b as a function — not the two independent statements the author likely intended, since ASI didn\'t insert a semicolon after `b` because the next line could grammatically continue as a function call.' },
+    { q: 'Why does a return statement followed by a newline and a value silently return undefined?', a: 'ASI inserts a semicolon immediately after `return` if the next token is on a new line, because `return` is one of the specific keywords ASI treats as a "restricted production" — so `return \\n { value: 5 }` becomes `return; { value: 5 };`, silently returning undefined and treating the object literal as an unrelated, unreachable code block — a classic ASI gotcha, fixed by keeping the returned value on the same line as `return`.' },
   ],
   '"use strict" — strict mode and what it changes': [
-    'What does "use strict" enable and what behaviors does it prevent?',
-    'How does strict mode affect the value of `this` in a plain function call?',
-    'ES modules are always in strict mode — what does that imply when migrating old code?',
+    { q: 'What does "use strict" enable and what behaviors does it prevent?', a: 'It enables a stricter JS parsing/execution mode that turns several previously-silent mistakes into thrown errors — assigning to an undeclared variable, assigning to a read-only/non-writable property, duplicate parameter names, and using reserved future keywords as identifiers — and it disables some legacy, error-prone features like `with` statements and octal literal syntax.' },
+    { q: 'How does strict mode affect the value of `this` in a plain function call?', a: 'In non-strict mode, calling a function without an explicit receiver (`foo()`, not `obj.foo()`) sets `this` to the global object (window in browsers) by default. In strict mode, `this` remains `undefined` in that same scenario, which helps catch bugs where you accidentally forgot to bind/call a method with the intended receiver, rather than silently operating on the global object.' },
+    { q: 'ES modules are always in strict mode — what does that imply when migrating old code?', a: 'Code that relied on non-strict-mode leniencies (implicit global variable creation via unassigned assignment, silent failures on invalid property assignments, `this` defaulting to the global object in plain function calls) will now throw errors or behave differently once converted to an ES module — migrating legacy scripts to ESM often surfaces previously-hidden bugs that strict mode\'s stricter error behavior exposes.' },
   ],
   'Identifiers, reserved words, and naming rules': [
-    'What characters are valid in a JavaScript identifier?',
-    'Can you use a reserved word as an object key? Why or why not?',
+    { q: 'What characters are valid in a JavaScript identifier?', a: 'An identifier must start with a letter, underscore (_), or dollar sign ($) — not a digit — and subsequent characters can additionally include digits; JavaScript also supports Unicode letters, so many non-ASCII characters are valid too, though most style guides restrict identifiers to standard ASCII for practical readability.' },
+    { q: 'Can you use a reserved word as an object key? Why or why not?', a: 'Yes — reserved words (like `class`, `for`, `return`) are only restricted when used as variable/function/binding identifiers, not as object property keys, since property keys are always treated as string literals in that context rather than as identifiers subject to the reserved-word grammar restriction, e.g. `{ class: "example" }` is perfectly valid.' },
   ],
   'Code blocks and block scoping with { }': [
-    'Does a bare block `{ let x = 1; }` create a new scope?',
-    'How does block scoping with let/const differ from function scoping with var?',
+    { q: 'Does a bare block `{ let x = 1; }` create a new scope?', a: 'Yes — any pair of curly braces (not just if/for/function bodies) creates a new block scope for let/const/class declarations inside it, even a standalone block with no associated control structure; `var` declarations, however, ignore block boundaries entirely and attach to the nearest enclosing function (or global) scope regardless.' },
+    { q: 'How does block scoping with let/const differ from function scoping with var?', a: 'let/const are scoped to the nearest enclosing block (`{}`) — they only exist and are accessible within that block. var ignores block boundaries entirely and is scoped to the nearest enclosing function (or the global scope if not inside any function), meaning a var declared inside an if-block or for-loop "leaks" out and remains accessible outside that block.' },
   ],
   'Labels and labeled statements': [
-    'What is a labeled statement used for in JavaScript?',
-    'Give an example where a labeled break is cleaner than a flag variable in nested loops.',
+    { q: 'What is a labeled statement used for in JavaScript?', a: 'A label (`outer: for (...) {...}`) gives a loop or block a name that `break` or `continue` can reference to target that specific outer loop, rather than only the innermost one — useful for controlling nested loops directly, e.g. breaking out of two levels of nested loops at once from within the inner loop.' },
+    { q: 'Give an example where a labeled break is cleaner than a flag variable in nested loops.', a: 'Searching a 2D grid for a value: `outer: for (let i = 0; i < rows; i++) { for (let j = 0; j < cols; j++) { if (grid[i][j] === target) break outer; } }` cleanly exits both loops immediately upon finding the match, versus the alternative of introducing a separate boolean "found" flag checked in both loop conditions, which adds extra state and clutter for the same effect.' },
   ],
 
   // Variables & Scope
   'var, let, and const — differences': [
-    'Explain the scoping and hoisting differences between var, let, and const.',
-    'Can you reassign a const? What about mutating its contents if it\'s an object?',
-    'Why is var considered problematic and mostly avoided in modern code?',
+    { q: 'Explain the scoping and hoisting differences between var, let, and const.', a: 'var is function-scoped, hoisted and initialized to undefined at the top of its scope (accessible, but undefined, before its declaration line). let and const are block-scoped, and while technically hoisted, they remain in an inaccessible "temporal dead zone" until their declaration line executes, throwing a ReferenceError if accessed before that point rather than silently returning undefined.' },
+    { q: "Can you reassign a const? What about mutating its contents if it's an object?", a: 'No — reassigning a const variable (`x = newValue`) throws a TypeError, since const specifically prevents rebinding the variable to a new value/reference. However, if the const holds an object or array, you can still mutate its contents (push to the array, change a property) freely, since that doesn\'t reassign the variable itself — the binding stays fixed, but what it points to can still be internally modified.' },
+    { q: 'Why is var considered problematic and mostly avoided in modern code?', a: 'Its function-scoping (ignoring block boundaries) leads to variables leaking out of if/for blocks unexpectedly, its hoisting-to-undefined behavior (rather than a genuine error) hides bugs where a variable is used before its intended initialization, and it allows silent re-declaration in the same scope — all issues let/const were specifically designed to fix by being block-scoped and enforcing a TDZ that surfaces these mistakes as explicit errors instead.' },
   ],
   'Function scope vs block scope': [
-    'Why does `var` inside an if-block leak out to the enclosing function?',
-    'How do you create block scope intentionally (without an if/for/function)?',
+    { q: "Why does `var` inside an if-block leak out to the enclosing function?", a: 'Because var is function-scoped by design — it completely ignores block boundaries (if statements, for loops, bare blocks) and attaches to the nearest enclosing function scope (or the global scope) regardless of how deeply nested inside blocks the declaration textually appears, which is exactly the behavior let/const changed by respecting block boundaries instead.' },
+    { q: 'How do you create block scope intentionally (without an if/for/function)?', a: 'Just wrap the code in a bare pair of curly braces: `{ let temp = compute(); use(temp); }` — this creates a standalone block scope purely for the purpose of limiting a variable\'s lifetime/visibility, without needing any actual control-flow construct (if/for/while) to justify the braces.' },
   ],
   'Hoisting of variables and functions': [
-    'What exactly gets "hoisted" for a var declaration vs a function declaration?',
-    'Why does calling a function expression before its declaration throw but calling a function declaration doesn\'t?',
-    'How does class hoisting differ from function hoisting?',
+    { q: 'What exactly gets "hoisted" for a var declaration vs a function declaration?', a: 'For var, only the declaration itself is hoisted to the top of its scope (initialized to undefined) — the assignment stays in place and only executes when that line is reached. For a function declaration, the entire function (both its name and its full implementation) is hoisted, meaning you can call the function anywhere in its scope, even textually before its declaration.' },
+    { q: "Why does calling a function expression before its declaration throw but calling a function declaration doesn't?", a: 'A function expression (`const foo = function() {...}` or `const foo = () => {...}`) is really just a variable assignment — only the `const foo` variable declaration is hoisted (with its TDZ, or as undefined for var), not the function value itself, so calling it before the assignment line throws (either a TDZ ReferenceError or "foo is not a function"). A function declaration (`function foo() {...}`) hoists the entire callable function, so it\'s fully usable from the very top of its scope.' },
+    { q: 'How does class hoisting differ from function hoisting?', a: 'Classes are hoisted similarly to let/const — the class name binding exists but remains in the temporal dead zone until the class declaration is actually evaluated, so referencing a class before its declaration line throws a ReferenceError, unlike a function declaration\'s fully-usable hoisting.' },
   ],
   'Temporal Dead Zone (TDZ)': [
-    'What is the Temporal Dead Zone and when does it apply?',
-    'If let is hoisted, why do you still get a ReferenceError when accessing it before its declaration?',
-    'Does TDZ apply to function declarations?',
+    { q: 'What is the Temporal Dead Zone and when does it apply?', a: 'The TDZ is the span of code between the start of a scope and the point where a let/const/class declaration actually executes — during this span, the variable exists (it\'s been hoisted in the sense that the engine knows about it) but accessing it throws a ReferenceError rather than returning undefined, applying to every let/const/class binding within its enclosing block.' },
+    { q: 'If let is hoisted, why do you still get a ReferenceError when accessing it before its declaration?', a: 'let is hoisted in the sense that the engine reserves the binding\'s existence at the top of the scope, but deliberately does not initialize it to any usable value (unlike var\'s hoist-to-undefined) — accessing it before its actual declaration line intentionally throws, since the language designers wanted "used before declared" to be a clear, catchable error rather than the silent undefined-value bugs var\'s hoisting behavior could produce.' },
+    { q: 'Does TDZ apply to function declarations?', a: 'No — function declarations are fully hoisted with their complete implementation available immediately, with no TDZ restriction, which is precisely the behavioral difference that lets you call a function declaration before its textual position in the code, unlike a let/const/class binding.' },
   ],
   'Global scope and the global object (window / globalThis)': [
-    'What is `globalThis` and why was it introduced?',
-    'How does a `var` declaration at the top level differ from a `let` declaration in terms of the global object?',
+    { q: 'What is `globalThis` and why was it introduced?', a: 'globalThis is a standardized, environment-agnostic reference to the global object — `window` in browsers, `global` in Node.js, `self` in Web Workers — introduced because code that needed to reference the global object in a cross-environment way previously had to use awkward feature-detection logic to figure out which specific global name (window/global/self) applied in the current environment.' },
+    { q: 'How does a `var` declaration at the top level differ from a `let` declaration in terms of the global object?', a: 'A top-level `var` declaration in a browser script creates a property directly on the global object (`window.myVar` becomes accessible), whereas a top-level `let`/`const` declaration creates a binding in a separate "script scope" that\'s globally accessible by name but does NOT become a property on the window object — this is an intentional difference to avoid let/const polluting the actual global object the way var historically did.' },
   ],
   'Lexical (static) scoping': [
-    'What does "lexical scoping" mean, and how does it differ from dynamic scoping?',
-    'How does lexical scope determine which variable an arrow function can access?',
+    { q: 'What does "lexical scoping" mean, and how does it differ from dynamic scoping?', a: 'Lexical (static) scoping means a variable\'s scope is determined by where it\'s physically written in the source code — you can determine what a variable refers to just by reading the code\'s nesting structure, without needing to know the call stack at runtime. Dynamic scoping (which JavaScript does NOT use, except for `this`) would instead resolve a variable based on the calling context at runtime, which is far harder to reason about statically.' },
+    { q: 'How does lexical scope determine which variable an arrow function can access?', a: 'An arrow function captures variables from its surrounding lexical (textually enclosing) scope at the point it was defined — including `this`, `arguments`, and any other outer variables — exactly like any other nested function/closure would, based purely on where the arrow function is written in the source, not on how or where it\'s later called.' },
   ],
   'Scope chain and variable resolution': [
-    'How does JavaScript traverse the scope chain to find a variable?',
-    'What happens if a variable is not found anywhere in the scope chain?',
+    { q: 'How does JavaScript traverse the scope chain to find a variable?', a: 'When code references a variable name, the engine looks it up starting in the current (innermost) scope, and if not found there, walks outward through each successively enclosing lexical scope (following the nesting structure of where functions/blocks were defined, not where they were called from) until it either finds a matching binding or reaches the global scope.' },
+    { q: 'What happens if a variable is not found anywhere in the scope chain?', a: 'In strict mode, referencing an undeclared variable throws a ReferenceError immediately. In non-strict mode, merely *assigning* to an undeclared variable (not just reading it) silently creates an implicit global variable — reading a genuinely undeclared variable still throws a ReferenceError in both modes, but the silent-global-creation-on-assignment behavior is one of the historical footguns strict mode explicitly disables.' },
   ],
   'Shadowing and re-declaration rules': [
-    'Can you re-declare a let variable in the same scope? What about in a child block?',
-    'What is variable shadowing and when might it cause a subtle bug?',
+    { q: 'Can you re-declare a let variable in the same scope? What about in a child block?', a: 'No — re-declaring the same let/const variable name within the exact same scope throws a SyntaxError ("already been declared"). However, declaring a variable with the same name inside a nested child block is perfectly valid and creates a separate, independent binding that shadows the outer one for the duration of that inner block.' },
+    { q: 'What is variable shadowing and when might it cause a subtle bug?', a: 'Shadowing is when an inner scope declares a variable with the same name as one in an outer scope, making the inner declaration take precedence within its own scope — this can cause subtle bugs when a developer intends to modify the outer variable but accidentally shadows it with a new inner declaration instead, silently leaving the outer variable unchanged while only the inner shadow gets modified.' },
   ],
   'const with objects/arrays (mutability vs reassignment)': [
-    'Why can you push into a const array but can\'t reassign it?',
-    'How do you truly make an object immutable if const doesn\'t prevent mutation?',
+    { q: "Why can you push into a const array but can't reassign it?", a: 'const only prevents the variable binding itself from being reassigned to point to a different value/reference — it says nothing about whether the value the binding currently points to can be internally mutated. `push()` mutates the existing array in place (the const variable still points to the exact same array reference), so it\'s allowed; `arr = []` would attempt to rebind the variable to a new reference, which const explicitly forbids.' },
+    { q: "How do you truly make an object immutable if const doesn't prevent mutation?", a: 'Use Object.freeze(obj) to make the object\'s own properties non-writable/non-configurable at the top level (mutation attempts silently fail in non-strict mode, or throw in strict mode) — note this is shallow, so nested objects within a frozen object remain mutable unless you recursively freeze them too, which is why deep-freeze utilities or immutable data libraries exist for genuinely deep immutability.' },
   ],
 
   // Data Types
   'Primitive types: string, number, boolean, null, undefined, symbol, bigint': [
-    'How many primitive types does JavaScript have, and what are they?',
-    'Why does `typeof null` return "object" — is null an object?',
-    'What is a Symbol and when would you use one?',
+    { q: 'How many primitive types does JavaScript have, and what are they?', a: 'Seven: string, number, boolean, null, undefined, symbol (ES2015), and bigint (ES2020) — everything else (objects, arrays, functions, dates, maps, etc.) is a reference type built on top of the base Object type, not a primitive.' },
+    { q: 'Why does `typeof null` return "object" — is null an object?', a: 'No, null is genuinely a primitive value representing "intentional absence of any object" — but `typeof null` returning "object" is a long-standing historical bug in JavaScript\'s original implementation (related to internal type tagging in the earliest JS engines) that has been kept for backward compatibility ever since, despite being universally acknowledged as a mistake.' },
+    { q: 'What is a Symbol and when would you use one?', a: 'A Symbol is a unique, immutable primitive value (`Symbol("description")`) guaranteed to never equal any other symbol, even one created with the identical description string — used to create object property keys guaranteed not to collide with any other code\'s property names (useful for library-internal "private-ish" properties), and to implement well-known protocol hooks like Symbol.iterator for custom iteration behavior.' },
   ],
   'Reference types: object, array, function': [
-    'How does assignment of an object differ from assignment of a primitive?',
-    'What happens when you pass an object to a function — is it pass-by-reference or pass-by-value?',
+    { q: 'How does assignment of an object differ from assignment of a primitive?', a: 'Assigning a primitive (`let b = a` where a is a number/string) copies the actual value — b and a are now completely independent. Assigning an object/array/function (`let b = a` where a is an object) copies only the reference (memory address) to the same underlying object — b and a now both point to the identical object, so mutating one is visible through the other.' },
+    { q: 'What happens when you pass an object to a function — is it pass-by-reference or pass-by-value?', a: 'JavaScript is technically always pass-by-value — but for objects, the "value" being passed is the reference itself (a copy of the pointer to the object), not the object\'s contents. This means mutating the object\'s properties inside the function affects the original object (since both point to the same underlying data), but reassigning the parameter to a brand-new object inside the function does NOT affect the caller\'s original variable, since that only changes the local copy of the reference.' },
   ],
   'typeof operator and its quirks (typeof null === "object")': [
-    'What does `typeof` return for null, undefined, a function, and an array?',
-    'Why is `typeof null === "object"` and how do you check for null safely?',
+    { q: 'What does `typeof` return for null, undefined, a function, and an array?', a: '`typeof null` returns "object" (the historical bug), `typeof undefined` returns "undefined", `typeof aFunction` returns "function" (functions get their own special typeof result despite being objects under the hood), and `typeof anArray` returns "object" (arrays have no special typeof result — you need Array.isArray() to actually distinguish an array from a plain object).' },
+    { q: 'Why is `typeof null === "object"` and how do you check for null safely?', a: 'It\'s a legacy bug from JS\'s earliest implementation, permanently kept for backward compatibility. To safely check for null specifically, use strict equality: `value === null`, or to check for "either null or undefined" at once, use `value == null` (loose equality specifically treats null and undefined as equal to each other and nothing else) or the more explicit `value === null || value === undefined`.' },
   ],
   'undefined vs null': [
-    'When does JavaScript produce undefined vs when should you use null explicitly?',
-    'How does strict equality distinguish undefined and null, and does loose equality?',
+    { q: 'When does JavaScript produce undefined vs when should you use null explicitly?', a: 'JavaScript itself produces undefined automatically in many situations — an uninitialized variable, a missing function argument, accessing a non-existent object property, a function with no explicit return — representing "this hasn\'t been assigned/doesn\'t exist." null is never produced automatically by the language itself; it\'s a value you explicitly assign to deliberately represent "intentionally empty/no value here," a meaningful signal distinct from "was never set."' },
+    { q: 'How does strict equality distinguish undefined and null, and does loose equality?', a: 'Strict equality (`===`) treats them as distinct — `undefined === null` is false, since they\'re different types entirely. Loose equality (`==`) has a special-cased rule making them equal to each other (and only to each other) — `undefined == null` is true, but `undefined == 0` and `null == 0` are both false, since the special-case is specifically scoped to just these two values being mutually loosely-equal.' },
   ],
   'The Symbol type and well-known symbols': [
-    'Why are Symbols guaranteed unique, and how does that make them useful for object keys?',
-    'What does Symbol.iterator do and when would you implement it?',
-    'How do well-known symbols like Symbol.toPrimitive allow you to customize built-in behavior?',
+    { q: 'Why are Symbols guaranteed unique, and how does that make them useful for object keys?', a: 'Every call to Symbol() creates a brand-new, entirely unique value, even if given the identical description string as a previous call — no two symbols are ever `===` equal to each other. This guarantees a symbol-keyed property can never accidentally collide with a property added by unrelated code (unlike string keys, where two different pieces of code could easily both choose the same key name unintentionally).' },
+    { q: 'What does Symbol.iterator do and when would you implement it?', a: 'Symbol.iterator is the well-known symbol that defines how an object behaves when iterated (via for...of, spread, destructuring) — implementing a method at that symbol key on your object (returning an iterator with a `.next()` method) makes your custom object/class work seamlessly with all of JS\'s built-in iteration syntax, the same way arrays and Maps do natively.' },
+    { q: 'How do well-known symbols like Symbol.toPrimitive allow you to customize built-in behavior?', a: 'Symbol.toPrimitive lets you define a method controlling exactly how your object converts to a primitive value in different contexts (numeric, string, or default coercion) — implementing it lets you customize what happens when your custom object is used in arithmetic, template literals, or string concatenation, overriding JS\'s default (often unhelpful, like "[object Object]") ToPrimitive behavior.' },
   ],
   'BigInt and large integers': [
-    'What problem does BigInt solve that regular number can\'t handle?',
-    'Can you mix BigInt and regular Number arithmetic? What happens?',
+    { q: "What problem does BigInt solve that regular number can't handle?", a: 'JavaScript\'s regular number type is a 64-bit floating point (IEEE 754) value, which can only precisely represent integers up to Number.MAX_SAFE_INTEGER (2^53 - 1) — beyond that, integer precision silently degrades. BigInt provides arbitrary-precision integers (limited only by available memory), letting you accurately represent and compute with integers far beyond that safe limit, important for things like cryptography or precise large-scale counters.' },
+    { q: 'Can you mix BigInt and regular Number arithmetic? What happens?', a: 'No — directly mixing a BigInt and a Number in an arithmetic operation (`10n + 5`) throws a TypeError, since JavaScript deliberately doesn\'t implicitly convert between them (an implicit conversion could silently lose BigInt\'s precision guarantee). You must explicitly convert one to match the other\'s type first (`10n + BigInt(5)` or `Number(10n) + 5`) before combining them.' },
   ],
   'Primitive wrapper objects (String, Number, Boolean)': [
-    'Why can you call `.toUpperCase()` on a string primitive if it\'s not an object?',
-    'What\'s the difference between `new String("hi")` and `"hi"`?',
+    { q: "Why can you call `.toUpperCase()` on a string primitive if it's not an object?", a: 'JavaScript automatically, temporarily "boxes" a string primitive into a String wrapper object whenever you access a property/method on it, calls the method, and then immediately discards the temporary wrapper object — this auto-boxing happens transparently behind the scenes, letting primitives appear to have methods even though the primitive value itself has no properties of its own.' },
+    { q: 'What\'s the difference between `new String("hi")` and `"hi"`?', a: '`"hi"` is a genuine string primitive. `new String("hi")` explicitly creates a String wrapper object — an actual object, not a primitive — which behaves differently in subtle ways: `typeof` returns "object" instead of "string," it\'s always truthy (even `new String("")` is truthy, unlike the primitive empty string which is falsy), and it requires `.valueOf()` or explicit conversion to get the actual primitive value back out — which is why explicitly constructing wrapper objects is almost universally discouraged.' },
   ],
   'Value vs reference (copy vs shared reference)': [
-    'If you assign `let b = a` where `a` is an object, and then mutate `b`, does `a` change?',
-    'How would you clone an object so that mutating the clone doesn\'t affect the original?',
+    { q: "If you assign `let b = a` where `a` is an object, and then mutate `b`, does `a` change?", a: 'Yes — since objects are assigned by reference, `b` and `a` both point to the exact same underlying object in memory after the assignment; mutating any property through `b` is visible through `a` too, since there\'s only one actual object, just two variable names both referencing it.' },
+    { q: "How would you clone an object so that mutating the clone doesn't affect the original?", a: 'For a shallow clone, use `{...obj}` (object spread) or `Object.assign({}, obj)`, which creates a genuinely new object copying the top-level properties. For a deep clone (needed if the object contains nested objects/arrays you also want independent), use `structuredClone(obj)` (the modern built-in), or a deep-clone library/manual recursive copy for older environments.' },
   ],
 
   // Type Coercion & Conversion
   'Implicit vs explicit coercion': [
-    'What is implicit coercion and when does it happen?',
-    'Give an example of implicit coercion that surprises developers.',
+    { q: 'What is implicit coercion and when does it happen?', a: 'Implicit coercion is JavaScript automatically converting a value from one type to another as a side effect of an operation, without you explicitly requesting the conversion — happening in contexts like the `+` operator with mixed types, comparisons with `==`, using a value in a boolean context (if statements), or template literal interpolation, where the language silently applies its internal ToString/ToNumber/ToBoolean conversion rules.' },
+    { q: 'Give an example of implicit coercion that surprises developers.', a: '`[] + []` produces `""` (empty string) and `[] + {}` produces `"[object Object]"` — both arrays and objects get implicitly converted to strings via ToPrimitive when used with `+`, and the resulting string concatenation often produces unintuitive results developers don\'t expect without understanding the underlying coercion mechanics.' },
   ],
   'Truthy and falsy values': [
-    'Which values are falsy in JavaScript? Name all of them.',
-    'What are some truthy values that developers mistakenly expect to be falsy?',
+    { q: 'Which values are falsy in JavaScript? Name all of them.', a: 'There are exactly eight falsy values: `false`, `0`, `-0`, `0n` (BigInt zero), `""` (empty string), `null`, `undefined`, and `NaN` — every other value in JavaScript, including all objects, arrays (even empty ones), and non-empty strings (even `"0"` or `"false"`), is truthy.' },
+    { q: 'What are some truthy values that developers mistakenly expect to be falsy?', a: 'An empty array `[]` and an empty object `{}` are both truthy (despite "feeling empty"), the string `"0"` is truthy (it\'s a non-empty string, unlike the actual number 0), and `new Boolean(false)` is truthy (it\'s a wrapper object, which is always truthy regardless of the primitive value it wraps) — all common sources of unexpected conditional behavior.' },
   ],
   'Abstract equality (==) vs strict equality (===)': [
-    'What does the abstract equality algorithm do differently from strict equality?',
-    'When does `null == undefined` return true but `null === undefined` return false?',
-    'When might you intentionally use `==` in production code?',
+    { q: 'What does the abstract equality algorithm do differently from strict equality?', a: 'Strict equality (`===`) requires both the type and value to match exactly, with no conversion. Abstract/loose equality (`==`) first checks if the types already match (behaving like === if so), and if not, applies a specific set of type coercion rules (converting strings to numbers, booleans to numbers, and using ToPrimitive on objects) before comparing — this coercion logic is the source of most of `==`\'s notoriously confusing edge cases.' },
+    { q: 'When does `null == undefined` return true but `null === undefined` return false?', a: 'The abstract equality specification has a special-cased rule making `null` and `undefined` loosely equal only to each other (and nothing else) — no coercion algorithm is actually applied here, it\'s a direct spec exception. Strict equality, requiring identical types, correctly treats them as different types and therefore unequal.' },
+    { q: 'When might you intentionally use `==` in production code?', a: 'The one broadly accepted idiomatic use is `value == null` as a concise way to check for "either null or undefined" in one comparison, relying specifically on that null/undefined special-case rule — beyond that narrow case, `===` is almost universally preferred to avoid the unpredictable coercion behavior of `==` in every other comparison.' },
   ],
   'Object.is and SameValueZero': [
-    'How does Object.is differ from === for NaN and -0?',
-    'Where does JavaScript use SameValueZero comparison internally?',
+    { q: 'How does Object.is differ from === for NaN and -0?', a: 'Object.is(NaN, NaN) returns true, while NaN === NaN returns false (NaN is famously never equal to itself under ===). Object.is(0, -0) returns false (it distinguishes positive and negative zero), while 0 === -0 returns true (=== treats them as equal) — Object.is essentially fixes these two specific edge cases that === has always had.' },
+    { q: 'Where does JavaScript use SameValueZero comparison internally?', a: 'SameValueZero (which treats NaN as equal to itself, like Object.is, but treats +0 and -0 as equal, unlike Object.is) is used internally by Array.prototype.includes, Set, and Map for their membership/uniqueness checks — this is why `[NaN].includes(NaN)` returns true even though `[NaN].indexOf(NaN)` returns -1, since indexOf uses strict equality internally while includes uses SameValueZero.' },
   ],
   'String, Number, and Boolean conversion rules': [
-    'How does JavaScript convert an object to a string when you concatenate it?',
-    'What does Number([]) return and why?',
-    'What is the result of `Boolean("")`, `Boolean(0)`, `Boolean([])`, `Boolean({})`?',
+    { q: 'How does JavaScript convert an object to a string when you concatenate it?', a: 'It calls the object\'s ToPrimitive algorithm with a "string" hint, which by default tries `toString()` first (falling back to `valueOf()` if toString doesn\'t return a primitive) — for a plain object with no custom toString, this produces the default `"[object Object]"`; arrays have a custom toString that joins their elements with commas instead.' },
+    { q: 'What does Number([]) return and why?', a: 'It returns 0. Number() on an object calls ToPrimitive with a "number" hint, which for an array calls its toString() (arrays have no valueOf override that returns a useful primitive), producing an empty string `""` for an empty array — and Number("") specifically converts to 0 by the numeric string conversion rules, giving the final surprising result of 0.' },
+    { q: 'What is the result of `Boolean("")`, `Boolean(0)`, `Boolean([])`, `Boolean({})`?', a: '`Boolean("")` is false (empty string is one of the eight falsy values). `Boolean(0)` is false (0 is falsy). `Boolean([])` is true (arrays are objects, and all objects — even empty ones — are truthy). `Boolean({})` is true (same reasoning — object truthiness has nothing to do with whether the object "has content").' },
   ],
   'The + operator: addition vs concatenation': [
-    'What is the result of `1 + "2"` vs `1 + 2`? Walk through the coercion.',
-    'Why does `[] + {}` produce a string while `{} + []` might produce something different?',
+    { q: 'What is the result of `1 + "2"` vs `1 + 2`? Walk through the coercion.', a: '`1 + "2"` results in `"12"` (string concatenation) — because one operand is already a string, `+` converts the number to a string and concatenates rather than performing arithmetic. `1 + 2` results in `3` (numeric addition), since both operands are already numbers and no string is involved, so `+` performs straightforward numeric addition.' },
+    { q: 'Why does `[] + {}` produce a string while `{} + []` might produce something different?', a: '`[] + {}` is evaluated as an expression, where both operands go through ToPrimitive (producing `""` for the empty array and `"[object Object]"` for the plain object), concatenating to `"[object Object]"`. `{} + []` at the top level of a statement can instead be parsed as an empty code block `{}` followed by a unary `+[]` expression (which coerces the empty array to the number 0) — a purely syntactic parsing ambiguity, not a coercion difference, that\'s a classic JS trivia gotcha.' },
   ],
   'ToPrimitive, valueOf, and toString': [
-    'When JavaScript needs a primitive from an object, what is the resolution order?',
-    'How would you make a custom object that acts like a number when used in arithmetic?',
+    { q: 'When JavaScript needs a primitive from an object, what is the resolution order?', a: 'ToPrimitive is called with a hint ("number", "string", or "default"). For a "number" hint, it tries `valueOf()` first, falling back to `toString()` if valueOf doesn\'t return a primitive. For a "string" hint, the order reverses — `toString()` is tried first, falling back to `valueOf()`. For "default" (used by `+` and loose equality), it behaves like the "number" hint (valueOf first) for most objects, except Date objects, which default to string-hint behavior instead.' },
+    { q: 'How would you make a custom object that acts like a number when used in arithmetic?', a: 'Define a `valueOf()` method on the object returning the numeric value you want it to represent — e.g. `class Money { constructor(cents) { this.cents = cents; } valueOf() { return this.cents; } }` — then `new Money(500) + new Money(300)` would coerce both via valueOf and produce 800, since arithmetic operators trigger ToPrimitive with a number hint, which prioritizes valueOf.' },
   ],
   'NaN and isNaN vs Number.isNaN': [
-    'Why does `isNaN("hello")` return true but `Number.isNaN("hello")` return false?',
-    'How do you check if a value is actually the NaN value without false positives?',
-    'Why is NaN the only value in JavaScript that is not equal to itself?',
+    { q: 'Why does `isNaN("hello")` return true but `Number.isNaN("hello")` return false?', a: 'The global isNaN() function first coerces its argument to a number before checking — `Number("hello")` is NaN, so `isNaN("hello")` returns true (misleadingly implying "hello" itself is somehow NaN-like). Number.isNaN() does NOT coerce first — it only returns true if the value is *already*, literally, the actual NaN value, so a non-number string like "hello" correctly returns false since it\'s not the NaN value itself, just a string that happens to convert to NaN.' },
+    { q: 'How do you check if a value is actually the NaN value without false positives?', a: 'Use `Number.isNaN(value)`, which — unlike the older global isNaN() — performs no implicit coercion, so it only returns true for the genuine NaN value itself, avoiding the false positives the coercing global isNaN() produces for non-numeric values like strings or objects that merely convert to NaN.' },
+    { q: 'Why is NaN the only value in JavaScript that is not equal to itself?', a: 'By IEEE 754 floating-point specification design, NaN ("Not a Number") represents the result of an undefined or unrepresentable numeric operation, and the spec deliberately defines it as unequal to everything, including itself — this is a long-standing floating-point standard behavior (not JS-specific) meant to signal "this value is inherently indeterminate," which is exactly why you can\'t use `=== NaN` to check for it and must use isNaN()/Number.isNaN() instead.' },
   ],
   'parseInt / parseFloat vs Number()': [
-    'What is the difference between parseInt("10px") and Number("10px")?',
-    'What does parseInt("010") return and why?',
-    'When would you use parseInt with an explicit radix?',
+    { q: 'What is the difference between parseInt("10px") and Number("10px")?', a: 'parseInt parses as many valid leading numeric characters as it can from the start of the string and stops at the first invalid character, ignoring the rest — `parseInt("10px")` returns 10. Number() requires the *entire* string to be a valid numeric representation to convert successfully — `Number("10px")` returns NaN, since "10px" as a whole isn\'t a valid number.' },
+    { q: 'What does parseInt("010") return and why?', a: 'In modern engines, `parseInt("010")` returns 10 (parsed as base 10 by default) — but historically, without an explicit radix, some engines interpreted a leading zero as an octal indicator, potentially returning 8 instead. This exact ambiguity is why always specifying an explicit radix (`parseInt("010", 10)`) is strongly recommended, to guarantee consistent, unambiguous behavior regardless of engine/legacy quirks.' },
+    { q: 'When would you use parseInt with an explicit radix?', a: 'Always, as a defensive best practice — explicitly passing the radix (`parseInt(str, 10)` for decimal, or `parseInt(str, 16)` for hexadecimal) removes any ambiguity about how leading zeros or prefixes (like "0x") should be interpreted, protecting against both historical engine inconsistencies and simply making your intent unambiguous to future readers of the code.' },
   ],
 
   // Operators
   'Arithmetic operators and operator precedence': [
-    'What is the result of `2 + 3 * 4` and why?',
-    'How does operator precedence affect nested expressions — how do you verify or override it?',
+    { q: 'What is the result of `2 + 3 * 4` and why?', a: 'It\'s 14, not 20 — multiplication has higher operator precedence than addition, so `3 * 4` (=12) is evaluated first, then added to 2, following the same mathematical order-of-operations convention (PEMDAS) most programming languages, including JS, adhere to.' },
+    { q: 'How does operator precedence affect nested expressions — how do you verify or override it?', a: 'Precedence determines which operator "binds tighter" in an ambiguous expression with multiple operators and no parentheses — you can always verify the exact precedence/associativity rules via the MDN operator precedence table, and you override the default evaluation order explicitly using parentheses, e.g. `(2 + 3) * 4` forces the addition to happen first regardless of the operators\' inherent default precedence.' },
   ],
   'Logical operators (&&, ||, !) and short-circuiting': [
-    'Why does `a && b` return `b` rather than `true` when both are truthy?',
-    'How is `||` commonly used for default values, and why was `??` introduced as a better alternative?',
-    'Give an example of short-circuit evaluation being used to guard a function call.',
+    { q: 'Why does `a && b` return `b` rather than `true` when both are truthy?', a: '`&&` doesn\'t produce a boolean result at all — it returns whichever actual operand value determined the result: if `a` is falsy, it short-circuits and returns `a` itself (without evaluating b); if `a` is truthy, it evaluates and returns `b` directly (whatever b\'s actual value is, not necessarily a boolean) — this "return the actual value, not just true/false" behavior is what makes patterns like `condition && <Component />` in JSX work.' },
+    { q: 'How is `||` commonly used for default values, and why was `??` introduced as a better alternative?', a: '`value || defaultValue` returns defaultValue whenever value is any falsy value — but this incorrectly overrides intentionally-falsy values like 0, "", or false with the default, which is often not what you want (e.g. a quantity of 0 shouldn\'t be replaced by a default). `??` (nullish coalescing) only falls back to the default when the left side is specifically null or undefined, correctly preserving other legitimately falsy values.' },
+    { q: 'Give an example of short-circuit evaluation being used to guard a function call.', a: '`user && user.logAccess()` only calls logAccess() if user is truthy, avoiding a "cannot read property of undefined/null" error if user happens to be null/undefined — this pattern predates (and is functionally similar in intent to) optional chaining (`user?.logAccess()`), relying on && short-circuiting to skip evaluating the right side entirely when the left side is falsy.' },
   ],
   'Nullish coalescing operator (??)': [
-    'What is the difference between `??` and `||` when the left side is `0` or `""`?',
-    'Why was `??` introduced if `||` already handles falsy values?',
+    { q: 'What is the difference between `??` and `||` when the left side is `0` or `""`?', a: '`0 || "default"` evaluates to "default", since 0 is falsy and `||` falls back on any falsy value. `0 ?? "default"` evaluates to 0, since `??` only falls back specifically for null/undefined, correctly treating 0 as a legitimate, intentional value rather than something to be replaced — this distinction is exactly why `??` was introduced as a more precise alternative for default-value scenarios.' },
+    { q: "Why was `??` introduced if `||` already handles falsy values?", a: 'Because "falsy" and "nullish (null/undefined)" are meaningfully different concepts that `||` conflated — using `||` for defaulting incorrectly overrides intentional falsy values like 0, empty string, or false, which are often perfectly valid data, not "missing" values; `??` was introduced specifically to express "only default when genuinely absent (null/undefined), not merely falsy."' },
   ],
   'Optional chaining (?.)': [
-    'What does `obj?.foo?.bar` evaluate to when `obj.foo` is undefined?',
-    'Can you use optional chaining with method calls and array access?',
-    'What error does optional chaining prevent?',
+    { q: 'What does `obj?.foo?.bar` evaluate to when `obj.foo` is undefined?', a: 'It evaluates to undefined — as soon as any link in the optional chain (`obj`, then `obj.foo`) is null or undefined, the entire remaining chain short-circuits immediately and evaluates to undefined, without attempting to access `.bar` on the undefined value (which would otherwise throw a TypeError).' },
+    { q: 'Can you use optional chaining with method calls and array access?', a: 'Yes — `obj?.method?.()` safely calls a method only if it exists (skipping the call entirely and returning undefined if obj or the method itself is nullish), and `arr?.[0]` safely accesses an array index only if arr itself isn\'t nullish, both following the same short-circuit-on-nullish behavior as property access.' },
+    { q: 'What error does optional chaining prevent?', a: 'It prevents the classic "Cannot read properties of undefined/null (reading \'x\')" TypeError that occurs when you try to access a property on a null or undefined value in a chain of nested property accesses — replacing what used to require verbose manual null-checking at every step with a single, concise `?.` at each potentially-nullish link.' },
   ],
   'Spread (...) and rest (...) operators': [
-    'What is the difference between using `...` in a function definition vs a function call?',
-    'How would you merge two objects using spread? What are the limitations (shallow copy)?',
-    'How does the rest parameter differ from the `arguments` object?',
+    { q: 'What is the difference between using `...` in a function definition vs a function call?', a: 'In a function definition\'s parameter list, `...` is the rest parameter — it collects any remaining passed arguments into a real array (`function f(...args) {}`). In a function call, `...` is the spread operator — it expands an existing iterable\'s elements out into individual arguments (`f(...myArray)`) — same syntax, opposite direction of "collecting into" vs "expanding out of" an array.' },
+    { q: 'How would you merge two objects using spread? What are the limitations (shallow copy)?', a: '`const merged = { ...objA, ...objB }` — later spreads override earlier ones for matching keys. The limitation is it\'s a shallow merge: nested object/array properties are copied by reference, not deeply cloned, so mutating a nested object within the merged result also mutates the corresponding nested object in the original source object, since they still point to the same underlying reference.' },
+    { q: "How does the rest parameter differ from the `arguments` object?", a: 'The rest parameter (`...args`) produces a genuine Array instance with all the real array methods (map, filter, etc.) available directly, and it only captures the arguments not already bound to named parameters. The legacy `arguments` object is an array-like (not a real array — no map/filter/etc. without conversion), captures ALL passed arguments regardless of named parameters, and — critically — is not available at all inside arrow functions.' },
   ],
   'delete, in, instanceof, typeof, void operators': [
-    'What does the `in` operator check — own properties or inherited ones?',
-    'How does `instanceof` determine membership, and what can fool it?',
-    'What does `delete` do on an array element — does it shift remaining elements?',
+    { q: 'What does the `in` operator check — own properties or inherited ones?', a: 'It checks both — `in` returns true if the property exists anywhere in the object\'s own properties OR anywhere up its prototype chain, unlike `hasOwnProperty()` which only checks the object\'s own (non-inherited) properties specifically.' },
+    { q: 'How does `instanceof` determine membership, and what can fool it?', a: 'instanceof checks whether the target object\'s prototype chain contains the specified constructor\'s `.prototype` object anywhere in it — it can be fooled/broken by manually reassigning an object\'s prototype (Object.setPrototypeOf), by values crossing realm boundaries (an array created in a different iframe has a different, unrelated Array.prototype reference, so instanceof Array can incorrectly return false), or by plain objects/primitives that never had the constructor involved in their creation at all.' },
+    { q: 'What does `delete` do on an array element — does it shift remaining elements?', a: 'delete removes the property at that index but leaves a "hole" (the array\'s length stays the same, and that index becomes genuinely empty/missing, not just undefined) — it does NOT shift subsequent elements down to fill the gap the way `splice()` would; for actually removing an array element and closing the gap, you should use splice() instead of delete.' },
   ],
 
   // Control Flow
   'if / else if / else': [
-    'What is a guard clause and why can it make code more readable than nested if/else?',
+    { q: 'What is a guard clause and why can it make code more readable than nested if/else?', a: 'A guard clause is an early return (or throw/continue) at the top of a function that immediately handles an edge case or invalid input, letting the rest of the function proceed with the "normal" case unindented and unnested — e.g. `if (!user) return null;` followed by the main logic — versus wrapping the entire main logic inside a big `if (user) { ... }` block, which adds unnecessary nesting and pushes the "happy path" logic further to the right, making it harder to scan.' },
   ],
   'switch statements and fall-through': [
-    'What happens when a switch case has no break? Walk through an example.',
-    'When would you intentionally use fall-through in a switch?',
-    'What comparison does switch use — == or ===?',
+    { q: 'What happens when a switch case has no break? Walk through an example.', a: 'Execution "falls through" and continues executing the following case\'s statements too, regardless of whether that next case\'s condition actually matches — e.g. `switch(1) { case 1: console.log("a"); case 2: console.log("b"); break; }` logs both "a" and "b", since without a break after case 1, execution just continues straight into case 2\'s statements.' },
+    { q: 'When would you intentionally use fall-through in a switch?', a: 'When multiple distinct case values should share the exact same handling logic — e.g. `case "Saturday": case "Sunday": isWeekend = true; break;` — stacking empty cases (no statements between them) so multiple matched values all fall through into the same shared block of code, avoiding duplicating that logic for each case.' },
+    { q: 'What comparison does switch use — == or ===?', a: 'switch uses strict equality (===) to compare the switch expression against each case value — no type coercion happens, so `switch("1") { case 1: ... }` would NOT match, since the string "1" is not strictly equal to the number 1.' },
   ],
   'for, while, and do...while loops': [
-    'What is the difference between while and do...while?',
-    'When does a do...while loop guarantee at least one execution?',
+    { q: 'What is the difference between while and do...while?', a: 'A while loop checks its condition before each iteration, including the very first one — if the condition is false initially, the loop body never runs at all. A do...while loop checks its condition after each iteration, guaranteeing the loop body executes at least once regardless of the condition\'s initial truthiness.' },
+    { q: 'When does a do...while loop guarantee at least one execution?', a: 'Always — by construction, the loop body runs first, and only afterward is the condition evaluated to decide whether to continue — this makes do...while appropriate for situations where you need the loop\'s action to happen at least once regardless of the initial state, like presenting a menu/prompt at least one time before checking whether to repeat.' },
   ],
   'for...of and for...in loops': [
-    'What does for...in iterate over, and why is it usually a bad choice for arrays?',
-    'How does for...of work and what must an object implement to support it?',
+    { q: "What does for...in iterate over, and why is it usually a bad choice for arrays?", a: 'for...in iterates over an object\'s enumerable property keys (as strings), including inherited enumerable properties from the prototype chain. For arrays, this means it iterates over the string index keys ("0", "1", "2"...) plus any additional enumerable properties that might exist on the array or its prototype — it doesn\'t guarantee numeric order, doesn\'t skip inherited/added properties, and gives you string indices instead of actual values, making it a poor, error-prone choice compared to for...of or array methods for iterating array contents.' },
+    { q: 'How does for...of work and what must an object implement to support it?', a: 'for...of iterates over the actual values produced by an iterable\'s iterator, working correctly with arrays, strings, Maps, Sets, and any custom object implementing the iterable protocol — the object must have a method at the Symbol.iterator key that returns an iterator object (one with a `.next()` method returning `{ value, done }` pairs) for for...of to know how to step through its values.' },
   ],
   'Iteration protocols (iterable & iterator)': [
-    'What two things must an object implement to be iterable?',
-    'How would you make a custom data structure work with for...of?',
-    'What is the difference between an iterable and an iterator?',
+    { q: 'What two things must an object implement to be iterable?', a: 'It must have a method at the well-known Symbol.iterator key, and that method must return an "iterator" object — an object with a `.next()` method that, each time called, returns an object of the shape `{ value: any, done: boolean }`, where done becomes true once iteration is complete.' },
+    { q: 'How would you make a custom data structure work with for...of?', a: 'Implement `[Symbol.iterator]()` on your custom class/object, returning an iterator object with a stateful `.next()` method that tracks position and returns the next value each call, setting `done: true` once there\'s nothing left — once implemented, for...of, spread syntax, and array destructuring all automatically work with your custom structure, since they all rely on the same underlying iteration protocol.' },
+    { q: 'What is the difference between an iterable and an iterator?', a: 'An iterable is anything with a Symbol.iterator method that, when called, produces a fresh iterator — it represents "a collection that can be iterated." An iterator is the actual stateful object returned by that method, the thing with the `.next()` method that\'s actually stepped through one value at a time and remembers its current position across calls.' },
   ],
 
   // Functions
   'Function declarations vs function expressions': [
-    'How does hoisting behave differently for a function declaration vs a function expression?',
-    'When would you choose a function expression over a declaration?',
+    { q: 'How does hoisting behave differently for a function declaration vs a function expression?', a: 'A function declaration is fully hoisted with its entire implementation available before its textual position in the code, callable from anywhere in its scope. A function expression is only as hoisted as the variable it\'s assigned to (undefined for var, TDZ for let/const) — the function itself isn\'t usable until the assignment line actually executes.' },
+    { q: 'When would you choose a function expression over a declaration?', a: 'When you need to conditionally define a function (assigning it inside an if-block to a variable declared outside), when you want the function to be anonymous or dynamically named, when passing a function inline as an argument (a callback), or when you specifically want to prevent early/hoisted usage before the function is genuinely ready to be called.' },
   ],
   'Arrow functions and lexical this': [
-    'Why doesn\'t an arrow function have its own `this`, and how is `this` resolved inside one?',
-    'Can you use an arrow function as a constructor? Why or why not?',
-    'When would you specifically need a regular function instead of an arrow function?',
+    { q: "Why doesn't an arrow function have its own `this`, and how is `this` resolved inside one?", a: 'Arrow functions were deliberately designed without their own `this` binding — instead, `this` inside an arrow function is resolved lexically, simply inherited from whatever `this` is in the immediately enclosing (non-arrow) scope at the time the arrow function was defined, exactly like any other regular variable would be resolved via the scope chain.' },
+    { q: 'Can you use an arrow function as a constructor? Why or why not?', a: 'No — attempting `new myArrowFn()` throws a TypeError. Arrow functions have no internal [[Construct]] method and no `prototype` property, both of which the `new` operator relies on to create and initialize new object instances — this is a deliberate restriction since arrow functions are meant purely for lightweight callback/expression use, not object construction.' },
+    { q: 'When would you specifically need a regular function instead of an arrow function?', a: 'When you need the function to have its own dynamic `this` determined by how it\'s called (a method that should bind to whatever object calls it), when you need access to the `arguments` object, when you need to use it as a constructor with `new`, or when you need a hoisted function declaration usable before its definition point in the code.' },
   ],
   'Parameters, arguments object, and default parameters': [
-    'Why is the `arguments` object not available in arrow functions?',
-    'How do default parameters interact with the `arguments` object in non-strict mode?',
-    'Can you reference a previous parameter in a default parameter expression?',
+    { q: "Why is the `arguments` object not available in arrow functions?", a: 'Arrow functions were deliberately designed to not have their own `arguments` binding, mirroring their lack of their own `this` — referencing `arguments` inside an arrow function instead looks it up lexically in the nearest enclosing regular function\'s scope (or throws a ReferenceError if there is none), rather than reflecting the arrow function\'s own actual call arguments.' },
+    { q: 'How do default parameters interact with the `arguments` object in non-strict mode?', a: 'When a function uses default parameters, the `arguments` object becomes "unmapped" — it no longer stays live-synced with the named parameter variables the way it historically did in simple (no defaults) non-strict functions; changing a named parameter\'s value inside the function body no longer automatically updates the corresponding arguments[i] entry once default parameters are involved.' },
+    { q: 'Can you reference a previous parameter in a default parameter expression?', a: 'Yes — default parameter expressions are evaluated left-to-right and can reference earlier parameters in the same parameter list: `function f(a, b = a + 1) { ... }` — but they cannot reference later parameters (which haven\'t been initialized yet at that point), since default expressions follow the same temporal-dead-zone-like left-to-right evaluation order as the parameters themselves.' },
   ],
   'First-class functions and higher-order functions': [
-    'What does "first-class function" mean in JavaScript?',
-    'Give a real-world example of a higher-order function that you use regularly.',
+    { q: 'What does "first-class function" mean in JavaScript?', a: 'It means functions are treated as regular values, just like numbers or strings — they can be assigned to variables, passed as arguments to other functions, returned from functions, and stored in data structures (arrays, object properties), with no special restrictions compared to any other kind of value.' },
+    { q: 'Give a real-world example of a higher-order function that you use regularly.', a: 'Array.prototype.map — it\'s a higher-order function because it accepts another function (the mapping callback) as an argument and applies it to each element, returning a new transformed array; other everyday examples include filter, reduce, setTimeout (accepts a callback), and any function that accepts/returns other functions, like a debounce or memoize utility.' },
   ],
   'Immediately Invoked Function Expressions (IIFE)': [
-    'Why were IIFEs used before ES modules? What problem did they solve?',
-    'Is there still a valid use case for IIFEs in modern JavaScript?',
+    { q: 'Why were IIFEs used before ES modules? What problem did they solve?', a: 'Before ES modules existed, all script-included code shared a single global scope by default, so every variable/function you declared risked colliding with another script\'s declarations. Wrapping code in an IIFE (`(function() { ...code... })()`) created an immediately-executing, isolated function scope, letting you keep internal variables/helpers private and avoid polluting or colliding with the shared global namespace.' },
+    { q: 'Is there still a valid use case for IIFEs in modern JavaScript?', a: 'With ES modules providing automatic file-level scoping, the original global-namespace-pollution problem is largely solved without needing IIFEs — but they still see occasional use for immediately executing async setup logic at the top level (before top-level await was widely supported), or for creating a one-off scoped block of code with cleanup that shouldn\'t leak any variables into its surrounding context.' },
   ],
   'Pure functions and side effects': [
-    'What makes a function "pure" and why is purity desirable?',
-    'List some common side effects in JavaScript functions.',
+    { q: 'What makes a function "pure" and why is purity desirable?', a: 'A pure function always produces the same output given the same input (no dependency on external mutable state), and has no observable side effects (no mutating arguments, no network calls, no writing to external variables/the DOM/console). Purity is desirable because pure functions are trivially testable in isolation (no setup/mocking of external state needed), safely cacheable/memoizable, and easy to reason about since their behavior is fully determined by their inputs alone.' },
+    { q: 'List some common side effects in JavaScript functions.', a: 'Mutating an argument passed by reference, modifying a variable outside the function\'s own scope (a module-level or global variable), making a network/API call, writing to the console/DOM, reading/writing localStorage or a database, and generating non-deterministic output like `Math.random()` or `Date.now()` — all of these make a function\'s output depend on (or affect) something beyond just its declared inputs/return value.' },
   ],
   'Recursion and tail calls': [
-    'How does recursion consume the call stack, and what happens if you go too deep?',
-    'What is tail-call optimization and does JavaScript actually use it in practice?',
+    { q: 'How does recursion consume the call stack, and what happens if you go too deep?', a: 'Each recursive call pushes a new stack frame onto the call stack (storing that call\'s local variables and return address), and these frames stay on the stack until each call returns — since the call stack has a fixed, finite size, sufficiently deep recursion (with no base case reached in time, or simply requiring more depth than the engine\'s stack limit) throws a "Maximum call stack size exceeded" RangeError.' },
+    { q: 'What is tail-call optimization and does JavaScript actually use it in practice?', a: 'Tail-call optimization reuses the current stack frame for a recursive call that\'s the very last operation in a function (a "tail call"), rather than pushing a new frame — theoretically enabling infinite recursion depth for such tail-recursive functions without stack overflow. Although proper tail calls are part of the official ES2015 spec, in practice almost no major JS engine (including V8/Chrome/Node) actually implements it, so relying on TCO for deep recursion in JavaScript is not safe in most real-world environments today.' },
   ],
   'Function currying and partial application': [
-    'What is currying, and how does it differ from partial application?',
-    'Implement a simple curry function that works for any arity.',
-    'When is currying practically useful?',
+    { q: 'What is currying, and how does it differ from partial application?', a: 'Currying transforms a function taking multiple arguments into a sequence of functions each taking exactly one argument (`add(a)(b)(c)` instead of `add(a, b, c)`). Partial application instead fixes some (but not necessarily just one) of a function\'s arguments upfront, producing a new function expecting the remaining arguments in a single subsequent call — currying is a specific, more rigid pattern (always one argument at a time), while partial application is more general/flexible about how many arguments get fixed at once.' },
+    { q: 'Implement a simple curry function that works for any arity.', a: 'A general-purpose curry helper checks whether enough arguments have accumulated to satisfy the original function\'s arity: `function curry(fn) { return function curried(...args) { if (args.length >= fn.length) return fn(...args); return (...more) => curried(...args, ...more); }; }` — this recursively collects arguments across multiple calls until enough have been gathered to actually invoke the original function.' },
+    { q: 'When is currying practically useful?', a: 'For building specialized, reusable functions from a general one by pre-filling common arguments (e.g. a generic `multiply(a, b)` curried into `double = multiply(2)`), for functional composition pipelines where each function in the chain expects exactly one argument, and in libraries like Redux where curried action creators or curried middleware/selector patterns are common idioms.' },
   ],
   'call, apply, and bind': [
-    'How do call, apply, and bind differ from each other?',
-    'How does bind create a new function rather than calling the original?',
-    'Give an example where bind solves a real `this`-loss problem.',
+    { q: 'How do call, apply, and bind differ from each other?', a: 'call invokes the function immediately, setting `this` and passing arguments individually (`fn.call(thisArg, a, b, c)`). apply invokes the function immediately too, but passes arguments as a single array (`fn.apply(thisArg, [a, b, c])`). bind does NOT invoke the function — it returns a brand new function with `this` (and optionally some leading arguments) permanently pre-bound, to be called later.' },
+    { q: 'How does bind create a new function rather than calling the original?', a: 'bind wraps the original function in a new function object that, whenever eventually called, internally invokes the original with the bound `this` value (and any pre-bound arguments) applied — the original function\'s definition is untouched; bind just produces a permanently-configured wrapper around it that you can call (or pass around, e.g. as an event handler) at any later point.' },
+    { q: "Give an example where bind solves a real `this`-loss problem.", a: 'Passing a class method as a callback directly (`button.addEventListener("click", this.handleClick)`) loses its intended `this` binding, since the method gets called as a plain function by the event system, not as `instance.handleClick()`. Binding it (`this.handleClick.bind(this)`, often done in the constructor) permanently locks `this` to the correct instance regardless of how the resulting bound function is later called.' },
   ],
 
   // Closures & Execution Context
   'What a closure is and how it works': [
-    'Define a closure in your own words with a code example.',
-    'Why does the inner function still have access to the outer function\'s variables after the outer function returns?',
+    { q: 'Define a closure in your own words with a code example.', a: 'A closure is the combination of a function bundled together with references to its surrounding (enclosing) lexical scope\'s variables, preserved even after that outer scope has technically finished executing — e.g. `function makeCounter() { let count = 0; return () => ++count; }` — the returned inner function keeps access to `count` from its enclosing makeCounter scope indefinitely, even though makeCounter itself has already returned.' },
+    { q: "Why does the inner function still have access to the outer function's variables after the outer function returns?", a: 'JavaScript doesn\'t garbage-collect a variable\'s memory just because its declaring function has finished executing — as long as some reachable reference (like a returned inner function) still closes over/references that variable, the JS engine keeps the underlying variable environment alive in memory, which is precisely what makes the closure work.' },
   ],
   'Practical uses of closures (data privacy, factories, memoization)': [
-    'How would you use a closure to create a private counter variable?',
-    'Implement a simple memoize function using closures.',
-    'How are closures used in the module pattern?',
+    { q: 'How would you use a closure to create a private counter variable?', a: '`function createCounter() { let count = 0; return { increment: () => ++count, get: () => count }; }` — the `count` variable is entirely inaccessible from outside the returned object except through the exposed increment/get functions, since there\'s no way to reach an enclosing function\'s local variable directly from outside its closure — this is a common way to simulate true private state in JavaScript.' },
+    { q: 'Implement a simple memoize function using closures.', a: '`function memoize(fn) { const cache = new Map(); return (...args) => { const key = JSON.stringify(args); if (cache.has(key)) return cache.get(key); const result = fn(...args); cache.set(key, result); return result; }; }` — the returned function closes over the `cache` Map, letting it persist and be reused across multiple calls without exposing it externally.' },
+    { q: 'How are closures used in the module pattern?', a: 'The module pattern wraps code in an IIFE (or, more commonly today, an ES module\'s own natural file-level scope) that returns/exports only specific, intended values/functions, while any other internal helper variables/functions stay closed over and completely private to that scope — external code can only interact through the deliberately exposed interface, with no way to directly reach or mutate the private internals.' },
   ],
   'Execution context (global, function, eval)': [
-    'What is an execution context and what does it contain?',
-    'How does JavaScript create an execution context when a function is called?',
+    { q: 'What is an execution context and what does it contain?', a: 'An execution context is the environment in which JS code is evaluated — it contains the variable environment (where local variables/function declarations live), the lexical environment (defining the current scope chain), and the value of `this` for that context. Each function call creates its own new execution context, alongside the single global execution context that exists for top-level code.' },
+    { q: 'How does JavaScript create an execution context when a function is called?', a: 'On each function call, the engine creates a new execution context, sets up the scope chain (linking to the outer lexical environments the function was defined within), determines the value of `this` based on how the function was invoked, hoists that function\'s own local variable/function declarations, and pushes this new context onto the call stack, popping it off once the function returns.' },
   ],
   'Call stack': [
-    'What happens to the call stack when a function calls another function?',
-    'What causes a "Maximum call stack size exceeded" error?',
+    { q: 'What happens to the call stack when a function calls another function?', a: 'A new stack frame is pushed onto the call stack representing that new function call (recording its local execution context, including where to resume once it returns) — this frame sits on top until that function completes, at which point it\'s popped off and control resumes in the calling function\'s frame right where it left off.' },
+    { q: 'What causes a "Maximum call stack size exceeded" error?', a: 'It occurs when the call stack grows beyond the JS engine\'s fixed, finite size limit — most commonly from infinite or excessively deep recursion (a recursive function whose base case is never reached, or that simply requires more recursive depth than the stack can accommodate), since each nested call adds another frame that never gets popped off until the recursion actually terminates.' },
   ],
   'Common closure pitfalls (loops with var, stale values)': [
-    'Why does a classic loop-with-var create a closure bug when using setTimeout inside?',
-    'How do you fix the loop closure bug — using let, IIFE, or bind?',
-    'What is a "stale closure" in the context of React hooks?',
+    { q: 'Why does a classic loop-with-var create a closure bug when using setTimeout inside?', a: 'Because var is function-scoped (not block-scoped), there\'s only ONE shared `i` variable across the entire loop, not a fresh one per iteration — by the time any of the setTimeout callbacks actually run (after the synchronous loop has already fully completed), they all close over and read that same single, now-final value of `i`, rather than the value it held during "their" specific iteration.' },
+    { q: 'How do you fix the loop closure bug — using let, IIFE, or bind?', a: 'Using `let` instead of `var` is the simplest modern fix — let creates a genuinely new, independent binding of `i` for each loop iteration, so each closure correctly captures its own iteration\'s value. Older pre-ES6 solutions wrapped the loop body in an IIFE that took `i` as a parameter (creating a new scope per iteration manually), or used `.bind(null, i)` to pre-bind the current iteration\'s value as an argument.' },
+    { q: 'What is a "stale closure" in the context of React hooks?', a: 'A stale closure occurs when a function (like an effect callback or event handler) captures a state/prop value from the render it was created in, and that value later changes in a subsequent render, but the earlier closure — because it wasn\'t recreated/updated — still references the old, "stale" captured value, commonly happening with incomplete useEffect dependency arrays or callbacks created once and reused across many renders without being refreshed.' },
   ],
 
   // `this` keyword
   'How `this` is determined (call-site binding)': [
-    'How does JavaScript determine what `this` refers to at runtime?',
-    'What are the four rules that govern `this` binding, in order of precedence?',
+    { q: 'How does JavaScript determine what `this` refers to at runtime?', a: '`this` is determined dynamically, based entirely on *how* a function is called (its "call site"), not where the function was defined (except for arrow functions, which are the deliberate exception, resolving `this` lexically instead) — the same function can have a completely different `this` value depending on whether it\'s called as `obj.method()`, a plain `fn()`, via `.call()`/`.apply()`/`.bind()`, or with `new`.' },
+    { q: 'What are the four rules that govern `this` binding, in order of precedence?', a: 'From highest to lowest precedence: (1) new binding — calling with `new` sets `this` to the newly created object. (2) Explicit binding — call/apply/bind explicitly set `this`. (3) Implicit binding — calling as a method (`obj.method()`) sets `this` to the object before the dot. (4) Default binding — a plain, unqualified function call sets `this` to undefined (strict mode) or the global object (non-strict mode) as the fallback when none of the higher-precedence rules apply.' },
   ],
   'Default binding': [
-    'What does `this` refer to in a plain function call in strict mode vs non-strict mode?',
+    { q: 'What does `this` refer to in a plain function call in strict mode vs non-strict mode?', a: 'In non-strict mode, a plain unqualified function call (`foo()`, with no explicit receiver) sets `this` to the global object (window in browsers). In strict mode, that same call leaves `this` as `undefined` instead — the strict mode behavior is specifically intended to surface bugs where a developer accidentally called something as a bare function instead of the intended method/bound call.' },
   ],
   'Implicit binding': [
-    'What is implicit binding and when does it apply?',
-    'Give an example of implicit binding being "lost" when a method is assigned to a variable.',
+    { q: 'What is implicit binding and when does it apply?', a: 'Implicit binding applies when a function is called as a method of an object (`obj.method()`) — `this` inside that method call is set to the object immediately to the left of the dot at the call site (obj, in this example), regardless of where or how that method function was originally defined.' },
+    { q: 'Give an example of implicit binding being "lost" when a method is assigned to a variable.', a: '`const fn = obj.method; fn();` — extracting the method into a standalone variable and calling it detaches it from its "obj." call-site context entirely; the subsequent bare `fn()` call now falls under default binding rules instead of implicit binding, so `this` inside method becomes undefined (strict mode) rather than obj, even though the exact same function reference is being invoked.' },
   ],
   'Explicit binding (call, apply, bind)': [
-    'How does call differ from apply in terms of argument passing?',
-    'Why would you use bind instead of call for an event handler?',
+    { q: 'How does call differ from apply in terms of argument passing?', a: 'call takes arguments individually, listed one after another after the thisArg: `fn.call(thisArg, arg1, arg2, arg3)`. apply takes all the arguments bundled into a single array: `fn.apply(thisArg, [arg1, arg2, arg3])` — functionally equivalent otherwise, with the choice between them typically just depending on whether your arguments are already conveniently in an array or listed individually.' },
+    { q: 'Why would you use bind instead of call for an event handler?', a: 'call and apply invoke the function immediately, which isn\'t useful for something like an event listener that needs to be called later, by the browser, whenever the event fires. bind produces a new function with `this` permanently pre-bound but doesn\'t call it right away — exactly what\'s needed to pass as `addEventListener("click", this.handler.bind(this))`, guaranteeing correct `this` whenever the browser eventually invokes it.' },
   ],
   'new binding': [
-    'What does the `new` keyword do step by step?',
-    'How does `new` binding take precedence over explicit binding?',
-  ],
-  'Arrow functions and lexical this': [
-    'In what scenario does using an arrow function for a callback preserve `this` where a regular function would not?',
-    'Can you force a different `this` onto an arrow function using call or bind?',
+    { q: 'What does the `new` keyword do step by step?', a: 'It creates a brand-new, empty object; sets that new object\'s internal [[Prototype]] to the constructor function\'s `.prototype` property; calls the constructor function with `this` bound to the new object; and, if the constructor doesn\'t explicitly return its own object, automatically returns the newly created and now-populated object as the result of the `new` expression.' },
+    { q: "How does `new` binding take precedence over explicit binding?", a: 'If a function was previously bound with `.bind()` (fixing its `this`), calling that bound function with `new` still creates a genuinely new object and uses that new object as `this` for the constructor call, effectively overriding the earlier explicit bind — `new` binding sits at the very top of the `this`-determination precedence order, above explicit, implicit, and default binding.' },
   ],
   'this in event handlers and callbacks': [
-    'Why does `this` inside an event listener callback sometimes point to the DOM element?',
-    'How do you ensure a class method retains `this` when used as an event listener?',
+    { q: 'Why does `this` inside an event listener callback sometimes point to the DOM element?', a: 'When you register a plain (non-arrow) function directly as an event listener (`element.addEventListener("click", function() {...})`), the browser internally invokes that callback as if it were a method call on the element (roughly `element.handler()`) — following implicit binding rules, this naturally sets `this` inside the handler to the DOM element the listener is attached to.' },
+    { q: 'How do you ensure a class method retains `this` when used as an event listener?', a: 'Either explicitly bind it (commonly in the constructor: `this.handleClick = this.handleClick.bind(this);`), or define the method as a class field using an arrow function (`handleClick = () => { ... }`), which lexically captures the instance\'s `this` at definition time and never loses it regardless of how the resulting function is later called/passed around.' },
   ],
 
   // Objects
   'Object literals and property shorthand': [
-    'What is property shorthand syntax and when is it useful?',
-    'What is a computed property name and how do you use it?',
+    { q: 'What is property shorthand syntax and when is it useful?', a: 'When a variable\'s name matches the desired property key, you can write just the variable name once instead of `key: value` — `{ name, age }` instead of `{ name: name, age: age }` — useful whenever you\'re building an object from existing variables that already happen to have the same names as the properties you want, which is extremely common when returning multiple values or constructing config/data objects.' },
+    { q: 'What is a computed property name and how do you use it?', a: 'A computed property name lets you use a dynamic expression (rather than a static, hardcoded key) as an object\'s key, using bracket syntax inside the literal: `{ [dynamicKeyVariable]: value }` — the expression inside the brackets is evaluated to determine the actual property name, letting you build objects with keys determined at runtime rather than always being fixed, literal identifiers.' },
   ],
   'Property descriptors (writable, enumerable, configurable)': [
-    'What are the three boolean attributes of a property descriptor?',
-    'How does Object.defineProperty differ from simple property assignment?',
-    'What does making a property non-configurable prevent?',
+    { q: 'What are the three boolean attributes of a property descriptor?', a: 'writable (whether the property\'s value can be reassigned), enumerable (whether it shows up in for...in loops, Object.keys, and spread/JSON.stringify), and configurable (whether the property can be deleted, or have its descriptor attributes themselves further changed later) — normal property assignment (`obj.x = 1`) creates a property with all three set to true by default.' },
+    { q: 'How does Object.defineProperty differ from simple property assignment?', a: 'Simple assignment (`obj.x = 1`) always creates (or updates) a property with default full writable/enumerable/configurable behavior. Object.defineProperty lets you precisely control each of those three attributes individually — e.g. creating a property that\'s readable but not writable, or one that\'s intentionally hidden from enumeration (non-enumerable) — giving fine-grained control that plain assignment simply can\'t express.' },
+    { q: 'What does making a property non-configurable prevent?', a: 'It prevents the property from being deleted, and prevents any further changes to its descriptor attributes (you can\'t later make it writable if it currently isn\'t, or make it enumerable if it currently isn\'t, etc.) — it essentially locks in that property\'s current descriptor configuration permanently, though (importantly) it doesn\'t automatically also make it non-writable unless separately configured that way too.' },
   ],
   'Object.keys / values / entries / fromEntries': [
-    'How do Object.keys, Object.values, and Object.entries differ from for...in?',
-    'How would you use Object.fromEntries to transform an object\'s values?',
+    { q: 'How do Object.keys, Object.values, and Object.entries differ from for...in?', a: 'Object.keys/values/entries only include the object\'s own (non-inherited) enumerable properties, returned as an actual array you can immediately chain array methods on. for...in additionally walks up the prototype chain, including inherited enumerable properties too, and gives you keys one at a time in a loop rather than a ready-to-use array — which is why Object.keys and friends are generally the safer, more predictable, more convenient choice for most everyday object-iteration needs.' },
+    { q: "How would you use Object.fromEntries to transform an object's values?", a: 'Convert the object to entries, map/transform them, then convert back: `Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, value * 2]))` doubles every value while preserving the same keys — this entries-map-fromEntries pattern is a common, concise way to transform an object\'s values (or filter/rename keys) using familiar array methods rather than manually building up a new object with a for loop.' },
   ],
   'Object.assign and shallow copy': [
-    'What are the limitations of Object.assign for deep nested objects?',
-    'How is Object spread `{...obj}` different from Object.assign?',
+    { q: 'What are the limitations of Object.assign for deep nested objects?', a: 'Object.assign only performs a shallow copy — top-level properties are copied by value for primitives, but nested object/array properties are copied by reference, meaning the resulting merged object still shares the exact same nested objects as its sources; mutating a nested object in the "copy" also mutates it in the original source object, since there\'s really only one such nested object underneath, just referenced from two places.' },
+    { q: 'How is Object spread `{...obj}` different from Object.assign?', a: 'Functionally, they\'re very similar (both perform a shallow merge/copy) — the main practical differences are syntactic (spread is a literal expression usable directly within an object literal, while Object.assign is a function call requiring an explicit target object as its first argument) and that Object spread doesn\'t trigger setters on the target the way Object.assign historically does when copying onto an existing object with defined setters.' },
   ],
   'Object.freeze, seal, and preventExtensions': [
-    'What is the difference between freeze, seal, and preventExtensions?',
-    'Does Object.freeze deeply freeze nested objects?',
+    { q: 'What is the difference between freeze, seal, and preventExtensions?', a: 'preventExtensions only prevents adding new properties — existing properties can still be modified or deleted. seal additionally prevents deleting existing properties or changing their configurability, but existing writable properties can still have their values changed. freeze is the strictest — it does everything seal does, plus makes all existing properties non-writable too, so nothing about the object (short of it being an entirely new object) can change at all.' },
+    { q: 'Does Object.freeze deeply freeze nested objects?', a: 'No — freeze is shallow, only affecting the object\'s own direct top-level properties; any nested objects/arrays referenced by those properties remain fully mutable unless you separately, recursively freeze them too, which is why a "deepFreeze" utility function (recursively calling freeze on every nested object) is a common pattern when true deep immutability is actually required.' },
   ],
   'Object destructuring (with defaults, renaming, nesting)': [
-    'How do you rename a property while destructuring it?',
-    'How do you provide a default value when a destructured property is undefined?',
-    'How do you destructure a nested object in a function parameter?',
+    { q: 'How do you rename a property while destructuring it?', a: 'Use the colon syntax: `const { name: userName } = user;` extracts the `name` property but binds it to a new local variable called `userName` instead — useful for avoiding naming collisions, or giving a more descriptive local name than the source property\'s own name.' },
+    { q: 'How do you provide a default value when a destructured property is undefined?', a: 'Use an equals sign after the property name: `const { role = "guest" } = user;` — if `user.role` is undefined (specifically undefined, not any other falsy value), `role` gets the default "guest" instead; this can also be combined with renaming: `const { role: userRole = "guest" } = user;`.' },
+    { q: 'How do you destructure a nested object in a function parameter?', a: 'Mirror the nested shape directly in the destructuring pattern: `function greet({ user: { name, address: { city } } }) { ... }` — this directly extracts deeply nested values as parameters without needing intermediate variables, though excessive nesting depth in a single destructuring pattern can hurt readability if taken too far.' },
   ],
   'Shallow vs deep copy (structuredClone)': [
-    'When would structuredClone fail (e.g. functions, class instances)?',
-    'What is the difference between a shallow copy and a deep copy, with a concrete example?',
-    'How did developers deep-clone objects before structuredClone?',
+    { q: 'When would structuredClone fail (e.g. functions, class instances)?', a: 'structuredClone throws a DataCloneError for values it can\'t serialize using the structured clone algorithm — functions (they\'re fundamentally not cloneable, since they carry closures/execution context), DOM nodes, and some class instances with non-clonable internals (though plain data-holding class instances often work, they lose their prototype chain/methods and become plain objects after cloning).' },
+    { q: 'What is the difference between a shallow copy and a deep copy, with a concrete example?', a: 'A shallow copy duplicates only the top level — `{...obj}` creates a new outer object, but if `obj.nested` is itself an object, both the original and the copy still point to the exact same nested object reference. A deep copy (like structuredClone) recursively duplicates every nested level too, so the copy\'s nested objects are entirely independent, and mutating them never affects the original at any depth.' },
+    { q: 'How did developers deep-clone objects before structuredClone?', a: 'A common (imperfect) trick was `JSON.parse(JSON.stringify(obj))`, which works for plain, JSON-serializable data but silently loses functions, undefined values, Dates (converted to strings), and any non-JSON-representable types — for genuine, robust deep cloning, developers relied on dedicated libraries like lodash\'s cloneDeep, since no built-in, fully correct native solution existed until structuredClone.' },
   ],
   'JSON.stringify / JSON.parse and their limitations': [
-    'What values does JSON.stringify silently drop or transform?',
-    'How does JSON.stringify handle circular references?',
-    'How can you use the replacer/reviver parameter to customize serialization?',
+    { q: 'What values does JSON.stringify silently drop or transform?', a: 'undefined values, functions, and Symbols are silently omitted entirely (if they\'re object property values) or converted to null (if in an array). Date objects get converted to their ISO string representation (losing their actual Date type on parse-back unless you manually revive them). NaN and Infinity get converted to null, since JSON has no representation for them.' },
+    { q: 'How does JSON.stringify handle circular references?', a: 'It throws a TypeError ("Converting circular structure to JSON") — JSON.stringify has no built-in mechanism to detect and represent an object that (directly or indirectly) references itself, since JSON as a data format has no concept of shared/circular references at all; you\'d need a custom replacer function or a specialized circular-safe serialization library to handle this case.' },
+    { q: 'How can you use the replacer/reviver parameter to customize serialization?', a: 'JSON.stringify\'s second argument (a "replacer" function or array) lets you filter/transform each key-value pair during serialization (e.g. excluding sensitive fields, or converting a Date to a custom format). JSON.parse\'s second argument (a "reviver" function) lets you transform each parsed value as it\'s reconstructed — commonly used to convert ISO date strings back into actual Date objects after parsing, reversing the string-conversion that stringify performed.' },
   ],
 
   // Prototypes & Inheritance
   'Prototype chain and [[Prototype]]': [
-    'What is the prototype chain, and how does JavaScript use it for property lookup?',
-    'What is at the top of every object\'s prototype chain?',
+    { q: 'What is the prototype chain, and how does JavaScript use it for property lookup?', a: 'Every object has an internal [[Prototype]] link to another object (or null), and when you access a property that doesn\'t exist directly on the object itself, JS automatically walks up this chain of linked prototype objects, checking each one in turn, until it finds a matching property or reaches the end of the chain (null) and returns undefined.' },
+    { q: "What is at the top of every object's prototype chain?", a: 'For ordinary objects, the chain terminates at Object.prototype (which itself has a [[Prototype]] of null) — Object.prototype is where the common built-in methods like toString, hasOwnProperty, and valueOf are actually defined, inherited by virtually every object unless deliberately created without that inheritance (e.g. via Object.create(null)).' },
   ],
   '__proto__ vs prototype': [
-    'What is the difference between `__proto__` and `.prototype`?',
-    'Why is `__proto__` considered legacy and what should you use instead?',
+    { q: 'What is the difference between `__proto__` and `.prototype`?', a: '`__proto__` is a (legacy, though still widely supported) accessor property on object instances exposing their actual internal [[Prototype]] link — what the object actually inherits from. `.prototype` is a property that exists specifically on *functions* (particularly constructor functions/classes), defining what will become the [[Prototype]] (accessible as __proto__) of any object created by calling that function with `new`.' },
+    { q: "Why is `__proto__` considered legacy and what should you use instead?", a: '__proto__ was originally a non-standard, implementation-specific feature that different engines implemented inconsistently before eventually being standardized (for web compatibility) as a legacy accessor — the modern, standardized, recommended alternatives are Object.getPrototypeOf(obj) (to read an object\'s prototype) and Object.setPrototypeOf(obj, proto) (to change it), which are more explicit and consistently specified.' },
   ],
   'Constructor functions and the `new` operator': [
-    'What four things does the `new` operator do when creating an object?',
-    'What happens if a constructor function returns a non-primitive object?',
+    { q: 'What four things does the `new` operator do when creating an object?', a: 'It creates a new, empty object; links that new object\'s [[Prototype]] to the constructor function\'s .prototype property; invokes the constructor function with `this` bound to that new object; and returns the new object automatically (unless the constructor explicitly returns its own separate object, in which case that returned object is used instead).' },
+    { q: 'What happens if a constructor function returns a non-primitive object?', a: 'If the constructor function explicitly `return`s an object (not a primitive), `new` uses that explicitly-returned object as the final result instead of the automatically-created new object — this override only applies to objects; if the constructor returns a primitive value (a string, number, etc.), that return value is ignored entirely and the normally-created new object is used instead.' },
   ],
   'Prototypal inheritance': [
-    'How would you implement inheritance using constructor functions and prototype chaining without using `class`?',
-    'What is the difference between prototypal and classical inheritance?',
+    { q: 'How would you implement inheritance using constructor functions and prototype chaining without using `class`?', a: 'Define a base constructor function with shared methods on its .prototype, then for the subclass constructor, call the base constructor with `.call(this, ...)` to initialize inherited properties, and set the subclass\'s .prototype to `Object.create(BaseConstructor.prototype)` (linking the prototype chain) before adding any subclass-specific methods — this is essentially what `class ... extends` does automatically under the hood.' },
+    { q: 'What is the difference between prototypal and classical inheritance?', a: 'Classical inheritance (Java/C#) is based on classes as blueprints — objects are instances of a fixed class hierarchy defined at compile time. Prototypal inheritance is based on objects directly inheriting from other live objects via the prototype chain, with no rigid class concept required at all — JavaScript\'s `class` syntax is ultimately just syntactic sugar over this same underlying prototypal mechanism, not a fundamentally different inheritance model.' },
   ],
   'Object.create': [
-    'How does Object.create(proto) differ from using `new`?',
-    'How would you use Object.create(null) and why?',
+    { q: 'How does Object.create(proto) differ from using `new`?', a: 'Object.create(proto) directly creates a new object with its [[Prototype]] set to exactly the object you pass in, with no constructor function invoked at all. `new SomeConstructor()` creates a new object whose prototype is SomeConstructor.prototype, AND additionally runs the constructor function\'s body to initialize the object — Object.create is a lower-level, more direct way to set up prototypal inheritance without any constructor-invocation ceremony.' },
+    { q: 'How would you use Object.create(null) and why?', a: 'Object.create(null) creates an object with no prototype at all (not even Object.prototype) — meaning it has none of the usual inherited methods (no toString, hasOwnProperty, etc.) — useful for creating a genuinely "pure" dictionary/map-like object with zero risk of prototype pollution or accidental collision with inherited property names like "toString" or "constructor" when used as a plain key-value store.' },
   ],
   'hasOwnProperty vs inherited properties': [
-    'How do you check if a property belongs to an object itself vs being inherited?',
-    'Why is using Object.hasOwn preferred over obj.hasOwnProperty in modern code?',
+    { q: 'How do you check if a property belongs to an object itself vs being inherited?', a: 'Use `obj.hasOwnProperty("key")` (or the newer Object.hasOwn(obj, "key")) — this checks only the object\'s own direct properties, returning false for a property that exists only via the prototype chain, unlike the `in` operator which returns true for both own and inherited properties.' },
+    { q: 'Why is using Object.hasOwn preferred over obj.hasOwnProperty in modern code?', a: 'obj.hasOwnProperty() itself relies on inheriting that method from Object.prototype, which fails or needs an awkward workaround for objects created with Object.create(null) (which have no Object.prototype in their chain, and thus no inherited hasOwnProperty method at all) — Object.hasOwn(obj, key), a standalone static function, works correctly and safely regardless of the object\'s own prototype chain.' },
   ],
   'instanceof and the prototype chain': [
-    'How does instanceof work under the hood?',
-    'What can break instanceof checks (e.g. across iframes)?',
+    { q: 'How does instanceof work under the hood?', a: '`obj instanceof Constructor` walks obj\'s prototype chain, checking at each step whether the current [[Prototype]] is strictly equal to Constructor.prototype — if it finds a match anywhere along the chain, it returns true; if it reaches the end (null) without a match, it returns false.' },
+    { q: 'What can break instanceof checks (e.g. across iframes)?', a: 'Values crossing realm boundaries (like an array or error object created in a different iframe/window/worker) have a completely separate, unrelated set of built-in prototypes (that iframe\'s own distinct Array.prototype, not the same object as your page\'s Array.prototype), so `crossFrameArray instanceof Array` can incorrectly return false even though the value genuinely is an array — since instanceof strictly compares against the local realm\'s specific prototype object reference.' },
   ],
 
   // Classes
   'class syntax and the constructor': [
-    'Are JavaScript classes just syntactic sugar? What is under the hood?',
-    'What happens if you don\'t define a constructor in a subclass?',
+    { q: 'Are JavaScript classes just syntactic sugar? What is under the hood?', a: 'Largely yes — a class declaration compiles down to the same underlying constructor-function-plus-prototype mechanism JavaScript always had; class methods become methods on the constructor\'s .prototype object, and `extends`/`super` set up the same prototype chain linking that manual prototypal inheritance code would achieve. Classes do add a few genuinely new runtime behaviors beyond pure sugar though — like being unable to call a class without `new` (throwing a TypeError), and having a temporal-dead-zone-like hoisting behavior distinct from function declarations.' },
+    { q: "What happens if you don't define a constructor in a subclass?", a: 'JavaScript automatically provides an implicit default constructor that simply calls `super(...args)`, forwarding all received arguments directly to the parent class\'s constructor — this default behavior is exactly why a subclass that doesn\'t need to add any of its own initialization logic can omit the constructor entirely and still correctly initialize via the parent\'s constructor.' },
   ],
   'Static methods and static properties': [
-    'When would you use a static method vs an instance method?',
-    'Can a subclass access static methods of its parent class?',
+    { q: 'When would you use a static method vs an instance method?', a: 'Use a static method for functionality logically related to the class itself but not dependent on any particular instance\'s data — factory methods (`MyClass.fromJSON(data)`), utility/helper functions grouped under the class\'s namespace, or class-level configuration/constants. Use an instance method whenever the logic needs access to a specific instance\'s own state via `this`.' },
+    { q: 'Can a subclass access static methods of its parent class?', a: 'Yes — static methods are inherited through the class hierarchy just like instance methods are, so a subclass can call an inherited static method either via its own name (`Subclass.parentStaticMethod()`) or, from within a static method of the subclass itself, via `super.parentStaticMethod()`.' },
   ],
   'Class fields (public and private #fields)': [
-    'How do private class fields (using #) differ from the convention of underscore-prefixed properties?',
-    'What error do you get when you try to access a private field from outside the class?',
+    { q: 'How do private class fields (using #) differ from the convention of underscore-prefixed properties?', a: 'An underscore-prefixed property (`this._internal`) is purely a naming convention — it\'s still a completely ordinary, fully accessible/mutable public property from outside the class; nothing in the language actually enforces the "please don\'t touch this" intent. A true `#privateField` is genuinely, mechanically inaccessible from outside the class — attempting to access it from external code isn\'t just discouraged, it throws a real syntax/runtime error.' },
+    { q: 'What error do you get when you try to access a private field from outside the class?', a: 'Attempting `instance.#privateField` from code outside the class definition is actually a SyntaxError at parse time (not even a runtime error) if the `#` name isn\'t declared/recognized in that lexical scope at all — the private field syntax is deeply integrated into the language\'s parsing itself, not just an access-control check performed at runtime.' },
   ],
   'Inheritance with extends and super': [
-    'When must you call `super()` in a subclass constructor, and what happens if you don\'t?',
-    'How do you call a parent class\'s method from a subclass method that overrides it?',
+    { q: 'When must you call `super()` in a subclass constructor, and what happens if you don\'t?', a: 'You must call super() before you can access `this` anywhere in a subclass\'s constructor (if that subclass has its own explicit constructor at all) — attempting to use `this` before calling super() throws a ReferenceError, since the parent class\'s constructor is what actually initializes the object; without calling it, `this` is genuinely not yet available/initialized in the subclass\'s constructor.' },
+    { q: "How do you call a parent class's method from a subclass method that overrides it?", a: 'Use `super.methodName(...)` inside the overriding subclass method — this explicitly invokes the parent class\'s version of that method (rather than the subclass\'s own overriding version, which would cause infinite recursion if called via `this.methodName()` instead), commonly used to extend rather than completely replace the parent\'s behavior.' },
   ],
 
   // Arrays
   'Mutating methods (push, pop, shift, unshift, splice, sort, reverse, fill, copyWithin)': [
-    'Why is sorting an array in place often problematic in React state? How do you avoid it?',
-    'How does Array.prototype.sort behave with numbers by default, and why does that surprise people?',
+    { q: 'Why is sorting an array in place often problematic in React state? How do you avoid it?', a: 'Array.prototype.sort mutates the original array in place and returns the same reference — if that array is React state, mutating it directly doesn\'t create a new reference, so React\'s reference-equality-based re-render detection won\'t notice the change and won\'t re-render. Avoid it by sorting a copy first: `[...array].sort(comparator)` (or the newer non-mutating `array.toSorted(comparator)`), ensuring you get a fresh array reference to actually set as the new state.' },
+    { q: 'How does Array.prototype.sort behave with numbers by default, and why does that surprise people?', a: 'Without an explicit comparator, sort converts elements to strings and compares them lexicographically (alphabetically) by default — so `[10, 9, 2, 1, 100].sort()` produces `[1, 10, 100, 2, 9]`, not numerically ascending order, since string comparison treats "10" as coming before "2" (comparing the first characters "1" vs "2"). You must always pass an explicit numeric comparator (`(a, b) => a - b`) for correct numeric sorting.' },
   ],
   'Non-mutating methods (slice, concat, map, filter, reduce, flat, flatMap)': [
-    'Implement flatMap using just flat and map.',
-    'How does reduce work — walk through a summation example step by step.',
-    'What does flat() do and how does depth work?',
+    { q: 'Implement flatMap using just flat and map.', a: '`array.map(fn).flat()` — flatMap first maps each element through the provided function (which may return an array for that element), then flattens exactly one level deep, combining both operations into a single, slightly more efficient built-in step; implementing it manually as map-then-flat produces the identical result, just as two separate passes rather than flatMap\'s single combined pass.' },
+    { q: 'How does reduce work — walk through a summation example step by step.', a: '`[1, 2, 3].reduce((acc, curr) => acc + curr, 0)` — starting with the initial accumulator value 0, reduce calls the callback once per element, each time passing the accumulator so far and the current element, and using the callback\'s return value as the new accumulator for the next iteration: (0+1)=1, (1+2)=3, (3+3)=6 — the final accumulator value (6) after processing every element is what reduce ultimately returns.' },
+    { q: 'What does flat() do and how does depth work?', a: 'flat() flattens nested sub-arrays into the parent array, up to a specified depth (defaulting to 1 level if no argument given) — `[[1,2],[3,[4,5]]].flat()` produces `[1,2,3,[4,5]]` (only one level flattened), while `.flat(2)` or `.flat(Infinity)` would fully flatten the deeper nested array too, producing `[1,2,3,4,5]`.' },
   ],
   'Searching (indexOf, lastIndexOf, includes, find, findIndex, findLast)': [
-    'Why does `includes` handle NaN correctly but `indexOf` does not?',
-    'When would you use find vs findIndex?',
+    { q: "Why does `includes` handle NaN correctly but `indexOf` does not?", a: 'indexOf uses strict equality (===) internally for its comparisons, and since NaN === NaN is always false, `[NaN].indexOf(NaN)` returns -1 (not found), even though NaN is literally present in the array. includes uses the SameValueZero algorithm instead, which specifically treats NaN as equal to itself, so `[NaN].includes(NaN)` correctly returns true.' },
+    { q: 'When would you use find vs findIndex?', a: 'Use find when you need the actual matching element itself (returns the element, or undefined if none match). Use findIndex when you need to know the position of the matching element (returns the index, or -1 if none match) — e.g. needed if you subsequently want to use that position to splice/replace the element in the original array.' },
   ],
   'sort and custom comparators': [
-    'Write a comparator to sort an array of objects by a string property.',
-    'Why does the default sort on `[10, 9, 2, 1, 100]` produce a wrong result?',
+    { q: 'Write a comparator to sort an array of objects by a string property.', a: '`items.sort((a, b) => a.name.localeCompare(b.name))` — using localeCompare (rather than the `<`/`>` operators) correctly handles locale-aware string ordering (accented characters, different alphabets), which is generally the safer, more correct default for sorting user-facing string data than naive character-code comparison.' },
+    { q: 'Why does the default sort on `[10, 9, 2, 1, 100]` produce a wrong result?', a: 'Without an explicit comparator, sort converts every element to a string and compares lexicographically — "10" sorts before "2" because comparing character-by-character, "1" (first char of "10") comes before "2" alphabetically/numerically as a character code, giving the counter-intuitive result `[1, 10, 100, 2, 9]` instead of true numeric ascending order.' },
   ],
   'Array destructuring': [
-    'How do you skip elements when destructuring an array?',
-    'How would you swap two variables using array destructuring?',
+    { q: 'How do you skip elements when destructuring an array?', a: 'Leave the corresponding position empty (just a comma with no variable name): `const [first, , third] = arr;` skips the second element entirely, only binding variables for the first and third positions.' },
+    { q: 'How would you swap two variables using array destructuring?', a: '`[a, b] = [b, a];` — the right-hand array literal is evaluated first (capturing both original values), and then destructuring-assigns them in swapped order to a and b, achieving a clean one-line swap without needing a temporary third variable, which the classic swap approach without destructuring would otherwise require.' },
   ],
   'Immutable array updates (toSorted, toReversed, toSpliced, with)': [
-    'What do the new non-mutating array methods (toSorted, toReversed, toSpliced, with) do?',
-    'How do they help with React state immutability patterns?',
+    { q: 'What do the new non-mutating array methods (toSorted, toReversed, toSpliced, with) do?', a: 'They\'re non-mutating counterparts of the classic mutating array methods — toSorted() returns a new sorted array (leaving the original untouched, unlike sort()), toReversed() returns a new reversed array (unlike reverse()), toSpliced() returns a new array with the splice operation applied (unlike splice()), and with(index, value) returns a new array with a single element replaced at the given index (a non-mutating alternative to `arr[index] = value`).' },
+    { q: 'How do they help with React state immutability patterns?', a: 'They eliminate the need for the previous common workaround of spreading into a copy before mutating (`[...arr].sort()`) — you can now call `arr.toSorted()` directly and get a properly new array reference safe to set as new state, without any risk of accidentally mutating the original array in place (which the equivalent mutating method would do, silently breaking React\'s change-detection if applied directly to state).' },
   ],
 
   // Strings
   'Template literals and expression interpolation': [
-    'What are the benefits of template literals over string concatenation?',
-    'How do tagged template literals work, and what is a real-world use case?',
+    { q: 'What are the benefits of template literals over string concatenation?', a: 'They support embedded expression interpolation directly (`${expression}`) without breaking out of the string with `+` concatenation, natively support multi-line strings without needing explicit `\\n` characters or concatenation across lines, and generally produce more readable code for building strings with dynamic content compared to chains of `+` operators mixing string literals and variables.' },
+    { q: 'How do tagged template literals work, and what is a real-world use case?', a: 'A tag function placed immediately before a template literal (`myTag\`Hello ${name}\`) intercepts the literal\'s parts before final assembly — receiving the literal string segments as an array and the interpolated expression values as separate arguments — letting the tag function customize the final output. Real-world uses include styled-components\' `css`/`styled.div` tags (parsing the template into a CSS-in-JS style object) and safe SQL query builders that automatically escape interpolated values to prevent injection.' },
   ],
   'Common methods (slice, substring, substr, split, trim, pad, repeat)': [
-    'What is the difference between slice, substring, and the deprecated substr?',
-    'How do padStart and padEnd work and where are they commonly used?',
+    { q: 'What is the difference between slice, substring, and the deprecated substr?', a: 'slice and substring both take (start, end) indices, but slice supports negative indices (counting from the end) while substring treats negative arguments as 0 and automatically swaps arguments if start > end. substr (deprecated, avoid using it) takes (start, length) instead of (start, end), a fundamentally different second-argument meaning that\'s a common source of confusion — modern code should stick to slice.' },
+    { q: 'How do padStart and padEnd work and where are they commonly used?', a: 'padStart(targetLength, padString) and padEnd(targetLength, padString) pad a string with a repeated pad character/string until it reaches the target total length, adding the padding at the start or end respectively — commonly used for formatting numbers with leading zeros (`"5".padStart(2, "0")` → "05"), aligning columns in console/text output, or truncating/formatting IDs to a fixed display width.' },
   ],
   'replace and replaceAll (with functions)': [
-    'How would you use a function as the second argument to replace to transform each match?',
-    'What is the difference between replace with a regex g flag and replaceAll?',
+    { q: 'How would you use a function as the second argument to replace to transform each match?', a: '`str.replace(/\\d+/g, (match) => Number(match) * 2)` — instead of a static replacement string, passing a function lets you compute a custom replacement value per match (receiving the matched substring, and additional args for captured groups/offset/full string), enabling dynamic, per-match transformations rather than a single fixed replacement.' },
+    { q: 'What is the difference between replace with a regex g flag and replaceAll?', a: 'replace() with a non-global regex only replaces the first match; with the `g` flag, it replaces all matches — so `replace(/x/g, ...)` and `replaceAll(/x/g, ...)` behave identically for regex patterns. The key practical difference is that replaceAll() requires a plain string pattern to also replace every occurrence (a plain string passed to replace() without the g flag only replaces the first occurrence, but a plain string in replaceAll() replaces all occurrences) — replaceAll was introduced specifically to make "replace every occurrence of this literal string" simpler without needing to construct a regex with the g flag.' },
   ],
   'Unicode, code points, and surrogate pairs': [
-    'Why does `"😀".length` return 2 in JavaScript?',
-    'How do you correctly iterate over a string containing emoji/surrogate pairs?',
-    'What does the `u` flag on a regex do for Unicode?',
+    { q: 'Why does `"😀".length` return 2 in JavaScript?', a: 'JavaScript strings are internally encoded as UTF-16, and characters outside the Basic Multilingual Plane (like most emoji) require two 16-bit "surrogate pair" code units to represent a single visual character/code point — `.length` counts UTF-16 code units, not actual visible characters, so a single emoji character reports a length of 2, not 1.' },
+    { q: 'How do you correctly iterate over a string containing emoji/surrogate pairs?', a: 'Use for...of (or spread `[...str]`) rather than a classic indexed for-loop or `.split("")` — for...of iterates by actual Unicode code point (correctly treating a surrogate pair as one single iteration step), unlike naive index-based iteration which would incorrectly split a surrogate pair into two separate, individually-meaningless "characters."' },
+    { q: 'What does the `u` flag on a regex do for Unicode?', a: 'It switches the regex engine to treat the pattern and input as a sequence of Unicode code points rather than raw UTF-16 code units — this fixes matching against characters requiring surrogate pairs (so `.` correctly matches a full emoji as one character instead of accidentally splitting a surrogate pair), and enables additional Unicode-aware regex syntax like `\\p{...}` Unicode property escapes.' },
   ],
 
   // Collections
   'Map vs plain object (keys, ordering, size)': [
-    'What can be a Map key that cannot be a plain object key?',
-    'In what order does a Map iterate its entries?',
-    'Why is a Map more appropriate than a plain object for a cache keyed by arbitrary values?',
+    { q: 'What can be a Map key that cannot be a plain object key?', a: 'A Map key can be any value at all — objects, functions, NaN, even other Maps — used by reference/value directly without any coercion. A plain object\'s keys are always coerced to strings (or Symbols, as a special case) — so using an object as a plain object key silently coerces it to the string "[object Object]", losing its actual identity, whereas Map preserves it exactly as-is.' },
+    { q: 'In what order does a Map iterate its entries?', a: 'Insertion order — Maps guarantee iteration proceeds in the exact order entries were added, which plain objects only partially/inconsistently guarantee (integer-like string keys get sorted numerically first, then string keys follow insertion order, then symbol keys — a quirky, easy-to-forget ordering rule that Map\'s straightforward, consistent insertion-order guarantee avoids entirely).' },
+    { q: 'Why is a Map more appropriate than a plain object for a cache keyed by arbitrary values?', a: 'Because a cache often needs non-string keys (objects, functions) to work correctly by actual identity/value rather than coerced string representation, needs a reliable, efficient `.size` property (objects require manually counting Object.keys().length), and benefits from guaranteed insertion-order iteration and no accidental collisions with inherited Object.prototype property names (like "toString" or "constructor") that a plain object used as a map could stumble into.' },
   ],
   'Set — uniqueness and set operations': [
-    'How does Set determine uniqueness — by value or reference?',
-    'How would you implement a union, intersection, or difference of two Sets?',
+    { q: 'How does Set determine uniqueness — by value or reference?', a: 'For primitives, by value (using SameValueZero comparison, the same algorithm Map uses for keys) — so `new Set([1, 1, 2])` correctly dedupes to `{1, 2}`. For objects, uniqueness is by reference — two distinct object literals with identical contents are still considered different, unique entries in the Set, since they\'re different actual object references even if structurally identical.' },
+    { q: 'How would you implement a union, intersection, or difference of two Sets?', a: 'Union: `new Set([...setA, ...setB])`. Intersection: `new Set([...setA].filter(x => setB.has(x)))`. Difference (A minus B): `new Set([...setA].filter(x => !setB.has(x)))` — modern JS also added native Set methods (union, intersection, difference) directly on Set.prototype in recent spec updates, providing these operations built-in without needing to hand-roll them via spread and filter.' },
   ],
   'WeakMap and WeakSet (garbage collection & use cases)': [
-    'Why can\'t you iterate over a WeakMap?',
-    'What is a practical use case for WeakMap (e.g. metadata without preventing GC)?',
+    { q: "Why can't you iterate over a WeakMap?", a: 'WeakMap deliberately provides no iteration methods (no keys(), no forEach, no size) because its entries can be garbage-collected at any unpredictable moment (whenever their key object becomes otherwise unreachable) — allowing iteration would expose non-deterministic, GC-timing-dependent behavior to your code, which the spec intentionally avoids by simply not providing any way to enumerate a WeakMap\'s current contents at all.' },
+    { q: 'What is a practical use case for WeakMap (e.g. metadata without preventing GC)?', a: 'Associating extra metadata with an object (e.g. a cache of computed results keyed by a specific DOM element, or private data associated with a class instance) without preventing that object from being garbage-collected once nothing else references it — a regular Map used the same way would keep the object alive forever (as long as the Map itself exists), since Map holds strong references to its keys, causing a memory leak; WeakMap\'s weak key references avoid this entirely.' },
   ],
 
   // Iterators & Generators
   'Generator functions (function*) and yield': [
-    'What does a generator function return when called?',
-    'How does execution flow when you call .next() on a generator?',
+    { q: 'What does a generator function return when called?', a: 'Calling a generator function (declared with `function*`) does NOT execute its body immediately — it returns a Generator object (which is both an iterable and an iterator) without running any of the function\'s code yet; execution only actually begins/advances each time you call `.next()` on the returned generator object.' },
+    { q: 'How does execution flow when you call .next() on a generator?', a: 'Each `.next()` call resumes execution from wherever the generator last paused (or from the very start, on the first call), running until it hits the next `yield` expression, at which point execution pauses again and `.next()` returns `{ value: yieldedValue, done: false }` — this continues until the function body actually completes/returns, at which point `.next()` returns `{ value: returnValue, done: true }`.' },
   ],
   'Lazy evaluation with generators': [
-    'How do generators enable lazy sequences and infinite data?',
-    'Implement an infinite counter using a generator.',
+    { q: 'How do generators enable lazy sequences and infinite data?', a: 'Because a generator only computes the next value when `.next()` is actually called (rather than eagerly computing an entire sequence upfront), you can represent conceptually infinite sequences (like all natural numbers) as a generator that never terminates, safely — consumers simply pull only as many values as they actually need, never forcing the full (infinite) sequence to be computed or held in memory at once.' },
+    { q: 'Implement an infinite counter using a generator.', a: '`function* counter() { let n = 0; while (true) { yield n++; } }` — each call to `.next()` yields the next number and pauses, meaning the infinite while loop never actually blocks or exhausts memory, since it only executes one step forward per `.next()` call rather than trying to run the infinite loop to completion all at once.' },
   ],
   'Async generators and for await...of': [
-    'How does an async generator differ from a regular generator?',
-    'When would you use `for await...of` with an async generator?',
+    { q: 'How does an async generator differ from a regular generator?', a: 'An async generator (`async function*`) can use `await` inside its body, and each call to `.next()` returns a Promise resolving to `{ value, done }` instead of that shape directly and synchronously — letting the generator naturally interleave asynchronous operations (like fetching each item from a paginated API) with its yield-based iteration pattern.' },
+    { q: "When would you use `for await...of` with an async generator?", a: 'Whenever you need to consume a sequence of asynchronously-produced values one at a time as they become available — e.g. iterating over paginated API results (fetching each page lazily as needed) or streaming data — `for await...of` automatically awaits each yielded promise from the async generator/iterator, letting you write straightforward, synchronous-looking loop code over an inherently asynchronous data source.' },
   ],
 
   // Asynchronous JavaScript
   'Promises: states (pending, fulfilled, rejected)': [
-    'What are the three states of a Promise and can they transition backwards?',
-    'What is the difference between a resolved and a fulfilled promise?',
+    { q: 'What are the three states of a Promise and can they transition backwards?', a: 'pending (initial state, neither resolved nor rejected yet), fulfilled (resolved successfully with a value), and rejected (failed with a reason/error). Once a promise transitions to fulfilled or rejected, it\'s permanently "settled" and can never transition again — a promise cannot go from fulfilled back to pending, or from rejected to fulfilled; the transition is strictly one-way and final.' },
+    { q: 'What is the difference between a resolved and a fulfilled promise?', a: '"Resolved" is a slightly broader/more subtle term than "fulfilled" — a promise becomes "resolved" the moment its fate is locked in, which happens either by fulfilling directly with a value, or by being resolved with another thenable/promise (in which case it\'s "resolved" but not yet actually "fulfilled" until that inner promise itself eventually settles) — in casual conversation, "resolved" is often used loosely to mean "fulfilled," but technically they describe slightly different points in the promise\'s lifecycle.' },
   ],
   'then, catch, finally': [
-    'What does a `.catch()` on a chain that has no rejection do?',
-    'Does `finally` receive the resolved value? Does it change the chain\'s value?',
+    { q: 'What does a `.catch()` on a chain that has no rejection do?', a: 'If none of the preceding promises in the chain ever reject, the `.catch()` handler simply never executes at all, and the resolved value passes straight through unchanged to whatever comes after the catch in the chain — catch only intercepts if a rejection actually occurred somewhere upstream in the chain.' },
+    { q: "Does `finally` receive the resolved value? Does it change the chain's value?", a: 'No — the finally callback receives no arguments at all (it doesn\'t know or care whether the chain fulfilled or rejected, or what the value/reason was), and by default it doesn\'t change the chain\'s eventual value — whatever value/rejection was flowing through the chain before finally continues on unchanged afterward (unless finally itself throws or returns a rejected promise, which would then override the original outcome).' },
   ],
   'Promise chaining and error propagation': [
-    'How does a thrown error inside a .then() propagate to the next .catch()?',
-    'What happens when you return a promise inside a .then() handler?',
+    { q: 'How does a thrown error inside a .then() propagate to the next .catch()?', a: 'Throwing inside a `.then()` callback (or returning a rejected promise) automatically causes the promise that `.then()` returns to become rejected with that error — this rejection then propagates down the chain, skipping over any subsequent `.then()` handlers (which only run on fulfillment) until it reaches the nearest `.catch()` (or a `.then()` with a second, rejection-handling argument), which is what actually catches and handles it.' },
+    { q: 'What happens when you return a promise inside a .then() handler?', a: 'The chain automatically "flattens" — instead of the outer promise resolving with an inner promise as its value (a promise wrapping a promise), the outer chain waits for that returned inner promise to itself settle, and then adopts its eventual value/rejection as its own — this automatic flattening/adoption behavior is exactly what makes sequential async chaining with `.then()` work naturally.' },
   ],
   'Promise.all, allSettled, race, any': [
-    'How does Promise.all behave if one promise rejects?',
-    'What is the difference between Promise.all and Promise.allSettled?',
-    'When would you use Promise.race vs Promise.any?',
+    { q: 'How does Promise.all behave if one promise rejects?', a: 'Promise.all immediately rejects as a whole, with that first rejection\'s reason, as soon as any one of the input promises rejects — it doesn\'t wait for the other promises to settle first; this "fail-fast" behavior means you lose visibility into whether the other promises would have succeeded or failed, since the combined promise short-circuits on the very first rejection encountered.' },
+    { q: 'What is the difference between Promise.all and Promise.allSettled?', a: 'Promise.all fails fast on the first rejection, giving you no results at all if even one promise fails. Promise.allSettled always waits for every promise to settle (regardless of success/failure) and resolves with an array of result objects describing each one\'s outcome (`{status: "fulfilled", value}` or `{status: "rejected", reason}`), letting you handle a mix of successes and failures without any of them short-circuiting the others.' },
+    { q: 'When would you use Promise.race vs Promise.any?', a: 'Promise.race settles as soon as the FIRST promise settles at all, whether that\'s a fulfillment or a rejection — useful for implementing a timeout race against a real operation. Promise.any settles as soon as the first promise FULFILLS (ignoring rejections entirely unless every single promise rejects, in which case it rejects with an AggregateError) — useful when you want the fastest successful result among several redundant attempts, tolerating some individual failures along the way.' },
   ],
   'async / await syntax': [
-    'What does an async function always return?',
-    'What is the difference between `await Promise.all([a, b])` and `await a; await b;` in terms of performance?',
+    { q: 'What does an async function always return?', a: 'A Promise — regardless of what you explicitly `return` inside it, the function\'s actual return value to its caller is always wrapped in a Promise; returning a plain value produces a promise that immediately fulfills with that value, and throwing an error inside produces a promise that rejects with that error.' },
+    { q: 'What is the difference between `await Promise.all([a, b])` and `await a; await b;` in terms of performance?', a: '`await a; await b;` runs sequentially — b doesn\'t even start until a has fully completed, meaning the total wait time is roughly a\'s duration plus b\'s duration. `await Promise.all([a, b])` starts both operations concurrently (assuming a and b are already-invoked promises, not functions called at that point) and waits for whichever finishes last, so the total time is roughly just the longer of the two, not their sum — a significant performance difference whenever the operations are genuinely independent.' },
   ],
   'Error handling with try/catch in async functions': [
-    'How do you catch errors from an awaited promise in an async function?',
-    'What happens if you forget to await a rejected promise inside a try block?',
+    { q: 'How do you catch errors from an awaited promise in an async function?', a: 'Wrap the await expression in a regular try/catch block: `try { const result = await fetchData(); } catch (err) { /* handle error */ }` — a rejected awaited promise is converted into a thrown error at that await point, which an enclosing try/catch can catch exactly like any synchronously thrown error.' },
+    { q: 'What happens if you forget to await a rejected promise inside a try block?', a: 'If you call an async function but don\'t await its result (just calling `fetchData()` without `await`), any rejection it produces happens asynchronously, outside the current try block\'s synchronous execution window — the try/catch won\'t catch it at all, since by the time the promise actually rejects, the surrounding try block has already finished executing; this typically manifests as an unhandled promise rejection instead.' },
   ],
   'Sequential vs parallel awaits': [
-    'How do you run two independent async operations in parallel with async/await?',
-    'What is the performance difference between sequential and parallel awaits in a real API scenario?',
+    { q: 'How do you run two independent async operations in parallel with async/await?', a: 'Start both operations first (calling the async functions, which immediately returns their promises without waiting), and only then await both together: `const [a, b] = await Promise.all([fetchA(), fetchB()]);` — the key is calling both functions before awaiting either one, so both underlying operations begin executing concurrently rather than one waiting for the other to finish first.' },
+    { q: 'What is the performance difference between sequential and parallel awaits in a real API scenario?', a: 'If each of two independent API calls takes roughly 500ms, sequential awaiting (`await callA(); await callB();`) takes roughly 1000ms total (they run one after another). Parallel awaiting (`await Promise.all([callA(), callB()])`) takes roughly just 500ms total (both run concurrently, and you wait only for the slower of the two) — a substantial, easily-overlooked performance improvement whenever multiple async operations don\'t actually depend on each other\'s results.' },
   ],
   'Microtasks vs macrotasks': [
-    'In what order do setTimeout(fn, 0), Promise.resolve().then, and queueMicrotask run?',
-    'Why do promise callbacks always run after the current synchronous code, even if resolved immediately?',
+    { q: 'In what order do setTimeout(fn, 0), Promise.resolve().then, and queueMicrotask run?', a: 'All synchronous code runs first, to completion. Then, before any macrotask (like setTimeout) runs, ALL currently queued microtasks are fully drained first — so Promise.resolve().then() and queueMicrotask() callbacks (both microtasks) run before the setTimeout(fn, 0) callback (a macrotask), even though setTimeout was scheduled with a 0ms delay; microtasks always have priority over macrotasks at each iteration of the event loop.' },
+    { q: 'Why do promise callbacks always run after the current synchronous code, even if resolved immediately?', a: 'Even an already-resolved promise\'s `.then()` callback is scheduled as a microtask rather than executing synchronously and immediately — this is a deliberate spec design choice ensuring consistent, predictable ordering (a promise callback never runs synchronously inline, avoiding "sometimes sync, sometimes async" unpredictability depending on whether the promise happened to already be resolved), always deferring to at least after the current synchronous execution context finishes.' },
   ],
   'AbortController and cancelling async work': [
-    'How does AbortController work with the fetch API?',
-    'Why can\'t you cancel a native Promise after it starts?',
+    { q: 'How does AbortController work with the fetch API?', a: 'You create an AbortController, pass its `.signal` property as an option to fetch (`fetch(url, { signal: controller.signal })`), and calling `controller.abort()` at any point causes the in-flight fetch to immediately reject with an AbortError — actually canceling the underlying network request (freeing up the connection), rather than just ignoring its eventual (still ongoing) response.' },
+    { q: "Why can't you cancel a native Promise after it starts?", a: 'The Promise spec deliberately provides no built-in cancellation mechanism — once a promise\'s executor function has started running, there\'s no native API to stop it; this is a well-known, intentional gap in the Promise design, which is exactly why AbortController (a separate, dedicated cancellation-signaling mechanism) was introduced as the standard way to add cancellability to async operations like fetch, rather than trying to retrofit cancellation into Promises themselves.' },
   ],
 
   // Event Loop & Concurrency
   'Call stack, Web APIs, callback queue, microtask queue': [
-    'Describe the event loop. What is the difference between the callback queue and the microtask queue?',
-    'Predict the output order of a snippet mixing setTimeout(0), Promise.resolve().then, and synchronous code.',
+    { q: 'Describe the event loop. What is the difference between the callback queue and the microtask queue?', a: 'The event loop continuously checks: is the call stack empty? If so, first fully drain the microtask queue (running every queued microtask, including any new ones added during that draining), then take exactly one task from the macrotask/callback queue (setTimeout callbacks, I/O callbacks, UI events) and run it, then repeat. The microtask queue (promises, queueMicrotask) always gets fully emptied before even a single macrotask/callback-queue item runs, giving microtasks strictly higher priority.' },
+    { q: 'Predict the output order of a snippet mixing setTimeout(0), Promise.resolve().then, and synchronous code.', a: 'Synchronous code logs first (it runs immediately, before anything is queued at all), then any Promise.resolve().then() callbacks log next (microtasks fully drain before the next macrotask), and finally the setTimeout(0) callback logs last (as a macrotask, it only runs after the call stack is empty AND the microtask queue has been fully drained) — this ordering surprises many developers who expect setTimeout(fn, 0) to run essentially "immediately."' },
   ],
   'How the event loop schedules tasks': [
-    'What happens if a microtask callback schedules another microtask — does the browser ever render?',
-    'How do Web Workers interact with the main thread\'s event loop?',
+    { q: 'What happens if a microtask callback schedules another microtask — does the browser ever render?', a: 'The event loop keeps draining the microtask queue until it\'s completely empty, including any new microtasks added by currently-executing microtasks — if a microtask endlessly schedules more microtasks, the browser never gets a chance to render a new frame or process other events, since rendering/macrotasks only get a turn once the microtask queue is genuinely, fully empty; this can cause a page to appear frozen even though the "app" is technically still busy processing.' },
+    { q: "How do Web Workers interact with the main thread's event loop?", a: 'A Web Worker runs on a completely separate thread with its own independent JS execution context, call stack, and event loop — it doesn\'t share or block the main thread\'s event loop at all; communication between the worker and main thread happens asynchronously via message passing (postMessage/onmessage), which is precisely why Web Workers are used to offload genuinely expensive computation without freezing the main UI thread.' },
   ],
   'setTimeout, setInterval, and clearing timers': [
-    'Why is setTimeout(fn, 0) not guaranteed to fire in exactly 0ms?',
-    'What is the minimum delay browsers enforce for nested setTimeouts?',
-    'How would you implement a reliable repeating timer without setInterval drift?',
+    { q: 'Why is setTimeout(fn, 0) not guaranteed to fire in exactly 0ms?', a: 'The specified delay is only a *minimum* — the callback is placed in the macrotask queue after that minimum delay has elapsed, but it can only actually run once the call stack is empty AND all pending microtasks have drained, and even then, it competes with any other already-queued macrotasks; the "0ms" delay is essentially "as soon as possible after the minimum has passed," not a hard, guaranteed-precise timing.' },
+    { q: 'What is the minimum delay browsers enforce for nested setTimeouts?', a: 'Most browsers enforce a minimum delay of roughly 4ms for setTimeout calls nested more than a certain depth (historically 5+ levels deep) within already-running setTimeout callbacks, a legacy spec-driven throttling mechanism intended to prevent runaway, tight setTimeout-based loops from monopolizing the CPU — this can cause unexpectedly slower-than-requested behavior for code that chains many rapid, nested setTimeout(fn, 0) calls.' },
+    { q: 'How would you implement a reliable repeating timer without setInterval drift?', a: 'Use a recursive setTimeout pattern instead of setInterval — schedule the next setTimeout only after the current callback\'s work has actually finished executing, based on the actual elapsed time (or simply scheduling relative to "now" each time) — this avoids setInterval\'s issue of naively queueing fixed-interval callbacks regardless of how long each individual callback actually took to run, which can cause callbacks to pile up or "drift" if execution time exceeds the interval.' },
   ],
   'requestAnimationFrame and requestIdleCallback': [
-    'Why should you use requestAnimationFrame instead of setTimeout for animations?',
-    'What is requestIdleCallback used for and what are its limitations?',
+    { q: 'Why should you use requestAnimationFrame instead of setTimeout for animations?', a: 'requestAnimationFrame schedules its callback to run right before the browser\'s next actual repaint, synchronized with the display\'s refresh rate (typically ~60fps) — this produces smoother animation and avoids wasted work (updates that happen between frames and get discarded/overwritten before ever being visually rendered), unlike setTimeout, which has no awareness of the browser\'s actual rendering/repaint cycle at all.' },
+    { q: 'What is requestIdleCallback used for and what are its limitations?', a: 'It schedules a callback to run only when the browser has genuinely spare idle time during a frame (after higher-priority rendering/layout work has completed), useful for low-priority background work (analytics logging, non-critical preloading) that shouldn\'t compete with rendering or user-interaction responsiveness. Its limitations: it\'s not supported in all browsers/environments (notably lacking full Safari support historically), offers no strict timing guarantee (a busy page might rarely or never yield genuine idle time), and isn\'t suitable for anything with a hard deadline.' },
   ],
 
   // ES6+ Features
   'Modules (import/export)': [
-    'What is the difference between named and default exports?',
-    'What does `import * as ns from "./mod"` give you?',
-    'Why does circular dependency handling differ between ESM and CommonJS?',
+    { q: 'What is the difference between named and default exports?', a: 'A module can have any number of named exports (`export const foo = ...`), each imported by their exact matching name (`import { foo } from "./mod"`), optionally renamed via `as`. A module can have at most one default export (`export default ...`), imported without curly braces and with any name the importer chooses (`import anything from "./mod"`) — default exports are looser/more flexible in naming at the import site, while named exports enforce name consistency (unless explicitly renamed).' },
+    { q: 'What does `import * as ns from "./mod"` give you?', a: 'It imports every named export (and the default export, accessible as `ns.default`) from that module, bundled together into a single namespace object `ns` — you then access each export as a property of that namespace object (`ns.foo`, `ns.bar`), useful when you need access to many/most of a module\'s exports without listing each one individually.' },
+    { q: 'Why does circular dependency handling differ between ESM and CommonJS?', a: 'ESM imports are "live bindings" resolved via static analysis before execution, meaning circular imports can still see later updates to exported values (since ESM tracks a reference to the binding, not a one-time snapshot of its value at import time). CommonJS\'s require() executes modules synchronously and caches a snapshot of `module.exports` at the time of the circular require, which can result in getting an incomplete/stale (partially-initialized) version of the circularly-required module\'s exports if accessed before that module has finished fully executing.' },
   ],
   'Dynamic import()': [
-    'What does dynamic import() return?',
-    'How would you use dynamic import for route-based code splitting?',
+    { q: 'What does dynamic import() return?', a: 'It returns a Promise that resolves to the imported module\'s namespace object (equivalent to what `import * as ns` would give you statically) — unlike static import statements (which must appear at the top level and are resolved before any code runs), dynamic import() can be called anywhere in your code, at any time, conditionally, and its module loading happens asynchronously.' },
+    { q: 'How would you use dynamic import for route-based code splitting?', a: 'Instead of statically importing every route\'s component upfront (bundling them all into one large initial bundle), you call `import("./RouteComponent")` only when that specific route is actually navigated to — bundlers automatically recognize this pattern and split that module into a separate chunk, only downloaded on demand when the user actually visits that route, reducing the initial bundle size significantly for apps with many routes.' },
   ],
   'CommonJS (require / module.exports) and differences': [
-    'What is the key difference between CJS and ESM in terms of when dependencies are resolved?',
-    'Why can\'t you use ES module syntax in a .cjs file?',
+    { q: 'What is the key difference between CJS and ESM in terms of when dependencies are resolved?', a: 'ESM imports/exports are statically analyzable — the module\'s dependency graph is determined at parse time, before any code executes, enabling tree-shaking and other static optimizations. CommonJS\'s require() is a genuine runtime function call, executed dynamically as the code runs — its dependency graph can only be fully known by actually executing the code, which makes static analysis/tree-shaking significantly harder for CJS modules compared to ESM.' },
+    { q: "Why can't you use ES module syntax in a .cjs file?", a: 'A .cjs file extension explicitly tells Node.js to treat that file as CommonJS regardless of any nearby package.json "type" field — Node needs to know, deterministically and unambiguously, which module system\'s parsing/resolution rules to apply to a given file, and CommonJS files use `require()`/`module.exports`, not `import`/`export` syntax, which belongs specifically to ESM\'s distinct module system and parser.' },
   ],
   'Tree shaking and side-effect-free modules': [
-    'What is tree shaking and what bundler/format requirement enables it?',
-    'What does the "sideEffects" field in package.json do?',
+    { q: 'What is tree shaking and what bundler/format requirement enables it?', a: 'Tree shaking is a bundler optimization that eliminates unused exports from the final bundle — code that\'s imported but never actually used gets statically detected and stripped out entirely. It requires ES modules\' static import/export syntax (not CommonJS\'s dynamic require pattern), since the bundler needs to be able to statically determine, at build time without executing any code, exactly which exports are actually used somewhere in the dependency graph.' },
+    { q: 'What does the "sideEffects" field in package.json do?', a: 'It tells bundlers whether a package\'s modules can be safely tree-shaken even for imports that appear otherwise unused — setting `"sideEffects": false` promises the bundler that importing (but not using) any module in that package has no meaningful side effects (like a polyfill registering itself globally), giving the bundler permission to more aggressively remove unused imports; setting it incorrectly (claiming false when a module genuinely does have import-time side effects) can cause real bugs when those side effects get silently stripped out.' },
   ],
 
   // Error Handling
   'try / catch / finally': [
-    'Does the finally block run even if there is a return inside try?',
-    'Can finally override the return value from a try block?',
+    { q: 'Does the finally block run even if there is a return inside try?', a: 'Yes — finally always runs, regardless of whether the try block completed normally, threw an error (caught or not), or hit a return/break/continue statement — it\'s guaranteed to execute before control actually leaves the try/catch/finally construct, making it reliable for cleanup logic (closing a connection, releasing a lock) that must happen no matter how the try block actually concludes.' },
+    { q: 'Can finally override the return value from a try block?', a: 'Yes, if finally itself contains an explicit return statement, it completely overrides/replaces whatever value the try (or catch) block was about to return — this is generally considered a footgun/anti-pattern (silently discarding the try block\'s intended return value), so returning from within finally is almost always discouraged in real code.' },
   ],
   'Custom error classes (extending Error)': [
-    'How do you create a custom error class that instanceof works correctly for?',
-    'Why might subclassing Error break instanceof in older transpiled code?',
+    { q: 'How do you create a custom error class that instanceof works correctly for?', a: '`class ValidationError extends Error { constructor(message) { super(message); this.name = "ValidationError"; } }` — extending the built-in Error class and calling super(message) in the constructor properly sets up the prototype chain, so `error instanceof ValidationError` and `error instanceof Error` both correctly return true, and setting `this.name` gives the error a proper, descriptive name shown in stack traces.' },
+    { q: 'Why might subclassing Error break instanceof in older transpiled code?', a: 'Older versions of Babel/TypeScript, when compiling ES6 classes down to ES5 for older browser support, didn\'t correctly handle extending built-in classes like Error (since ES5 constructor functions can\'t properly replicate the ES6 class extension semantics for built-ins) — this historically caused `instanceof CustomError` to incorrectly return false after transpilation, a well-known gotcha requiring specific workarounds (manually fixing the prototype chain after calling super) in affected older toolchains.' },
   ],
   'Error.cause': [
-    'What is Error.cause and how does it improve error chains?',
-    'How would you re-throw an error while preserving the original as the cause?',
+    { q: 'What is Error.cause and how does it improve error chains?', a: 'Error.cause (a relatively recent addition, `new Error("message", { cause: originalError })`) lets you attach an underlying/originating error as the "cause" of a new, higher-level error you\'re throwing — preserving the full chain of causation (e.g. "Failed to save user" caused by "Database connection timeout") rather than losing the original lower-level error\'s context when wrapping/re-throwing it as a more meaningful, higher-level error.' },
+    { q: 'How would you re-throw an error while preserving the original as the cause?', a: '`catch (err) { throw new Error("Higher-level context message", { cause: err }); }` — this creates a new, more descriptive/contextual error while attaching the originally-caught error as its cause property, letting error-logging/debugging tools walk the full chain of causation back to the true root cause, rather than only seeing the final, most superficial error message.' },
   ],
   'Global error handling (window.onerror, unhandledrejection)': [
-    'How do you globally catch unhandled promise rejections in a browser?',
-    'What information does the `unhandledrejection` event provide?',
+    { q: 'How do you globally catch unhandled promise rejections in a browser?', a: 'Listen for the `unhandledrejection` event on window: `window.addEventListener("unhandledrejection", (event) => { ... });` — this fires whenever a promise rejects and no `.catch()` (or rejection handler) was ever attached to handle it, giving you a global safety net to log/report otherwise-silent async errors that would\'ve gone completely unnoticed.' },
+    { q: 'What information does the `unhandledrejection` event provide?', a: 'The event object includes `.reason` (the actual rejection value/error the promise was rejected with) and `.promise` (a reference to the specific promise that rejected) — you can use `event.preventDefault()` inside the handler to suppress the browser\'s default "uncaught (in promise)" console warning, typically after you\'ve already logged/reported it through your own error-tracking mechanism instead.' },
   ],
 
   // Regular Expressions
   'Character classes, anchors, and quantifiers': [
-    'What is the difference between `^` inside and outside a character class?',
-    'What does `*` vs `+` vs `?` mean as quantifiers?',
-    'What is greedy vs lazy matching and how do you switch between them?',
+    { q: 'What is the difference between `^` inside and outside a character class?', a: 'Outside a character class, `^` anchors the match to the start of the string (or line, with the m flag). Inside a character class (`[^abc]`), `^` as the very first character instead means negation — matching any character NOT in the specified set — a completely different meaning depending purely on its position relative to the square brackets.' },
+    { q: 'What does `*` vs `+` vs `?` mean as quantifiers?', a: '`*` matches zero or more occurrences of the preceding element. `+` matches one or more occurrences (requires at least one). `?` matches zero or one occurrence (makes the preceding element optional) — all three are shorthand for more general `{n,m}` repetition syntax (`*` is `{0,}`, `+` is `{1,}`, `?` is `{0,1}`).' },
+    { q: 'What is greedy vs lazy matching and how do you switch between them?', a: 'By default, quantifiers are greedy — they match as much as possible while still allowing the overall pattern to succeed (`.*` grabs the longest possible match). Appending `?` after a quantifier makes it lazy/non-greedy instead (`.*?`), matching as little as possible while still letting the overall pattern succeed — critical when matching content between delimiters, where greedy matching would otherwise incorrectly span across multiple delimiter pairs instead of stopping at the nearest one.' },
   ],
   'Groups, capturing, and backreferences': [
-    'What is the difference between a capturing group and a non-capturing group `(?:...)`?',
-    'How do you reference a captured group in the replacement string of replace?',
+    { q: 'What is the difference between a capturing group and a non-capturing group `(?:...)`?', a: 'A capturing group `(...)` remembers and exposes the matched substring as a separate item in the match result array (accessible by index, or by name if using a named group), usable later in backreferences or the replacement string. A non-capturing group `(?:...)` groups a sub-pattern purely for applying a quantifier or alternation to it as a unit, without adding an entry to the captured results — useful when you need grouping mechanics but don\'t actually need to extract that specific sub-match.' },
+    { q: 'How do you reference a captured group in the replacement string of replace?', a: 'Use `$1`, `$2`, etc. (matching the capture group\'s position) directly in the replacement string: `"John Smith".replace(/(\\w+) (\\w+)/, "$2 $1")` produces "Smith John" — swapping the captured first and last name using positional backreferences to the two capturing groups.' },
   ],
   'Flags (g, i, m, s, u, y)': [
-    'What does the `g` flag change about exec, match, and test?',
-    'What does the `s` (dotAll) flag enable?',
+    { q: 'What does the `g` flag change about exec, match, and test?', a: 'Without `g`, exec/match only find the first match and stop. With `g`, match returns an array of ALL matches found in the string (rather than the detailed first-match object with capture groups), and repeatedly calling exec() on the same global regex object advances through successive matches on each call (tracking position via the regex\'s lastIndex property) instead of always returning the first match again.' },
+    { q: 'What does the `s` (dotAll) flag enable?', a: 'By default, the `.` metacharacter matches any character EXCEPT line terminators (newlines) — the `s` flag makes `.` also match newline characters, letting a pattern span across multiple lines when needed, which is otherwise impossible with the default dot behavior.' },
   ],
 
   // Functional Programming
   'Pure functions and referential transparency': [
-    'What makes a function referentially transparent?',
-    'Why are pure functions easier to test and reason about?',
+    { q: 'What makes a function referentially transparent?', a: 'A function call is referentially transparent if it can be freely replaced by its return value anywhere in the code without changing the program\'s behavior — this requires the function to be pure (same input always produces the same output, with no side effects), since any dependency on or modification of external state would make substituting the call for its result potentially change behavior elsewhere.' },
+    { q: 'Why are pure functions easier to test and reason about?', a: 'Since a pure function\'s output depends only on its explicit inputs (with zero hidden dependencies on external mutable state), you can test it in complete isolation with simple input/expected-output assertions, with no need to set up, mock, or reset any surrounding environment/state — and reasoning about its behavior requires only looking at the function itself, not tracing through the entire surrounding program to understand what external state might affect it.' },
   ],
   'Higher-order functions': [
-    'Implement a compose function that combines two or more functions right-to-left.',
-    'What is the difference between compose and pipe?',
+    { q: 'Implement a compose function that combines two or more functions right-to-left.', a: '`const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x);` — reduceRight processes the functions array from the last function to the first, applying each one\'s result as the input to the next function further left in the array, producing a right-to-left composed pipeline: `compose(f, g, h)(x)` is equivalent to `f(g(h(x)))`.' },
+    { q: 'What is the difference between compose and pipe?', a: 'compose combines functions right-to-left (mimicking traditional mathematical function composition notation, f(g(x))), while pipe combines functions left-to-right (often considered more intuitively readable, since the data visually flows through the functions in the same order they\'re listed) — functionally, pipe is often just implemented as compose with the functions array reversed, or using reduce instead of reduceRight.' },
   ],
   'map / filter / reduce composition': [
-    'Rewrite a for-loop data transformation as a chain of map, filter, and reduce.',
-    'What are the performance trade-offs of chaining multiple array methods?',
+    { q: 'Rewrite a for-loop data transformation as a chain of map, filter, and reduce.', a: 'A for-loop that filters even numbers, doubles them, and sums the result — `let sum = 0; for (const n of nums) { if (n % 2 === 0) sum += n * 2; }` — becomes the declarative chain: `nums.filter(n => n % 2 === 0).map(n => n * 2).reduce((acc, n) => acc + n, 0)`, expressing the same logic as a pipeline of independent, composable, individually-testable transformation steps rather than one monolithic imperative loop.' },
+    { q: 'What are the performance trade-offs of chaining multiple array methods?', a: 'Each chained method (filter, then map, then reduce) creates an intermediate array and does a full separate pass over the data, which is less CPU/memory-efficient than a single hand-written loop doing everything in one combined pass — for most application code and moderately-sized data, this overhead is negligible and the readability/composability benefit is well worth it, but for very large datasets or hot performance-critical paths, a single manual loop (or generator-based lazy pipeline) can meaningfully outperform a long chain of separate array method calls.' },
   ],
 
   // Meta-programming
   'Proxy and traps (get, set, has, deleteProperty)': [
-    'What is a JavaScript Proxy and when would you use one?',
-    'How would you use a Proxy to implement a reactive data store?',
-    'What is a Reflect method and how does it relate to Proxy traps?',
+    { q: 'What is a JavaScript Proxy and when would you use one?', a: 'A Proxy wraps a target object and lets you intercept and customize fundamental operations performed on it (property reads, writes, deletion, existence checks) via configurable "trap" handler functions — used for building reactive data systems (intercepting property writes to trigger UI updates, as Vue\'s reactivity system does), validation layers, logging/access-tracking wrappers, or virtual objects computing their properties on demand.' },
+    { q: 'How would you use a Proxy to implement a reactive data store?', a: 'Wrap your state object in a Proxy with a `set` trap that, in addition to actually setting the value on the target, also triggers a notification to any subscribed listeners/re-render callbacks whenever a property changes — this is essentially how frameworks like Vue 3 implement fine-grained reactivity, automatically detecting exactly which specific property changed without requiring explicit manual subscription/setter calls from the developer.' },
+    { q: 'What is a Reflect method and how does it relate to Proxy traps?', a: 'Reflect provides a set of methods mirroring the same fundamental operations Proxy traps intercept (Reflect.get, Reflect.set, Reflect.has, etc.) — inside a trap handler, you typically call the corresponding Reflect method to actually perform the default, standard behavior of that operation on the target object (after your custom logic), ensuring correct behavior (like proper `this` binding and prototype chain handling) rather than trying to hand-reimplement that default behavior yourself.' },
   ],
   'Symbols and well-known symbols (Symbol.iterator, Symbol.toPrimitive)': [
-    'How do well-known symbols let you hook into language-level behavior?',
-    'Implement Symbol.iterator on a custom object to make it work with for...of.',
+    { q: 'How do well-known symbols let you hook into language-level behavior?', a: 'JavaScript defines a set of predefined, special Symbol values (Symbol.iterator, Symbol.toPrimitive, Symbol.hasInstance, etc.) that the language\'s built-in operations look for on objects to customize their behavior — implementing a method at one of these specific symbol keys on your own object lets you customize how core language features (iteration, type coercion, instanceof checks) behave for that specific object, effectively hooking into and overriding otherwise-fixed language-level behavior.' },
+    { q: 'Implement Symbol.iterator on a custom object to make it work with for...of.', a: '`const range = { from: 1, to: 5, [Symbol.iterator]() { let current = this.from; const last = this.to; return { next: () => current <= last ? { value: current++, done: false } : { value: undefined, done: true } }; } };` — now `for (const n of range)` works directly on this custom object, iterating from 1 to 5, since it correctly implements the iterable protocol via Symbol.iterator.' },
   ],
 
   // DOM
   'Selecting elements (getElementById, querySelector, querySelectorAll)': [
-    'What is the difference between querySelector and querySelectorAll?',
-    'Why is `querySelectorAll` slower than `getElementById` for a simple id lookup?',
+    { q: 'What is the difference between querySelector and querySelectorAll?', a: 'querySelector returns only the first element matching the given CSS selector (or null if none match). querySelectorAll returns a static NodeList of ALL matching elements (an empty NodeList, not null, if none match) — querySelector is for grabbing a single specific element, querySelectorAll for iterating over every element matching a pattern.' },
+    { q: 'Why is `querySelectorAll` slower than `getElementById` for a simple id lookup?', a: 'getElementById performs a direct, highly-optimized lookup using the browser\'s internal id-to-element index/hash map. querySelector(All) has to parse the arbitrary CSS selector string and run the browser\'s general-purpose CSS selector matching engine against the DOM tree, which — even for a simple `#id` selector — carries more overhead than the specialized, purpose-built getElementById lookup path.' },
   ],
   'Creating, inserting, and removing nodes': [
-    'How does appendChild differ from insertBefore?',
-    'What is the benefit of using a DocumentFragment for batch DOM insertions?',
+    { q: 'How does appendChild differ from insertBefore?', a: 'appendChild always adds the new node as the LAST child of the parent. insertBefore lets you specify exactly where within the parent\'s children the new node should be placed, by passing a reference to the existing sibling node it should be inserted immediately before — giving you positional control that appendChild alone doesn\'t provide.' },
+    { q: 'What is the benefit of using a DocumentFragment for batch DOM insertions?', a: 'A DocumentFragment is an in-memory, lightweight container that isn\'t part of the actual rendered document — you can build up multiple nodes inside it without triggering any layout/reflow, and then insert the entire fragment into the real DOM in a single operation, causing only one reflow/repaint instead of one for every individual node insertion, significantly improving performance when inserting many elements at once.' },
   ],
   'Reflow and repaint (performance)': [
-    'What triggers a layout reflow vs a repaint, and why is reflow more expensive?',
-    'How would you batch DOM reads and writes to avoid layout thrashing?',
+    { q: 'What triggers a layout reflow vs a repaint, and why is reflow more expensive?', a: 'A reflow (layout recalculation) is triggered by anything affecting an element\'s geometry — size, position, adding/removing DOM nodes, changing content that affects layout — forcing the browser to recompute the position/size of potentially many affected elements throughout the tree. A repaint is triggered by purely visual changes that don\'t affect layout (color, background, visibility) and only requires redrawing pixels, not recalculating geometry — reflow is more expensive because it can cascade and force recalculation of many other elements\' layout too, whereas a repaint is typically more localized.' },
+    { q: 'How would you batch DOM reads and writes to avoid layout thrashing?', a: 'Group all your DOM reads together first (measuring offsetHeight, getBoundingClientRect, etc.), then perform all your DOM writes together afterward, rather than interleaving reads and writes — interleaving forces the browser to synchronously recalculate layout on each read (since a pending write might have invalidated the previous layout), causing repeated, unnecessary forced synchronous reflows known as "layout thrashing."' },
   ],
   'Shadow DOM and web components (overview)': [
-    'What problem does the Shadow DOM solve?',
-    'How do custom elements interact with the rest of the DOM?',
+    { q: 'What problem does the Shadow DOM solve?', a: 'It provides genuine encapsulation for a component\'s internal DOM structure and styles — CSS defined inside a shadow root doesn\'t leak out to affect the rest of the page, and external page CSS doesn\'t accidentally leak in and affect the component\'s internals either — solving the long-standing problem of building genuinely self-contained, reusable UI components without global CSS collisions/specificity wars.' },
+    { q: 'How do custom elements interact with the rest of the DOM?', a: 'A custom element (defined via `customElements.define("my-element", MyElementClass)`) behaves like any other native HTML element once registered — you can use it directly in markup (`<my-element>`), and it participates fully in the regular DOM tree, event bubbling, and CSS cascade for its light DOM content, while its internal shadow DOM content (if it uses one) remains encapsulated as described above.' },
   ],
 
   // Events
   'Event bubbling, capturing, and propagation': [
-    'In what order do capturing and bubbling phases occur?',
-    'What is the difference between stopPropagation and stopImmediatePropagation?',
+    { q: 'In what order do capturing and bubbling phases occur?', a: 'An event first travels DOWN from the document root through ancestor elements to the actual target element (the capturing phase), then travels back UP from the target through those same ancestors again (the bubbling phase) — listeners registered with `{ capture: true }` fire during the downward capturing phase; regular listeners (the default) fire during the upward bubbling phase.' },
+    { q: 'What is the difference between stopPropagation and stopImmediatePropagation?', a: 'stopPropagation() prevents the event from continuing to bubble/capture further up/down the DOM tree, but other listeners attached to the SAME element for the same event still all run normally. stopImmediatePropagation() does everything stopPropagation does, PLUS prevents any other listeners on that same element (registered after the current one) from running at all, even ones attached to the identical element.' },
   ],
   'Event delegation': [
-    'What is event delegation and why is it more efficient than attaching listeners to each element?',
-    'How do you implement a click handler for a dynamically-added list item using event delegation?',
+    { q: 'What is event delegation and why is it more efficient than attaching listeners to each element?', a: 'Event delegation attaches a single listener to a common parent element, relying on event bubbling to catch events from any of its (current or future) children, then inspecting `event.target` inside the handler to determine which specific child actually triggered it — this is more efficient than attaching individual listeners to every child, especially for large or dynamically-changing lists, since it uses one listener total instead of potentially hundreds, and automatically covers new children added later without needing to re-attach listeners.' },
+    { q: 'How do you implement a click handler for a dynamically-added list item using event delegation?', a: '`listContainer.addEventListener("click", (e) => { const item = e.target.closest("li"); if (item) { /* handle click on this specific li */ } });` — attaching the listener once to the stable parent container, and using `closest()` inside the handler to identify the specific list item that was actually clicked (or ignore the click if it wasn\'t on an li at all), correctly handles clicks on items added to the list at any point after the listener was originally attached.' },
   ],
   'Debouncing and throttling event handlers': [
-    'What is the difference between debounce and throttle?',
-    'Implement a simple debounce function.',
-    'When would you prefer throttle over debounce (e.g. scroll vs search input)?',
+    { q: 'What is the difference between debounce and throttle?', a: 'Debounce delays execution until a period of inactivity has passed — repeated calls within that window keep resetting the timer, so the function only fires once, after the calls have genuinely stopped for the specified duration. Throttle guarantees the function runs at most once per fixed time interval, regardless of how many times it\'s triggered — it fires periodically during continuous activity rather than waiting for activity to fully stop.' },
+    { q: 'Implement a simple debounce function.', a: '`function debounce(fn, delay) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); }; }` — each new call cancels any previously pending scheduled execution and schedules a fresh one, so fn only actually executes once the calls have stopped coming in for at least `delay` milliseconds.' },
+    { q: 'When would you prefer throttle over debounce (e.g. scroll vs search input)?', a: 'Use throttle for continuous events where you want regular, periodic updates during ongoing activity (a scroll handler updating a progress indicator — you want it to keep updating throughout the scroll, not just once at the end). Use debounce for events where you only care about the final state after activity settles (search-as-you-type — you want to wait until the user pauses typing before firing an expensive API request, not fire one on every single keystroke).' },
   ],
 
   // Browser & Web APIs
   'localStorage, sessionStorage, and cookies': [
-    'What are the differences between localStorage, sessionStorage, and cookies in terms of scope and lifetime?',
-    'What are the security risks of storing a JWT in localStorage?',
+    { q: 'What are the differences between localStorage, sessionStorage, and cookies in terms of scope and lifetime?', a: 'localStorage persists indefinitely (until explicitly cleared) and is scoped per-origin, shared across all tabs/windows of that origin. sessionStorage persists only for the duration of a single tab\'s session (cleared when that tab closes) and is scoped per-tab, not shared even across tabs of the same origin. Cookies persist based on their configured expiration (or session-only if none set), are scoped per-domain (with path options), and — unlike the other two — are automatically sent with every matching HTTP request to the server.' },
+    { q: 'What are the security risks of storing a JWT in localStorage?', a: 'localStorage is fully accessible to any JavaScript running on the page, including malicious third-party scripts injected via an XSS vulnerability — if an attacker achieves XSS, they can trivially read and exfiltrate a JWT stored in localStorage, giving them full access to impersonate the user; httpOnly cookies (inaccessible to JS entirely) are generally considered safer for storing sensitive auth tokens for exactly this reason.' },
   ],
   'fetch API and Request/Response': [
-    'How do you handle a non-2xx HTTP response with fetch — does it reject the promise?',
-    'How would you add default headers to all fetch requests in a fetch wrapper?',
+    { q: 'How do you handle a non-2xx HTTP response with fetch — does it reject the promise?', a: 'No — fetch\'s promise only rejects for genuine network-level failures (DNS failure, connection refused, CORS block) — a 404 or 500 HTTP response is still considered a "successful" fetch from the promise\'s perspective and resolves normally; you must explicitly check `response.ok` (or `response.status`) yourself and manually throw/handle the error case, since fetch doesn\'t do this automatically the way some other HTTP client libraries do.' },
+    { q: 'How would you add default headers to all fetch requests in a fetch wrapper?', a: 'Write a small wrapper function around fetch that merges a set of default headers (auth token, content-type) with any request-specific headers passed in: `function apiFetch(url, options = {}) { return fetch(url, { ...options, headers: { ...defaultHeaders, ...options.headers } }); }` — centralizing this logic avoids repeating the same header-setting boilerplate at every individual fetch call site throughout the app.' },
   ],
   'Intersection Observer, Mutation Observer, Resize Observer': [
-    'How would you use IntersectionObserver to implement lazy image loading?',
-    'What is the benefit of IntersectionObserver over a scroll event listener?',
+    { q: 'How would you use IntersectionObserver to implement lazy image loading?', a: 'Create an IntersectionObserver watching your placeholder image elements (each initially having a data-src attribute instead of a real src), and in the observer\'s callback, when an entry reports `isIntersecting: true` (meaning it\'s scrolled into or near the viewport), swap that image\'s real `src` attribute in and unobserve that element — only actually loading each image\'s data once it\'s about to become visible, rather than loading everything upfront.' },
+    { q: 'What is the benefit of IntersectionObserver over a scroll event listener?', a: 'IntersectionObserver runs asynchronously, off the main rendering thread\'s critical path, and is specifically optimized by the browser to efficiently detect visibility intersection without requiring you to manually calculate element positions/bounding rects on every single scroll event (which would be expensive, synchronous, and fire extremely frequently) — it\'s both meaningfully more performant and requires far less manual calculation code than a scroll-listener-based approach.' },
   ],
   'Web Workers and Service Workers (overview)': [
-    'What can a Web Worker do that a Service Worker cannot (and vice versa)?',
-    'How does a Service Worker intercept fetch requests?',
+    { q: 'What can a Web Worker do that a Service Worker cannot (and vice versa)?', a: 'A Web Worker runs arbitrary JS off the main thread for heavy computation, with direct access to things like fetch and most JS APIs (though no DOM access), and lives only as long as its page/tab is open. A Service Worker specifically acts as a programmable network proxy between the page and the network — intercepting fetch requests, enabling offline caching strategies and push notifications — and can persist and run even when the page isn\'t open, which a regular Web Worker cannot do.' },
+    { q: 'How does a Service Worker intercept fetch requests?', a: 'Once registered and activated, a Service Worker can listen for the `fetch` event, which fires for every network request the page makes while the Service Worker is controlling it — inside that handler, you call `event.respondWith(...)` with your own custom response (from a cache, a modified request, or a fallback), letting you fully control caching strategies (cache-first, network-first, stale-while-revalidate) and offline behavior at the network-request level.' },
   ],
 
   // Networking & Data
   'CORS and preflight requests': [
-    'What is CORS and why does the browser enforce it?',
-    'What triggers a CORS preflight request?',
-    'Which response headers does the server need to set for CORS to work?',
+    { q: 'What is CORS and why does the browser enforce it?', a: 'CORS (Cross-Origin Resource Sharing) is a browser-enforced security mechanism that, by default, blocks a web page from making requests to a different origin (different domain/protocol/port) unless the target server explicitly opts in via specific response headers — it exists to protect users from malicious sites silently making authenticated requests to other sites on the user\'s behalf using their existing cookies/session, exploiting the browser\'s ambient authority.' },
+    { q: 'What triggers a CORS preflight request?', a: 'A preflight (an automatic OPTIONS request sent before the actual request) is triggered for "non-simple" cross-origin requests — using an HTTP method other than GET/HEAD/POST, custom request headers beyond the small allowed simple set, or a Content-Type other than a few specific simple values (like form-urlencoded) — the browser sends this OPTIONS request first to confirm the server actually permits the real request before sending it.' },
+    { q: 'Which response headers does the server need to set for CORS to work?', a: 'At minimum, Access-Control-Allow-Origin (specifying which origin(s) are permitted, or `*` for any) — and for more complex requests, also Access-Control-Allow-Methods (which HTTP methods are allowed), Access-Control-Allow-Headers (which custom headers are allowed), and Access-Control-Allow-Credentials (if the request needs to include cookies/credentials, which also requires the client to explicitly opt in via `credentials: "include"`).' },
   ],
   'Aborting requests with AbortController': [
-    'How does AbortController integrate with fetch?',
-    'How would you abort an in-flight request when a React component unmounts?',
+    { q: 'How does AbortController integrate with fetch?', a: 'You pass the controller\'s `.signal` as a fetch option (`{ signal: controller.signal }`), and calling `controller.abort()` at any later point immediately causes that in-flight fetch to reject with an AbortError, actually canceling the underlying network request rather than merely ignoring its eventual response once it arrives.' },
+    { q: 'How would you abort an in-flight request when a React component unmounts?', a: 'Create an AbortController inside a useEffect, pass its signal to your fetch call, and return a cleanup function from the effect that calls `controller.abort()` — React automatically runs this cleanup function when the component unmounts (or when the effect re-runs due to a dependency change), ensuring you don\'t attempt a state update on an unmounted component and don\'t waste resources on a request whose result is no longer needed.' },
   ],
   'Same-origin policy': [
-    'What constitutes the "origin" in the same-origin policy?',
-    'What are the different mechanisms (CORS, JSONP, postMessage) for cross-origin communication?',
+    { q: 'What constitutes the "origin" in the same-origin policy?', a: 'An origin is defined by the exact combination of protocol (http vs https), hostname (domain), and port — two URLs are considered the same origin only if all three of these match exactly; even the same domain on http vs https, or on port 3000 vs port 8080, counts as a genuinely different origin under this policy.' },
+    { q: 'What are the different mechanisms (CORS, JSONP, postMessage) for cross-origin communication?', a: 'CORS lets a server explicitly opt certain cross-origin requests into being permitted, via specific response headers. JSONP (a legacy, largely obsolete technique) works around the same-origin restriction by exploiting the fact that `<script>` tags aren\'t subject to it, loading data as executable JS rather than a genuine data response. postMessage() provides a safe, explicit API for two different-origin windows/iframes to exchange messages directly, with the receiving side able to verify the sender\'s origin before trusting the message content.' },
   ],
 
   // Memory Management & Performance
   'Garbage collection (mark-and-sweep)': [
-    'How does the mark-and-sweep garbage collector determine what to collect?',
-    'Can you force garbage collection in JavaScript? Why or why not?',
+    { q: 'How does the mark-and-sweep garbage collector determine what to collect?', a: 'Starting from a set of "roots" (global variables, currently-executing function call stacks), the collector recursively marks every object reachable by following references from those roots — any object NOT reached/marked during this traversal is considered unreachable ("garbage"), and the collector then sweeps through memory, freeing all the unmarked, unreachable objects.' },
+    { q: 'Can you force garbage collection in JavaScript? Why or why not?', a: 'No — there\'s no standard API to force garbage collection in normal JavaScript execution (deliberately, since giving developers direct GC control could easily be misused and cause worse performance than letting the engine\'s own heuristics decide the optimal timing); some engines expose non-standard debugging flags (like Chrome\'s `--expose-gc` for Node with specific flags) purely for testing/profiling purposes, not for use in production application code.' },
   ],
   'Memory leaks and common causes': [
-    'List four common causes of memory leaks in JavaScript applications.',
-    'How would you detect a memory leak using Chrome DevTools?',
+    { q: 'List four common causes of memory leaks in JavaScript applications.', a: 'Forgotten event listeners/timers that keep a reference to objects that should otherwise be collectible (never calling removeEventListener/clearInterval when done); accidental global variables (implicit globals in non-strict mode, or attaching things to window); closures unintentionally retaining references to large objects/data longer than needed; and detached DOM nodes still referenced by JS variables even after being removed from the actual document tree.' },
+    { q: 'How would you detect a memory leak using Chrome DevTools?', a: 'Take heap snapshots at different points in time (e.g. before and after repeatedly performing an action that shouldn\'t itself accumulate memory, like opening/closing a modal several times), compare them in the Memory tab to see which object types are growing unexpectedly across snapshots, and use the "Comparison" view to identify specifically what\'s being retained and trace its retaining path (what\'s still holding a reference to it) back to the actual root cause.' },
   ],
   'Debouncing and throttling': [
-    'Implement a throttle function that fires at most once per 200ms.',
-    'Where in your app have you applied debounce or throttle and why?',
+    { q: 'Implement a throttle function that fires at most once per 200ms.', a: '`function throttle(fn, limit) { let waiting = false; return (...args) => { if (!waiting) { fn(...args); waiting = true; setTimeout(() => waiting = false, limit); } }; }` — the first call fires immediately, and subsequent calls within the limit window are simply ignored/skipped until the timer resets, guaranteeing the function fires at most once per limit-duration window.' },
+    { q: 'Where in your app have you applied debounce or throttle and why?', a: 'Common real applications: debouncing a search input\'s API-triggering onChange handler (avoiding an API call on every keystroke), throttling a scroll-position-tracking handler (updating a "scroll to top" button\'s visibility without recalculating on literally every scroll pixel), and debouncing a window resize handler that recalculates an expensive layout, to avoid running that recalculation dozens of times per second during an active resize drag.' },
   ],
   'Memoization': [
-    'Implement a generic memoize function using a Map.',
-    'What are the risks of memoizing a function that has side effects?',
+    { q: 'Implement a generic memoize function using a Map.', a: '`function memoize(fn) { const cache = new Map(); return (...args) => { const key = JSON.stringify(args); if (!cache.has(key)) cache.set(key, fn(...args)); return cache.get(key); }; }` — caching results keyed by a serialized representation of the arguments, so repeated calls with identical arguments skip recomputation and return the cached result directly.' },
+    { q: 'What are the risks of memoizing a function that has side effects?', a: 'Memoization fundamentally assumes the function is pure — if a memoized function has side effects (logging, mutating external state, making an API call), memoizing it means those side effects only actually happen on the FIRST call with a given set of arguments, silently skipped on all subsequent calls with the same arguments — which can produce very confusing bugs if the caller expects the side effect to happen every single time the function is called, unaware that memoization has silently changed that expectation.' },
   ],
 
   // Dates & Internationalization
   'The Date object and its pitfalls': [
-    'Why does `new Date("2023-01-01")` parse as UTC midnight while `new Date("2023/01/01")` parses as local time?',
-    'What library would you reach for instead of Date for complex date manipulation and why?',
+    { q: 'Why does `new Date("2023-01-01")` parse as UTC midnight while `new Date("2023/01/01")` parses as local time?', a: 'The ISO 8601 date-only format (YYYY-MM-DD) is specifically defined by the spec to be interpreted as UTC midnight when no time/timezone is included. The slash-separated format (YYYY/MM/DD) is NOT a standardized ISO format at all — it\'s parsed via implementation-specific, non-standard date-string parsing, which conventionally (though not strictly guaranteed across all engines) interprets it as local time — this inconsistency between the two very similar-looking formats is a frequent, easy-to-miss source of subtle timezone bugs.' },
+    { q: 'What library would you reach for instead of Date for complex date manipulation and why?', a: 'date-fns or Luxon (Temporal, the modern native successor, is also emerging) are commonly preferred over the native Date object for non-trivial date logic, since native Date has a notoriously awkward, mutable, and timezone-inconsistent API (0-indexed months, unintuitive setters that mutate in place, poor timezone support) — these libraries provide clearer, more predictable, typically immutable APIs specifically designed to avoid Date\'s well-known historical footguns.' },
   ],
   'Intl.DateTimeFormat, NumberFormat, Collator': [
-    'How would you format a number as currency in the user\'s locale using the Intl API?',
-    'How does Intl.Collator improve locale-sensitive string sorting?',
+    { q: "How would you format a number as currency in the user's locale using the Intl API?", a: '`new Intl.NumberFormat(userLocale, { style: "currency", currency: "USD" }).format(1234.5)` — this produces a correctly locale-formatted currency string (e.g. "$1,234.50" for en-US, or a differently formatted equivalent for other locales), handling locale-specific thousands separators, decimal points, and currency symbol placement automatically, without you needing to hand-write locale-specific formatting logic yourself.' },
+    { q: 'How does Intl.Collator improve locale-sensitive string sorting?', a: 'Naive string comparison (using `<`/`>` or default Array.sort) compares strings by raw character/code-point value, which doesn\'t correctly handle locale-specific alphabetical ordering (accented characters, different scripts, case-insensitive-by-default expectations in some locales). Intl.Collator provides a comparator function specifically implementing correct, locale-aware collation rules — `new Intl.Collator(locale).compare(a, b)` — producing genuinely correct alphabetical ordering matching what a native speaker of that locale would expect.' },
   ],
 
   // Security
   'Cross-Site Scripting (XSS) and sanitization': [
-    'What is XSS and what are the three main types?',
-    'How does using textContent instead of innerHTML help prevent XSS?',
-    'What is DOMPurify and when would you use it?',
+    { q: 'What is XSS and what are the three main types?', a: 'XSS is a vulnerability where an attacker injects malicious script into a page that then executes in another user\'s browser session, typically to steal cookies/tokens or perform actions as that user. The three main types: stored XSS (malicious script is persistently saved on the server, e.g. in a comment, and served to every subsequent visitor), reflected XSS (malicious script is embedded in a request, like a URL parameter, and immediately reflected back into the response without proper escaping), and DOM-based XSS (the vulnerability exists purely client-side, in JS code that unsafely inserts untrusted data into the DOM, with no server involvement at all).' },
+    { q: 'How does using textContent instead of innerHTML help prevent XSS?', a: 'textContent inserts a string as literal, plain text — any HTML/script tags within it are displayed as inert visible text characters, never parsed or executed as actual markup. innerHTML parses the assigned string as real HTML, meaning any embedded `<script>` tags or malicious event handler attributes (`onerror="..."`) genuinely execute — using textContent whenever you\'re inserting untrusted or user-generated content (rather than deliberately-constructed, trusted HTML) eliminates this entire class of injection vulnerability.' },
+    { q: 'What is DOMPurify and when would you use it?', a: 'DOMPurify is a widely-used library that sanitizes untrusted HTML by parsing it and stripping out dangerous elements/attributes (scripts, event handlers, javascript: URLs) while preserving safe, intended formatting — you\'d use it whenever you genuinely need to render user-generated or externally-sourced HTML (e.g. rich text content, markdown-rendered-to-HTML) rather than plain text, since in that specific case you can\'t simply use textContent (which would strip ALL formatting), but innerHTML directly would be dangerously unsafe without sanitization first.' },
   ],
   'Cross-Site Request Forgery (CSRF)': [
-    'How does a CSRF attack work? Walk through an example.',
-    'What does SameSite=Strict on a cookie prevent?',
+    { q: 'How does a CSRF attack work? Walk through an example.', a: 'A victim is logged into a legitimate site (with an active session cookie), then visits a malicious page that automatically submits a hidden form (or makes a request) to the legitimate site\'s state-changing endpoint (e.g. "transfer funds") — since browsers automatically attach the victim\'s existing cookies to any request to that domain regardless of which page initiated it, the legitimate server sees what looks like a genuine, authenticated request from the victim and processes it, even though the victim never intentionally took that action.' },
+    { q: 'What does SameSite=Strict on a cookie prevent?', a: 'It prevents the browser from sending that cookie along with any cross-site request at all (even a simple top-level navigation from another site\'s link) — since a CSRF attack fundamentally relies on the browser automatically attaching the victim\'s session cookie to a cross-origin-initiated request, SameSite=Strict (or the slightly more permissive Lax, which still allows top-level navigation but blocks background cross-site requests) largely neutralizes this attack vector by simply refusing to send the cookie in that scenario.' },
   ],
   'eval and Function constructor risks': [
-    'Why is eval a security risk and an optimization barrier?',
-    'What are alternatives to eval for dynamic code evaluation?',
+    { q: 'Why is eval a security risk and an optimization barrier?', a: 'eval() executes arbitrary string content as genuine JavaScript code with full access to the calling scope — if that string ever contains (even indirectly, through injection) attacker-controlled content, it becomes a direct arbitrary code execution vulnerability. It\'s also an optimization barrier because the JS engine can\'t statically analyze/optimize code whose actual content is only known at runtime, forcing it into slower, less-optimized execution paths and disabling many compiler optimizations for the enclosing scope entirely.' },
+    { q: 'What are alternatives to eval for dynamic code evaluation?', a: 'For parsing/evaluating data (not code), use JSON.parse instead of eval on a JSON string. For dynamic property access, use bracket notation (`obj[dynamicKey]`) instead of building and evaluating a dynamic expression string. For genuinely dynamic logic/configuration, consider a safer, restricted expression evaluator/DSL rather than full unrestricted eval, or restructure the problem to avoid needing dynamic code execution entirely (e.g. a lookup table/strategy pattern instead of dynamically constructing function bodies).' },
   ],
   'Prototype pollution': [
-    'What is prototype pollution and how can it be exploited?',
-    'How would you safely merge two plain objects to avoid prototype pollution?',
+    { q: 'What is prototype pollution and how can it be exploited?', a: 'Prototype pollution occurs when an attacker manages to inject a property (often via a crafted key like `__proto__` or `constructor.prototype`) into Object.prototype itself, through an insufficiently-guarded recursive merge/assignment function processing untrusted input — since Object.prototype is shared by virtually every plain object in the entire application, polluting it can silently corrupt application logic, bypass security checks that assume certain properties are absent, or in some cases even lead to remote code execution depending on how the polluted property is subsequently used elsewhere in the app.' },
+    { q: 'How would you safely merge two plain objects to avoid prototype pollution?', a: 'Explicitly reject/skip dangerous keys like `__proto__`, `constructor`, and `prototype` during any recursive merge of untrusted input, use `Object.create(null)` for the target object when building a plain data structure from untrusted keys (giving it no prototype at all to pollute), or rely on a well-audited, security-conscious merge library that\'s specifically designed to guard against this class of vulnerability rather than hand-rolling deep-merge logic yourself.' },
   ],
 
   // Tooling & Environment
   'Browser vs Node.js runtimes': [
-    'What global APIs exist in a browser but not in Node.js, and vice versa?',
-    'How does module resolution differ between browsers and Node.js?',
+    { q: 'What global APIs exist in a browser but not in Node.js, and vice versa?', a: 'Browsers provide `window`, `document`, the full DOM API, `localStorage`, and other browser-specific APIs (geolocation, notifications) that have no meaning outside a page context. Node.js provides `process`, `require`/`module` (in CJS), Node-specific core modules (fs, path, os, http server APIs), and Buffer — none of which exist in a browser, since Node runs outside any browser sandbox with direct OS-level access instead.' },
+    { q: 'How does module resolution differ between browsers and Node.js?', a: 'Browsers (natively) resolve ES module imports via actual URLs, requiring exact paths/extensions with no implicit resolution magic. Node.js\'s module resolution (for both CJS and ESM) implements a more elaborate algorithm — checking file extensions automatically, resolving directories to their index files or package.json "main"/"exports" field, and searching up through nested node_modules folders — none of which a plain browser environment does natively without a bundler providing equivalent resolution logic.' },
   ],
   'Transpilers (Babel) and polyfills': [
-    'What is the difference between transpilation (Babel) and a polyfill?',
-    'What does `@babel/preset-env` do and how does `browserslist` integrate with it?',
+    { q: 'What is the difference between transpilation (Babel) and a polyfill?', a: 'Transpilation converts newer JS *syntax* into older, equivalent syntax that older environments can parse and execute (e.g. converting optional chaining `?.` into an equivalent chain of conditional checks) — it changes how code is written. A polyfill provides an actual runtime *implementation* of a missing built-in feature (like Array.prototype.flat, or fetch) that the target environment simply doesn\'t have at all — it adds missing functionality rather than rewriting syntax, since some newer features (new global functions/APIs) can\'t be expressed via syntax transformation alone.' },
+    { q: 'What does `@babel/preset-env` do and how does `browserslist` integrate with it?', a: '@babel/preset-env automatically determines which specific syntax transformations and polyfills are actually needed, based on your specified target environments, rather than you manually selecting individual Babel plugins yourself. It integrates with a browserslist configuration (a shared, standardized way to declare "which browsers/versions do we need to support," used by multiple tools across the ecosystem) to determine those targets, ensuring Babel only transforms/polyfills what\'s genuinely necessary for your actual declared browser support matrix, avoiding unnecessary bloat for features your targets already natively support.' },
   ],
   'Bundlers (Webpack, Vite, esbuild) — concept': [
-    'Why did Vite\'s native-ESM dev server become popular over Webpack\'s bundled dev server?',
-    'What is a "chunk" in the context of bundlers and code splitting?',
+    { q: "Why did Vite's native-ESM dev server become popular over Webpack's bundled dev server?", a: 'Webpack\'s dev server has to bundle your entire application (or a significant portion of it) before serving anything, and that bundling step gets progressively slower as an application grows. Vite instead serves your source files as native ES modules directly to the browser during development (letting the browser itself handle module resolution/loading), only transforming individual files on demand as they\'re actually requested — this makes Vite\'s dev server startup and hot-reload dramatically faster, especially for large applications, since it avoids the whole-app bundling step entirely during development.' },
+    { q: 'What is a "chunk" in the context of bundlers and code splitting?', a: 'A chunk is one output JS file produced by the bundler — instead of bundling your entire application into one single massive file, code splitting divides it into multiple separate chunks (an initial chunk needed immediately, plus additional chunks for routes/features loaded on demand via dynamic import) — the bundler analyzes your app\'s dependency graph and import boundaries (especially dynamic imports) to determine sensible chunk boundaries automatically.' },
   ],
   'Debugging with DevTools (breakpoints, console, profiling)': [
-    'How would you use a conditional breakpoint to pause only when a certain condition is true?',
-    'What is the difference between the Performance tab and the Memory tab in DevTools?',
+    { q: 'How would you use a conditional breakpoint to pause only when a certain condition is true?', a: 'Right-click on a line number in the Sources panel and choose "Add conditional breakpoint," entering a JS expression (e.g. `user.id === 42`) — execution only actually pauses at that line when the expression evaluates to truthy, letting you skip past many irrelevant iterations of a loop or many irrelevant calls to a shared function, honing in specifically on the case you actually care about debugging.' },
+    { q: 'What is the difference between the Performance tab and the Memory tab in DevTools?', a: 'The Performance tab records a timeline of CPU/rendering activity over a period of time (JS execution, layout, painting, scripting), letting you identify slow functions, long tasks, and rendering bottlenecks during actual interactions. The Memory tab focuses specifically on heap usage — taking snapshots, comparing them over time, and identifying memory leaks or excessive memory consumption by specific object types — the two tabs answer fundamentally different questions: "what\'s slow" (Performance) vs. "what\'s using/leaking memory" (Memory).' },
   ],
 };
