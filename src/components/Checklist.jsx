@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { checklistSections } from '../data/checklistTopics';
@@ -101,23 +101,23 @@ function CopyButton({ text, isLight, copied, onCopied }) {
   );
 }
 
-// Opens a Google AI Mode search for the given text in a new tab.
+// Search icon — redirects to the main app with the search pre-filled.
 function SearchButton({ text, sectionLabel, isLight }) {
-  const handleClick = (e) => {
-    e.stopPropagation();
-    const query = `${sectionLabel} ${text}`;
-    // udm=50 routes the query to Google's AI Mode instead of classic web results.
-    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&udm=50`, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <button
-      onClick={handleClick}
-      title="Search this topic on Google AI Mode"
-      aria-label={`Search "${text}" on Google AI Mode`}
+      onClick={(e) => {
+        e.stopPropagation();
+        const searchInput = document.querySelector('input[placeholder*="Search modules"]');
+        if (searchInput) {
+          searchInput.value = text;
+          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }}
+      title="Search for this topic"
+      aria-label={`Search for "${text}"`}
       style={{
         width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'none', alignItems: 'center', justifyContent: 'center',
         border: 'none', cursor: 'pointer',
         background: 'transparent',
         color: isLight ? '#94a3b8' : '#64748b',
@@ -126,30 +126,31 @@ function SearchButton({ text, sectionLabel, isLight }) {
       onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
     >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="7" />
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
     </button>
   );
 }
 
+// Simple progress bar
 function ProgressBar({ done, total, color, isLight }) {
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 200, maxWidth: 300 }}>
       <div style={{
-        flex: 1, height: 8, borderRadius: 999,
-        background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.09)',
+        flex: 1, height: 6, borderRadius: 3,
+        background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)',
         overflow: 'hidden',
       }}>
         <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: 999,
-          background: color, transition: 'width 0.3s ease',
+          width: `${percent}%`, height: '100%', borderRadius: 3,
+          background: color, transition: 'width 0.3s ease-out',
         }} />
       </div>
-      <span style={{ fontSize: 12, fontWeight: 700, color, whiteSpace: 'nowrap' }}>
-        {done}/{total} · {pct}%
+      <span style={{ fontSize: 11, fontWeight: 800, color: isLight ? '#64748b' : '#94a3b8', minWidth: 55, textAlign: 'right' }}>
+        {done}/{total} · {percent}%
       </span>
     </div>
   );
@@ -169,62 +170,68 @@ export default function Checklist({ isLight, initialSection }) {
   const [copiedId, setCopiedId] = useState(null); // topic id whose copy icon shows a checkmark
   const [expanded, setExpanded] = useState({}); // topic id -> bool, shows its question list
   const [answerShown, setAnswerShown] = useState({}); // question id -> bool, shows its answer
+  const lastRemoteValueRef = useRef(null);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState(false);
-  // Track whether we've loaded from Firestore for this user session
-  const loadedForUser = useRef(null);
-  // Guards the persist effect from writing stale/empty local state over
-  // real Firestore data before the initial load for this user has resolved.
-  const hydratedRef = useRef(true);
 
   const flashCopied = (id) => {
     setCopiedId(id);
     setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
   };
 
-  // When user logs in, load their progress from Firestore
+  // 1. Listen to Firestore in real-time
   useEffect(() => {
-    if (!user || loadedForUser.current === user.uid) return;
-    loadedForUser.current = user.uid;
-    hydratedRef.current = false; // block the persist effect until the fetch below resolves
+    if (!user) {
+      setInitialLoadDone(true);
+      return;
+    }
+    setInitialLoadDone(false);
     setSyncing(true);
     setSyncError(false);
-    getDoc(doc(db, 'users', user.uid))
-      .then((snap) => {
-        if (snap.exists()) {
-          const data = snap.data().known || {};
-          setKnown(data);
-        }
-        // If no doc yet, keep current localStorage state so nothing is lost
-      })
-      .catch((err) => {
-        console.error('Failed to load checklist progress from Firestore:', err);
-        setSyncError(true);
-      })
-      .finally(() => {
-        hydratedRef.current = true;
+
+    const unsub = onSnapshot(
+      doc(db, 'users', user.uid),
+      (snap) => {
         setSyncing(false);
-      });
+        if (snap.exists() && snap.data().known) {
+          const remoteKnown = snap.data().known;
+          lastRemoteValueRef.current = remoteKnown;
+          setKnown((prev) => {
+            if (JSON.stringify(prev) !== JSON.stringify(remoteKnown)) {
+              return remoteKnown;
+            }
+            return prev;
+          });
+        }
+        setInitialLoadDone(true);
+      },
+      (err) => {
+        console.error('Failed to listen to checklist progress:', err);
+        setSyncError(true);
+        setSyncing(false);
+        setInitialLoadDone(true);
+      }
+    );
+
+    return () => unsub();
   }, [user]);
 
-  // When user logs out, reset to localStorage data
-  useEffect(() => {
-    if (user === null) {
-      loadedForUser.current = null;
-      hydratedRef.current = true;
-      setKnown(loadState());
-    }
-  }, [user]);
-
-  // Persist: Firestore if logged in, localStorage always as backup.
-  // Skipped while hydratedRef is false (i.e. mid-way through loading this
-  // user's remote data) so we never clobber it with stale local state.
+  // 2. Persist Local & Firestore Sync
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(known));
     } catch { /* ignore */ }
 
-    if (user && hydratedRef.current) {
+    if (user && initialLoadDone) {
+      // Avoid writing if this update came from the server
+      if (
+        lastRemoteValueRef.current &&
+        JSON.stringify(known) === JSON.stringify(lastRemoteValueRef.current)
+      ) {
+        return;
+      }
+
       setDoc(doc(db, 'users', user.uid), { known }, { merge: true })
         .then(() => setSyncError(false))
         .catch((err) => {
@@ -232,7 +239,7 @@ export default function Checklist({ isLight, initialSection }) {
           setSyncError(true);
         });
     }
-  }, [known, user]);
+  }, [known, user, initialLoadDone]);
 
   const section = checklistSections.find((s) => s.id === activeSection);
   const questionBank = QUESTION_BANKS[activeSection] || {};
@@ -287,7 +294,7 @@ export default function Checklist({ isLight, initialSection }) {
       {/* Section tabs */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
-        padding: '10px 24px', flexShrink: 0,
+        padding: '10px 0', flexShrink: 0,
         borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
         background: isLight ? '#f8fafc' : 'rgba(255,255,255,0.02)',
       }}>
@@ -325,7 +332,7 @@ export default function Checklist({ isLight, initialSection }) {
       {/* Section header: progress + controls */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-        padding: '12px 24px', flexShrink: 0,
+        padding: '12px 0', flexShrink: 0,
         borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -354,7 +361,7 @@ export default function Checklist({ isLight, initialSection }) {
       {cur.total > 0 && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-          padding: '10px 24px', flexShrink: 0,
+          padding: '10px 0', flexShrink: 0,
           borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
         }}>
           <input
@@ -381,7 +388,7 @@ export default function Checklist({ isLight, initialSection }) {
       )}
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px 48px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '18px 0 48px' }}>
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
           {cur.total === 0 ? (
             <div style={{

@@ -12,6 +12,7 @@ import PersonalBehavioralSection from './components/PersonalBehavioralSection';
 import BehavioralSection from './components/BehavioralSection';
 import AuthModal from './components/AuthModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import PrepJournal from './components/PrepJournal';
 
 function AppShell() {
   const { user, logout } = useAuth();
@@ -83,7 +84,7 @@ function AppShell() {
       />
 
       <div>
-        <main className="min-h-screen">
+        <main>
           {/* Homepage Hub */}
           {activeSkill === 'home' && (
             <Home onSelectSkill={handleSelectSkill} isLight={isLight} />
@@ -91,12 +92,16 @@ function AppShell() {
 
           {/* Code Practice view */}
           {isCodePractice && (
-            <CodePractice isLight={isLight} initialProblemId={navContext?.problemId} />
+            <div className="max-w-6xl mx-auto px-6">
+              <CodePractice isLight={isLight} initialProblemId={navContext?.problemId} />
+            </div>
           )}
 
           {/* Topic Checklist view */}
           {isChecklist && (
-            <Checklist isLight={isLight} initialSection={navContext?.section} />
+            <div className="max-w-6xl mx-auto px-6">
+              <Checklist isLight={isLight} initialSection={navContext?.section} />
+            </div>
           )}
 
           {/* Normal skill view */}
@@ -223,6 +228,9 @@ function AppShell() {
       {showAuthModal && (
         <AuthModal isLight={isLight} onSkip={handleSkip} />
       )}
+
+      {/* Global Study Notepad / Prep Journal overlay */}
+      <PrepJournal isLight={isLight} />
     </div>
   );
 }
