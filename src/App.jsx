@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSkillData } from './hooks/useSkillData';
 import { useTheme } from './hooks/useTheme';
-import Sidebar from './components/Sidebar';
+import Home from './components/Home';
 import TopBar from './components/TopBar';
 import SkillHero from './components/SkillHero';
 import SectionCard from './components/SectionCard';
@@ -33,20 +33,20 @@ function AppShell() {
   const { theme, toggle: toggleTheme } = useTheme();
   const isLight = theme === 'light';
 
-  const [activeSkill, setActiveSkill] = useState('javascript');
+  const [activeSkill, setActiveSkill] = useState('home');
+  const [navContext, setNavContext] = useState(null); // { section?, problemId? }
   const isCodePractice = activeSkill === 'code-practice';
   const isChecklist = activeSkill === 'checklist';
   const isPersonalBehavioral = activeSkill === 'personal-behavioral';
-  const [sidebarPinned, setSidebarPinned] = useState(false);
-  const sidebarW = sidebarPinned ? 256 : 56;
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // { title, code }
 
   const { data, loading, error, config } = useSkillData(activeSkill);
 
-  const handleSelectSkill = (id) => {
+  const handleSelectSkill = (id, context = null) => {
     setActiveSkill(id);
-    setSearch('');
+    setNavContext(context);
+    setSearch(context?.searchQuery || '');
   };
 
   const q = search.trim().toLowerCase();
@@ -68,39 +68,39 @@ function AppShell() {
   const hasNonSenior = visibleSections.some(s => !s.isSenior);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isLight ? 'bg-[#f0f4f8]' : 'bg-[#0a0a0a]'}`}>
-      <Sidebar
+    <div className={`min-h-screen transition-colors duration-300 ${isLight ? 'bg-[#f8fafc]' : 'bg-[#030712]'}`}>
+      <TopBar
         activeSkill={activeSkill}
-        onSelect={handleSelectSkill}
+        onBackToHome={() => { setNavContext(null); handleSelectSkill('home'); }}
+        skillName={isCodePractice ? 'Code Practice' : isChecklist ? 'Topic Checklist' : (data?.skill || '')}
+        search={isCodePractice || isChecklist || activeSkill === 'home' ? '' : search}
+        onSearch={isCodePractice || isChecklist || activeSkill === 'home' ? () => { } : setSearch}
+        isLight={isLight}
+        hideSearch={isCodePractice || isChecklist || activeSkill === 'home'}
+        onShowAuth={() => setSkipped(false)}
         theme={theme}
         onThemeToggle={toggleTheme}
-        pinned={sidebarPinned}
-        onPinToggle={() => setSidebarPinned(p => !p)}
       />
 
-      <div style={{ paddingLeft: sidebarW, transition: 'padding-left 0.22s cubic-bezier(0.4,0,0.2,1)' }}>
-        <TopBar
-          skillName={isCodePractice ? 'Code Practice' : isChecklist ? 'Topic Checklist' : (data?.skill || '…')}
-          search={isCodePractice || isChecklist ? '' : search}
-          onSearch={isCodePractice || isChecklist ? () => { } : setSearch}
-          isLight={isLight}
-          hideSearch={isCodePractice || isChecklist}
-          onShowAuth={() => setSkipped(false)}
-        />
-
+      <div>
         <main className="min-h-screen">
+          {/* Homepage Hub */}
+          {activeSkill === 'home' && (
+            <Home onSelectSkill={handleSelectSkill} isLight={isLight} />
+          )}
+
           {/* Code Practice view */}
           {isCodePractice && (
-            <CodePractice isLight={isLight} />
+            <CodePractice isLight={isLight} initialProblemId={navContext?.problemId} />
           )}
 
           {/* Topic Checklist view */}
           {isChecklist && (
-            <Checklist isLight={isLight} />
+            <Checklist isLight={isLight} initialSection={navContext?.section} />
           )}
 
           {/* Normal skill view */}
-          {!isCodePractice && !isChecklist && (
+          {!isCodePractice && !isChecklist && activeSkill !== 'home' && (
             <div className="max-w-4xl mx-auto px-6 py-8">
               {/* Loading */}
               {loading && (

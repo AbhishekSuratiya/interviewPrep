@@ -561,10 +561,14 @@ window.addEventListener('load', function() {
 }
 
 
-export default function CodePractice({ isLight }) {
+export default function CodePractice({ isLight, initialProblemId }) {
   const STORAGE_KEY = 'codePractice:codes';
   const [mode, setMode] = useState('problems'); // 'problems' | 'playground'
-  const [activeId, setActiveId] = useState(1);
+  const [activeId, setActiveId] = useState(
+    initialProblemId && allQuestions.some(q => q.id === initialProblemId)
+      ? initialProblemId
+      : 1
+  );
   const [codes, setCodes] = useState(() => {
     const defaults = Object.fromEntries(allQuestions.map(q => [q.id, q.starterCode]));
     try {

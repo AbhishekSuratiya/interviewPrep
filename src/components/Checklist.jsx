@@ -155,9 +155,13 @@ function ProgressBar({ done, total, color, isLight }) {
   );
 }
 
-export default function Checklist({ isLight }) {
+export default function Checklist({ isLight, initialSection }) {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState(checklistSections[0].id);
+  const [activeSection, setActiveSection] = useState(
+    (initialSection && checklistSections.some(s => s.id === initialSection))
+      ? initialSection
+      : checklistSections[0].id
+  );
   const [known, setKnown] = useState(loadState);
   const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState({}); // group title -> bool
