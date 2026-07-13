@@ -46,6 +46,26 @@ const SKILLS_METADATA = [
     badge: 'Mobile'
   },
   {
+    id: 'nodejs',
+    title: 'Node.js',
+    category: 'Core Concepts',
+    color: '#68a063',
+    iconUrl: `${DEVICON_BASE}/nodejs/nodejs-original.svg`,
+    description: 'Master the runtime: event loop internals, streams & backpressure, Express middleware pipelines, and production-grade Node engineering.',
+    stats: '5 Sections • 22 Topics',
+    badge: 'Hot Topic'
+  },
+  {
+    id: 'ai',
+    title: 'Artificial Intelligence',
+    category: 'Core Concepts',
+    color: '#22d3ee',
+    emoji: '🤖',
+    description: 'Understand ML fundamentals, neural networks & Transformers, LLM prompt engineering, RAG, and building production AI features.',
+    stats: '5 Sections • 22 Topics',
+    badge: 'Hot Topic'
+  },
+  {
     id: 'senior',
     title: 'Senior Topics',
     category: 'Architecture',

@@ -1,0 +1,462 @@
+{
+  "skill": "Artificial Intelligence",
+  "icon": "🤖",
+  "color": "#22d3ee",
+  "sections": [
+    {
+      "id": "ai-fundamentals",
+      "title": "AI/ML Fundamentals",
+      "emoji": "🧩",
+      "topics": [
+        {
+          "id": "what-is-machine-learning",
+          "title": "What is Machine Learning",
+          "summary": "How ML differs from traditional programming — learning patterns from data instead of hand-coded rules.",
+          "explanation": "Traditional programming is: you write explicit rules, and the program applies them to input to produce output. Machine learning inverts this: you provide input data and (usually) known correct outputs, and an algorithm learns the rules/patterns itself by adjusting internal parameters to minimize error between its predictions and the true answers. The result is a trained 'model' — a set of learned parameters — that can generalize to new, unseen data. This shift matters because many real-world problems (recognizing images, understanding language) have rules too complex or numerous for a human to hand-code explicitly.",
+          "analogy": "Traditional programming is like giving someone a precise recipe to follow exactly. Machine learning is like showing someone thousands of example dishes and letting them figure out the underlying recipe patterns themselves through repeated tasting and adjustment, until they can cook a similar dish from a description they've never seen before.",
+          "keyPoints": [
+            "Traditional programming: explicit rules in, data through rules, output. ML: data + desired output in, rules (model) learned.",
+            "A 'model' is a set of learned numerical parameters that map inputs to predictions.",
+            "'Training' is the process of adjusting those parameters to minimize prediction error on known data.",
+            "'Generalization' is the ability of a trained model to perform well on new, unseen data — the actual goal.",
+            "ML is best suited for problems where rules are too complex, numerous, or unknown to hand-code directly."
+          ],
+          "code": "// Conceptual contrast, not runnable ML code:\n\n// Traditional programming — explicit rule\nfunction isSpam(email) {\n  return email.includes('WIN FREE MONEY');\n}\n\n// Machine learning — model learned from thousands of labeled examples\nconst prediction = spamModel.predict(emailFeatures);\n// The 'rules' for detecting spam were learned from data, not hand-written.",
+          "situations": [
+            {
+              "question": "A product manager asks why you'd use machine learning instead of just writing more if/else rules for a fraud detection feature. How do you explain the trade-off?",
+              "answer": "I'd explain that fraud patterns are numerous, constantly evolving, and often too subtle or interrelated for a human to enumerate as explicit rules — a rules-based system would need constant manual updates and would still miss subtle correlations across many signals. An ML model can learn these complex, evolving patterns directly from historical labeled fraud data and adapt as it's retrained on new data, though I'd also note the trade-off: less interpretability and a need for ongoing monitoring/retraining versus the simplicity and predictability of explicit rules for simpler, well-understood cases."
+            }
+          ]
+        },
+        {
+          "id": "supervised-unsupervised-rl",
+          "title": "Supervised vs Unsupervised vs Reinforcement Learning",
+          "summary": "The three major paradigms of machine learning and what kind of problem each is suited for.",
+          "explanation": "Supervised learning trains on labeled data (input-output pairs) to predict outputs for new inputs — classification (spam/not spam) and regression (predicting a price) are supervised tasks. Unsupervised learning works with unlabeled data, finding structure on its own — clustering (grouping similar customers) and dimensionality reduction are unsupervised. Reinforcement learning (RL) trains an agent to take actions in an environment to maximize cumulative reward through trial and error, learning from feedback (rewards/penalties) rather than labeled examples — used for game-playing AI, robotics, and increasingly for fine-tuning LLMs (RLHF).",
+          "analogy": "Supervised learning is like studying with a textbook that has an answer key — you learn by checking your answers against known-correct ones. Unsupervised learning is like being handed a pile of documents with no labels and asked to sort them into meaningful groups yourself. Reinforcement learning is like learning to ride a bike purely through trial, error, and the feedback of falling or staying upright.",
+          "keyPoints": [
+            "Supervised: learns from labeled input-output pairs — classification and regression tasks.",
+            "Unsupervised: learns from unlabeled data, finding structure — clustering, anomaly detection, dimensionality reduction.",
+            "Reinforcement learning: an agent learns via trial-and-error, guided by reward signals from an environment.",
+            "RLHF (Reinforcement Learning from Human Feedback) is how many LLMs are fine-tuned to align with human preferences.",
+            "Semi-supervised learning blends small amounts of labeled data with larger unlabeled datasets."
+          ],
+          "code": "// Conceptual examples:\n\n// Supervised: predict house price from labeled examples (features -> known price)\nmodel.fit(features, knownPrices);\n\n// Unsupervised: group customers into segments with no predefined labels\nconst clusters = kmeans.fit(customerFeatures);\n\n// Reinforcement learning: agent learns via reward signal, no labeled dataset\nagent.train(environment, { rewardFunction });",
+          "situations": [
+            {
+              "question": "You have a large dataset of customer transactions with no predefined categories, and you want to discover natural customer segments for marketing. Which ML paradigm fits, and why?",
+              "answer": "Unsupervised learning — specifically a clustering algorithm like k-means or hierarchical clustering. There are no known 'correct' labels for what the segments should be; the goal is to let the algorithm discover natural groupings in the data based on similarity across features, which is exactly what unsupervised learning is designed for, as opposed to supervised learning which requires predefined labeled examples."
+            }
+          ]
+        },
+        {
+          "id": "training-vs-inference",
+          "title": "Training vs Inference",
+          "summary": "The two distinct phases of a model's lifecycle, and why they have very different resource/latency characteristics.",
+          "explanation": "Training is the (often lengthy, resource-intensive) process of feeding data through a model repeatedly, computing errors, and adjusting parameters (weights) to improve accuracy — this can take hours to weeks and requires significant compute (often GPUs/TPUs). Inference is using an already-trained model to make a prediction on new input — much faster and cheaper per request, since it's just a forward pass through fixed, already-learned parameters, with no weight updates happening. Production AI systems are almost always optimized heavily for inference (latency, cost per request) since that's what runs continuously at scale, while training happens periodically (or once) offline.",
+          "analogy": "Training is like years of medical school and residency (expensive, time-consuming, happens once/periodically) — inference is like a doctor seeing a patient and making a diagnosis using that accumulated knowledge (relatively fast, happens repeatedly, doesn't require re-attending medical school each time).",
+          "keyPoints": [
+            "Training: iteratively adjusting model parameters (weights) to minimize error on training data — slow, compute-heavy.",
+            "Inference: using a trained (fixed-weights) model to make a prediction on new input — fast, comparatively cheap.",
+            "Production systems optimize heavily for inference latency/cost since it runs continuously at scale.",
+            "Techniques like quantization and distillation reduce a trained model's size/cost specifically for inference.",
+            "'Fine-tuning' is a lighter-weight form of additional training applied to an already-pretrained model."
+          ],
+          "code": "// Conceptual distinction:\n\n// Training — slow, iterative, happens offline/periodically\nfor (let epoch = 0; epoch < numEpochs; epoch++) {\n  const predictions = model.forward(trainingData);\n  const loss = computeLoss(predictions, trueLabels);\n  model.backward(loss); // update weights\n}\n\n// Inference — fast, single forward pass, happens per request in production\nconst prediction = model.predict(newInput);",
+          "situations": [
+            {
+              "question": "Your team is deciding whether to deploy a large model directly or a quantized/distilled smaller version for a real-time user-facing feature. What's the key consideration?",
+              "answer": "Inference latency and cost at scale matter far more than training-time considerations here, since training happens once/periodically while inference runs on every single user request. A quantized or distilled model trades some accuracy for significantly lower latency and compute cost per inference call — for a real-time, high-traffic user-facing feature, that trade-off is often well worth it, especially if the accuracy loss is small relative to the latency/cost gains."
+            }
+          ]
+        },
+        {
+          "id": "overfitting-regularization",
+          "title": "Overfitting & Regularization",
+          "summary": "Why a model that performs perfectly on training data can fail badly on new data, and how to prevent it.",
+          "explanation": "Overfitting occurs when a model learns the training data too specifically — including its noise and idiosyncrasies — rather than the underlying general pattern, resulting in excellent training accuracy but poor performance on new, unseen data. Underfitting is the opposite problem: the model is too simple to capture the real pattern at all. Regularization techniques (L1/L2 penalties on weight magnitude, dropout in neural networks, early stopping, gathering more training data) combat overfitting by discouraging the model from fitting noise, encouraging it to learn simpler, more generalizable patterns instead.",
+          "analogy": "Overfitting is like a student who memorizes the exact answers to last year's practice exam questions instead of actually understanding the underlying concepts — they'll ace a test with the exact same questions but fail badly the moment a real exam asks the same concept in a slightly different way.",
+          "keyPoints": [
+            "Overfitting: excellent performance on training data, poor performance on new/test data — the model memorized noise.",
+            "Underfitting: poor performance even on training data — the model is too simple to capture the real pattern.",
+            "A held-out validation/test set is essential to detect overfitting (training accuracy alone is misleading).",
+            "Regularization (L1/L2 weight penalties, dropout, early stopping) discourages overly complex, noise-fitting models.",
+            "More diverse training data generally reduces overfitting by giving the model less opportunity to memorize specifics."
+          ],
+          "code": "// Conceptual: L2 regularization adds a penalty for large weights to the loss function\nconst loss = predictionError + lambda * sumOfSquaredWeights;\n// Larger lambda -> stronger penalty against complex/large weights -> less overfitting,\n// but too large risks underfitting by over-constraining the model.",
+          "situations": [
+            {
+              "question": "Your model achieves 99% accuracy on the training set but only 65% accuracy on real production data. What's likely happening and what would you investigate?",
+              "answer": "This is a classic overfitting symptom — the model has essentially memorized the training data's specifics (including noise) rather than learning generalizable patterns. I'd check whether a proper held-out validation/test set was used during development (rather than evaluating only on training data), consider adding regularization (dropout, L2 penalty, early stopping), and evaluate whether more diverse training data or reduced model complexity is needed to close the gap between training and real-world performance."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neural-networks-deep-learning",
+      "title": "Neural Networks & Deep Learning",
+      "emoji": "🧠",
+      "topics": [
+        {
+          "id": "neurons-activation-functions",
+          "title": "Neurons & Activation Functions",
+          "summary": "The basic building block of a neural network, and why non-linear activation functions are essential.",
+          "explanation": "An artificial neuron computes a weighted sum of its inputs, adds a bias term, and passes the result through an activation function to produce its output. Without a non-linear activation function, stacking many layers would mathematically collapse into a single linear transformation, no matter how many layers you add — completely defeating the purpose of 'deep' networks. Common activation functions include ReLU (max(0, x), simple and widely used in hidden layers), sigmoid (squashes to 0-1, used for binary output probabilities), and softmax (used for multi-class output probabilities that sum to 1).",
+          "analogy": "A neuron is like a single voter who weighs different pieces of evidence (inputs) by how much they trust each source (weights), sums up their overall impression, and then makes a non-linear decision (the activation function) — 'convinced' or 'not convinced' — rather than a purely proportional response, which is what allows complex, non-linear decision-making to emerge when many such voters are layered together.",
+          "keyPoints": [
+            "A neuron computes: activation(weighted_sum_of_inputs + bias).",
+            "Non-linear activation functions are essential — without them, stacked layers collapse into one linear function.",
+            "ReLU (max(0,x)) is the most common hidden-layer activation, fast to compute and avoids some training issues.",
+            "Sigmoid squashes output to (0,1), useful for binary classification probabilities.",
+            "Softmax converts a vector of raw scores into a probability distribution summing to 1, used for multi-class outputs."
+          ],
+          "code": "// A single neuron's computation, conceptually\nfunction neuron(inputs, weights, bias, activation) {\n  const weightedSum = inputs.reduce((sum, x, i) => sum + x * weights[i], bias);\n  return activation(weightedSum);\n}\n\nconst relu = (x) => Math.max(0, x);\nconst sigmoid = (x) => 1 / (1 + Math.exp(-x));",
+          "situations": [
+            {
+              "question": "A colleague suggests removing all activation functions from a neural network to 'simplify' it and speed up training. What would you tell them?",
+              "answer": "I'd explain that removing non-linear activation functions would fundamentally break the network — a stack of purely linear layers (matrix multiplications with no non-linearity between them) mathematically collapses into a single equivalent linear transformation, regardless of how many layers you have. This means the network would lose all its ability to model complex, non-linear relationships in the data, essentially reducing a deep network to the modeling power of simple linear regression."
+            }
+          ]
+        },
+        {
+          "id": "backpropagation-gradient-descent",
+          "title": "Backpropagation & Gradient Descent",
+          "summary": "How neural networks actually learn — computing gradients and iteratively adjusting weights to reduce error.",
+          "explanation": "Gradient descent is the optimization algorithm that adjusts a model's weights to minimize a loss function (a measure of prediction error), by repeatedly stepping in the direction that most reduces the loss — determined by the gradient (the loss function's slope with respect to each weight). Backpropagation is the efficient algorithm for actually computing those gradients throughout a neural network: it applies the chain rule of calculus backward from the output layer to the input layer, computing how much each weight in every layer contributed to the final error. The learning rate controls how large each adjustment step is — too large risks overshooting/instability, too small makes training impractically slow.",
+          "analogy": "Gradient descent is like descending a foggy mountain to reach the lowest valley by feeling the slope right under your feet and always stepping downhill — backpropagation is the specific technique for figuring out exactly how steep the slope is at every single point on the mountain (every weight in every layer) by working backward from where you currently are.",
+          "keyPoints": [
+            "Loss function measures how wrong the model's predictions are — the thing being minimized.",
+            "Gradient descent iteratively adjusts weights in the direction that reduces the loss.",
+            "Backpropagation efficiently computes gradients for every weight using the chain rule, working backward from output to input.",
+            "Learning rate controls step size — too high causes instability/overshooting, too low causes slow convergence.",
+            "Variants like Adam and SGD with momentum improve on basic gradient descent's convergence speed and stability."
+          ],
+          "code": "// Simplified gradient descent update rule, conceptually:\nfor (let step = 0; step < numSteps; step++) {\n  const predictions = model.forward(inputs);\n  const loss = computeLoss(predictions, trueLabels);\n  const gradients = backpropagate(loss, model); // chain rule, layer by layer\n\n  for (const weight of model.weights) {\n    weight.value -= learningRate * gradients[weight.id];\n  }\n}",
+          "situations": [
+            {
+              "question": "Training loss is decreasing but very slowly, and it's taking far too long to converge. What hyperparameter would you investigate first?",
+              "answer": "The learning rate — if it's set too low, gradient descent takes tiny steps toward the minimum, causing very slow convergence exactly as described. I'd try increasing it (potentially with a learning rate scheduler that decreases it over time) and consider switching to an adaptive optimizer like Adam, which often converges faster than plain SGD by adjusting the effective step size per parameter automatically."
+            }
+          ]
+        },
+        {
+          "id": "cnns-overview",
+          "title": "Convolutional Neural Networks (CNNs)",
+          "summary": "How CNNs use convolutional filters to efficiently learn spatial patterns, dominant for image tasks.",
+          "explanation": "CNNs are specialized for grid-like data (especially images) — instead of connecting every input pixel to every neuron (which would be computationally huge and ignore spatial structure), convolutional layers slide small learnable filters (kernels) across the image, detecting local patterns (edges, textures) that combine into higher-level features (shapes, objects) in deeper layers. This exploits two key properties of images: spatial locality (nearby pixels are related) and translation invariance (a detected edge pattern is useful regardless of where in the image it appears). Pooling layers downsample feature maps, reducing computation and adding some robustness to small shifts.",
+          "analogy": "A CNN scanning an image is like sliding a small magnifying glass (a filter) systematically across a photo, looking for the same specific pattern (like an edge or a curve) everywhere in the image, rather than needing a separate, independent detector memorized for every single pixel position.",
+          "keyPoints": [
+            "Convolutional layers slide learnable filters across the input, detecting local spatial patterns.",
+            "Early layers detect simple features (edges); deeper layers combine them into complex features (shapes, objects).",
+            "Exploits translation invariance — a learned filter detects a pattern regardless of its position in the image.",
+            "Pooling layers (max/average pooling) downsample feature maps, reducing computation and dimensionality.",
+            "CNNs dramatically reduce parameter count compared to fully-connecting every pixel to every neuron."
+          ],
+          "code": "// Conceptual CNN architecture (pseudocode, e.g. via a framework like TensorFlow/PyTorch)\nconst model = sequential([\n  conv2d({ filters: 32, kernelSize: 3, activation: 'relu' }),\n  maxPooling2d({ poolSize: 2 }),\n  conv2d({ filters: 64, kernelSize: 3, activation: 'relu' }),\n  maxPooling2d({ poolSize: 2 }),\n  flatten(),\n  dense({ units: 10, activation: 'softmax' }), // 10-class classification output\n]);",
+          "situations": [
+            {
+              "question": "Why would a fully-connected (dense) neural network be impractical for classifying high-resolution images directly, compared to a CNN?",
+              "answer": "A fully-connected layer would need a separate weight for every connection between every input pixel and every neuron — for a modest 1000x1000 pixel image, that's a million input values connecting to potentially thousands of neurons, resulting in an enormous, computationally infeasible number of parameters, and it would also completely ignore the image's spatial structure (treating pixel relationships as arbitrary rather than exploiting locality). A CNN's shared, sliding filters drastically reduce the parameter count while explicitly exploiting the spatial patterns that matter for image understanding."
+            }
+          ]
+        },
+        {
+          "id": "rnns-transformers-overview",
+          "title": "RNNs, Attention & Transformers Overview",
+          "summary": "The evolution from sequential RNNs to the attention-based Transformer architecture powering modern LLMs.",
+          "explanation": "Recurrent Neural Networks (RNNs) process sequential data (text, time series) by maintaining a hidden state updated at each step, letting them theoretically use information from earlier in the sequence — but they struggle with long-range dependencies (vanishing gradients) and process sequentially, making them slow to train (can't parallelize across the sequence). The Transformer architecture (2017) replaced recurrence with a self-attention mechanism, which lets every position in a sequence directly attend to (weigh the relevance of) every other position simultaneously, capturing long-range dependencies far better and enabling massive parallelization during training. This architecture is the foundation of virtually all modern LLMs (GPT, BERT, Claude).",
+          "analogy": "An RNN reading a sentence is like reading word by word with a notebook, carrying forward a summary as you go — details from many words back tend to fade. A Transformer's attention mechanism is like reading the whole sentence at once and being able to instantly cross-reference any word against any other word directly, regardless of distance, without relying on a fading, sequentially-carried summary.",
+          "keyPoints": [
+            "RNNs process sequences step-by-step, maintaining a hidden state — sequential, hard to parallelize, struggle with long-range dependencies.",
+            "Self-attention lets every token in a sequence directly weigh its relevance to every other token, regardless of distance.",
+            "Transformers process the whole sequence in parallel during training, dramatically speeding up training on large datasets.",
+            "The 'attention is all you need' architecture (2017) underlies GPT, BERT, Claude, and nearly all modern LLMs.",
+            "Positional encoding is added to Transformer inputs since attention itself has no inherent notion of sequence order."
+          ],
+          "code": "// Conceptual self-attention: each token computes a weighted sum of all tokens,\n// weighted by learned relevance ('attention scores').\nfunction selfAttention(tokens) {\n  return tokens.map((query) => {\n    const scores = tokens.map((key) => dotProduct(query, key));\n    const weights = softmax(scores);\n    return weightedSum(tokens, weights); // blend of all tokens, weighted by relevance\n  });\n}",
+          "situations": [
+            {
+              "question": "Why did the industry largely move from RNN/LSTM-based models to Transformers for language tasks?",
+              "answer": "Two main reasons: Transformers' self-attention captures long-range dependencies in text far more effectively than RNNs, which suffer from vanishing gradients that make information from many steps earlier hard to retain. Just as importantly, Transformers process an entire sequence in parallel during training (since attention doesn't require sequential step-by-step processing the way RNN hidden states do), which made it practical to train on the massive datasets that enabled the current generation of large language models — RNN's inherently sequential nature made that scale of training impractically slow."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "llms-generative-ai",
+      "title": "LLMs & Generative AI",
+      "emoji": "✨",
+      "topics": [
+        {
+          "id": "what-is-an-llm",
+          "title": "What is an LLM",
+          "summary": "How large language models are trained to predict the next token, and how that produces coherent, useful text.",
+          "explanation": "A Large Language Model (LLM) is a Transformer-based neural network trained on massive amounts of text to predict the next token given the preceding context. Despite this deceptively simple training objective, at sufficient scale (parameters + training data) this next-token-prediction task forces the model to implicitly learn grammar, facts, reasoning patterns, and even some emergent capabilities not explicitly trained for. Modern LLMs go through multiple training stages: pretraining (next-token prediction on huge, broad text corpora), then instruction tuning and RLHF (fine-tuning on curated examples and human feedback to make outputs helpful, safe, and aligned with instructions rather than just 'plausible continuation').",
+          "analogy": "An LLM is like an extraordinarily well-read person who has absorbed a vast portion of humanity's written text, and who responds to any prompt by essentially finishing the sentence in the most statistically plausible, contextually appropriate way given everything they've read — refined afterward through additional training to actually be helpful and follow instructions rather than just produce plausible-sounding continuations.",
+          "keyPoints": [
+            "Core training objective: predict the next token given preceding context (autoregressive language modeling).",
+            "Pretraining on massive, broad text corpora is followed by instruction tuning and RLHF for alignment/helpfulness.",
+            "Emergent capabilities (reasoning, few-shot learning) appear at sufficient scale, not explicitly hand-programmed.",
+            "LLMs generate text token-by-token, sampling from a probability distribution over the vocabulary at each step.",
+            "LLMs have no persistent memory between separate conversations unless explicitly given context/memory mechanisms."
+          ],
+          "code": "// Conceptual generation loop:\nlet context = 'The weather today is';\nwhile (!isComplete) {\n  const nextTokenProbabilities = model.predict(context);\n  const nextToken = sampleFrom(nextTokenProbabilities); // e.g. greedy, or with temperature\n  context += nextToken;\n}\n// Each token is generated one at a time, conditioned on everything generated so far.",
+          "situations": [
+            {
+              "question": "A stakeholder asks why an LLM sometimes confidently states incorrect facts ('hallucinates'). How would you explain this in terms of how LLMs actually work?",
+              "answer": "I'd explain that an LLM's core objective is producing statistically plausible, fluent continuations of text based on patterns learned during training — it has no built-in mechanism for verifying factual truth or distinguishing 'confidently correct' from 'confidently plausible-sounding but wrong.' When a query touches on something underrepresented or ambiguous in its training data, the model can still generate fluent, confident-sounding text that happens to be factually incorrect, since fluency and factual accuracy aren't the same thing the model was directly optimized for."
+            }
+          ]
+        },
+        {
+          "id": "tokens-embeddings",
+          "title": "Tokens & Embeddings",
+          "summary": "How raw text gets converted into numbers a model can process, and what embeddings actually represent.",
+          "explanation": "LLMs can't directly process raw text — text is first split into tokens (often sub-word pieces, not whole words — e.g. 'unhappiness' might become 'un' + 'happi' + 'ness'), each mapped to a numeric ID via a fixed vocabulary. Each token ID is then converted into an embedding — a dense vector of numbers (often hundreds/thousands of dimensions) that captures semantic meaning, learned during training such that semantically similar tokens/concepts end up with similar (close together) vectors in that high-dimensional space. Embeddings aren't unique to LLMs — they're also used standalone for semantic search, recommendation systems, and clustering.",
+          "analogy": "Tokenization is like breaking a sentence into Lego-brick-sized pieces the model can actually handle. Embeddings are like plotting each piece's meaning as a specific point in a vast, many-dimensional map — pieces with related meanings (like 'king' and 'queen') end up plotted near each other, while unrelated ones (like 'king' and 'banana') end up far apart.",
+          "keyPoints": [
+            "Tokenization splits text into sub-word units (tokens), each mapped to a numeric ID from a fixed vocabulary.",
+            "Sub-word tokenization (like BPE) balances vocabulary size against handling rare/unseen words gracefully.",
+            "An embedding is a dense numeric vector representing a token/text's meaning in high-dimensional space.",
+            "Semantically similar concepts end up with embeddings that are close together (e.g. via cosine similarity).",
+            "Embeddings are used standalone (outside LLM generation) for semantic search, clustering, and recommendation systems."
+          ],
+          "code": "// Conceptual: text -> tokens -> embeddings\nconst tokens = tokenizer.encode('The cat sat on the mat');\n// e.g. [464, 2415, 3332, 319, 262, 2603]\n\nconst embeddings = tokens.map(id => embeddingLookupTable[id]);\n// Each embedding is a vector like [0.12, -0.45, 0.88, ...] (hundreds of dimensions)\n\n// Semantic similarity via cosine similarity between embedding vectors\nconst similarity = cosineSimilarity(embedding('king'), embedding('queen')); // high\nconst dissimilarity = cosineSimilarity(embedding('king'), embedding('banana')); // low",
+          "situations": [
+            {
+              "question": "You're building a semantic search feature for a documentation site. Why would you use embeddings instead of simple keyword matching?",
+              "answer": "Keyword matching only finds documents containing the exact words in the query, missing relevant results that use different but semantically related terminology (e.g. searching 'cancel subscription' wouldn't match a doc titled 'how to end your membership'). Embeddings capture semantic meaning, so you can embed both the query and all documents, then find documents whose embeddings are closest (most similar) to the query's embedding — surfacing conceptually relevant results even when the exact wording differs significantly."
+            }
+          ]
+        },
+        {
+          "id": "prompt-engineering",
+          "title": "Prompt Engineering",
+          "summary": "Structuring inputs to reliably get useful, well-formatted outputs from an LLM without changing its weights.",
+          "explanation": "Prompt engineering is the practice of crafting inputs (instructions, context, examples, formatting) to reliably steer an LLM's output toward what you actually want, without modifying the model itself. Key techniques include: clear, specific instructions (ambiguity produces inconsistent output); few-shot examples (showing 2-3 example input/output pairs to demonstrate the desired format/style); chain-of-thought prompting (asking the model to reason step-by-step, which measurably improves accuracy on complex reasoning tasks); and system prompts that set persistent behavior/persona/constraints for the whole conversation. Good prompt engineering is often the fastest, cheapest lever for improving output quality before reaching for fine-tuning.",
+          "analogy": "Prompt engineering is like giving very precise instructions to a brilliant but extremely literal-minded new employee — the quality of their output depends heavily on how clearly you specify the task, provide examples of what 'good' looks like, and ask them to show their work rather than just blurt out an answer.",
+          "keyPoints": [
+            "Clear, specific instructions reduce output ambiguity/inconsistency far more than vague requests.",
+            "Few-shot prompting (providing example input/output pairs) reliably steers format and style.",
+            "Chain-of-thought prompting ('think step by step') measurably improves accuracy on complex reasoning tasks.",
+            "System prompts set persistent behavior/persona/constraints applying across an entire conversation.",
+            "Prompt engineering is usually the cheapest and fastest lever to try before reaching for fine-tuning."
+          ],
+          "code": "// Few-shot prompt example\nconst prompt = `\nConvert the following to a formal tone.\n\nInput: hey can u send that file\nOutput: Could you please send me that file?\n\nInput: thx for the update, sounds good\nOutput: Thank you for the update; that sounds good.\n\nInput: yo whats the eta on this\nOutput:`; // model completes following the demonstrated pattern",
+          "situations": [
+            {
+              "question": "An LLM-powered feature in your app produces inconsistent output formats — sometimes JSON, sometimes prose, even when you always ask for JSON. What prompt engineering techniques would you try before reaching for fine-tuning?",
+              "answer": "First, I'd make the instruction more explicit and structured (e.g. 'Respond with ONLY valid JSON matching this exact schema: {...}'), add a few-shot example showing the exact expected output format, and consider using the provider's structured-output/JSON-mode feature if available, which constrains generation to valid JSON at the API level. I'd only consider fine-tuning if prompt-level techniques genuinely couldn't achieve reliable enough consistency after exhausting these cheaper options."
+            }
+          ]
+        },
+        {
+          "id": "fine-tuning-vs-rag",
+          "title": "Fine-tuning vs RAG",
+          "summary": "Two different ways to customize an LLM's behavior/knowledge, and when each is the right tool.",
+          "explanation": "Fine-tuning further trains a pretrained model's weights on a smaller, task-specific dataset, teaching it a particular style, format, or specialized behavior — good for teaching consistent tone/format or specialized domain jargon, but doesn't reliably 'teach' new factual knowledge and requires retraining whenever the underlying information changes. RAG (Retrieval-Augmented Generation) instead keeps the model's weights fixed and, at query time, retrieves relevant documents/data (typically via semantic search over an embedding index) and injects them into the prompt as context, letting the model answer grounded in fresh, specific, or private information it was never trained on. RAG is generally preferred for keeping answers current and grounded in verifiable source data; fine-tuning is preferred for changing behavior/style/format.",
+          "analogy": "Fine-tuning is like sending an employee to a specialized training course that permanently changes how they think and communicate. RAG is like giving that same employee access to a searchable reference library they can look things up in on demand — their core skills don't change, but they can now answer questions using specific, up-to-date documents they consult in the moment.",
+          "keyPoints": [
+            "Fine-tuning updates model weights on task-specific data — good for teaching style, format, specialized behavior.",
+            "Fine-tuning doesn't reliably teach new factual knowledge, and requires retraining as underlying facts change.",
+            "RAG retrieves relevant context at query time (via semantic search over embeddings) and injects it into the prompt.",
+            "RAG keeps the base model's weights fixed, so answers can be grounded in fresh, private, or frequently-changing data.",
+            "The two are complementary, not mutually exclusive — a system can be both fine-tuned and RAG-augmented."
+          ],
+          "code": "// Conceptual RAG pipeline:\nasync function ragAnswer(query) {\n  const queryEmbedding = await embed(query);\n  const relevantDocs = await vectorDb.search(queryEmbedding, { topK: 5 });\n\n  const context = relevantDocs.map(d => d.text).join('\\n\\n');\n  const prompt = `Answer the question using only this context:\\n${context}\\n\\nQuestion: ${query}`;\n\n  return await llm.generate(prompt);\n}",
+          "situations": [
+            {
+              "question": "You need to build an internal support chatbot that answers questions using your company's constantly-updated internal documentation. Would you fine-tune a model on the docs, or use RAG? Why?",
+              "answer": "RAG is the clear fit here. The documentation changes frequently, and fine-tuning would require expensive retraining every time docs update, with no guarantee the model reliably 'learned' every specific fact anyway. RAG instead retrieves the most current, relevant document snippets at query time and grounds the model's answer in them directly — updating the knowledge is as simple as re-indexing the changed documents, with no retraining needed, and answers can even cite the specific source documents used."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "building-with-ai-apis",
+      "title": "Building with AI APIs",
+      "emoji": "🔌",
+      "topics": [
+        {
+          "id": "calling-llm-api",
+          "title": "Calling an LLM API",
+          "summary": "The basic request/response shape for interacting with hosted LLM providers, and key parameters to understand.",
+          "explanation": "Most LLM providers (Anthropic, OpenAI) expose a REST API where you send a list of messages (a conversation history, often with roles like 'system', 'user', 'assistant') and receive a generated response. Key parameters include: model (which specific model to use, trading off cost/speed/capability), max_tokens (limits response length and cost), temperature (controls randomness — 0 is deterministic/focused, higher values are more creative/varied), and system prompts (persistent instructions shaping the model's behavior for the whole conversation). API keys must be kept server-side, never exposed in client-side code.",
+          "analogy": "Calling an LLM API is like sending a detailed letter (the messages array, with conversation history and instructions) to a very capable consultant and getting a written reply back — you control how verbose their reply can be (max_tokens), how creative versus conservative they should be (temperature), and you give them standing instructions (the system prompt) that apply to the whole engagement.",
+          "keyPoints": [
+            "Requests typically include a messages array with roles (system/user/assistant) forming the conversation context.",
+            "max_tokens caps response length, directly controlling cost and preventing runaway generation.",
+            "temperature controls randomness — near 0 for deterministic/factual tasks, higher for creative tasks.",
+            "System prompts set persistent behavior/persona/constraints applying to the entire conversation.",
+            "API keys must always be used server-side (a backend proxy) — never embedded in client-side/browser code."
+          ],
+          "code": "// Server-side (Node.js) example calling an LLM API\nconst response = await fetch('https://api.anthropic.com/v1/messages', {\n  method: 'POST',\n  headers: {\n    'x-api-key': process.env.ANTHROPIC_API_KEY, // server-side only, never client-exposed\n    'content-type': 'application/json',\n  },\n  body: JSON.stringify({\n    model: 'claude-sonnet-5',\n    max_tokens: 500,\n    system: 'You are a helpful support assistant.',\n    messages: [{ role: 'user', content: 'How do I reset my password?' }],\n  }),\n});\nconst data = await response.json();",
+          "situations": [
+            {
+              "question": "A junior developer wants to call the LLM API directly from the frontend React app to keep things simple. What's wrong with this approach?",
+              "answer": "It would require embedding the API key in client-side code, which is fully visible to anyone inspecting the browser's network requests or bundled JS — exposing it to theft and abuse (unauthorized usage billed to your account). The correct pattern is a backend endpoint that holds the API key server-side and proxies requests from the frontend, keeping the key secret and also giving you a place to add rate limiting, input validation, and usage monitoring."
+            }
+          ]
+        },
+        {
+          "id": "streaming-responses",
+          "title": "Streaming Responses",
+          "summary": "Receiving and displaying LLM output token-by-token as it's generated, rather than waiting for the full response.",
+          "explanation": "LLM generation happens token-by-token, and streaming lets you receive and display each token/chunk as it's produced rather than waiting for the entire (potentially long) response to complete before showing anything — dramatically improving perceived responsiveness, since users see a 'typing' effect starting almost immediately instead of a long blank wait. Most providers support this via Server-Sent Events (SSE) or a chunked streaming response; on the frontend, you read the response body as a stream, appending each incoming chunk to displayed state as it arrives.",
+          "analogy": "Streaming is the difference between watching a chef plate an entire multi-course meal before you're allowed to see or eat any of it (non-streaming), versus watching and eating each course as it's finished and brought out (streaming) — the total time to finish everything might be similar, but the perceived experience is far better when you get to start immediately.",
+          "keyPoints": [
+            "LLMs generate output token-by-token internally regardless of whether the API streams or not.",
+            "Streaming (via SSE or chunked responses) delivers each chunk to the client as soon as it's generated.",
+            "Streaming dramatically improves perceived latency/responsiveness even if total generation time is unchanged.",
+            "On the frontend, you read the response body as a stream and progressively update displayed state per chunk.",
+            "Streaming complicates error handling — a failure partway through leaves a partial response to handle gracefully."
+          ],
+          "code": "// Conceptual frontend streaming consumption\nconst response = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ prompt }) });\nconst reader = response.body.getReader();\nconst decoder = new TextDecoder();\nlet fullText = '';\n\nwhile (true) {\n  const { done, value } = await reader.read();\n  if (done) break;\n  fullText += decoder.decode(value);\n  setDisplayedText(fullText); // progressively render as chunks arrive\n}",
+          "situations": [
+            {
+              "question": "Users complain that an AI chat feature in your app 'feels slow' even though the average total response time is the same as a competitor's. What would you investigate first?",
+              "answer": "Whether the response is being streamed to the user as it's generated, or whether the frontend is waiting for the entire response to complete before displaying anything. Even with identical total generation time, a non-streaming implementation feels much slower because users stare at a blank/loading state the whole time, while a streaming implementation shows a 'typing' effect starting almost immediately — I'd check if streaming is implemented end-to-end (both the API call and the frontend's handling of the streamed chunks)."
+            }
+          ]
+        },
+        {
+          "id": "function-calling-tool-use",
+          "title": "Function Calling / Tool Use",
+          "summary": "Letting an LLM invoke real application functions/APIs based on its reasoning, extending it beyond pure text generation.",
+          "explanation": "Function calling (tool use) lets you describe available functions/tools to an LLM (their names, parameters, and purposes), and the model can decide to 'call' one by returning a structured request specifying which function and what arguments — your application code then actually executes that function and returns the result back to the model, which can use it to formulate a final response or call another tool. This extends an LLM beyond pure text generation into taking real actions — looking up live data, performing calculations, querying a database, or triggering application logic — grounding its responses in real, current information rather than relying only on its trained knowledge.",
+          "analogy": "Function calling is like giving a knowledgeable consultant a phone and a directory of specialists they can call when a question is outside what they already know — instead of guessing an answer, they can dial the weather service, the calculator, or the database lookup line, get a real answer, and incorporate it into their final response to you.",
+          "keyPoints": [
+            "You describe available tools/functions (name, parameters, purpose) to the model as part of the request.",
+            "The model returns a structured request specifying which tool to call and with what arguments — it doesn't execute anything itself.",
+            "Your application code executes the actual function and returns the result back to the model for further reasoning.",
+            "This grounds LLM responses in real, current, or precise data rather than relying only on trained knowledge.",
+            "Multi-step tool use (calling several tools in sequence, reasoning between calls) enables agentic workflows."
+          ],
+          "code": "// Conceptual tool definition and handling loop\nconst tools = [{\n  name: 'get_weather',\n  description: 'Get current weather for a city',\n  parameters: { city: 'string' },\n}];\n\nconst response = await llm.generate({ messages, tools });\n\nif (response.toolCall) {\n  const result = await getWeather(response.toolCall.arguments.city);\n  // Send the result back to the model to continue reasoning\n  const finalResponse = await llm.generate({\n    messages: [...messages, response, { role: 'tool', content: result }],\n  });\n}",
+          "situations": [
+            {
+              "question": "You want an AI assistant feature to answer questions like 'what's my current account balance?' — something the LLM obviously can't know from training data alone. How would you architect this?",
+              "answer": "I'd implement function calling: define a tool like get_account_balance(userId) that the model can invoke, and when the user asks about their balance, the model recognizes it needs current, user-specific data it doesn't have and requests that tool call. My backend then actually queries the real account balance from the database, returns it to the model, and the model formulates a natural-language response incorporating that real, current data — rather than the model ever attempting to hallucinate an answer from its training data, which would obviously be wrong."
+            }
+          ]
+        },
+        {
+          "id": "vector-databases-semantic-search",
+          "title": "Vector Databases & Semantic Search",
+          "summary": "Storing and efficiently querying embeddings at scale to power RAG and semantic search features.",
+          "explanation": "A vector database stores embeddings (dense numeric vectors) alongside their source content, and provides efficient approximate-nearest-neighbor search to find the most semantically similar vectors to a query embedding — critical for RAG pipelines and semantic search, since comparing a query against millions of embeddings with brute-force distance calculation would be far too slow at scale. Popular options include Pinecone, Weaviate, pgvector (a Postgres extension), and Chroma — they use specialized indexing algorithms (like HNSW) to make similarity search fast even across millions of vectors.",
+          "analogy": "A vector database is like a highly specialized librarian who's organized every book not alphabetically, but by conceptual similarity — when you ask a fuzzy, meaning-based question, they can instantly point you to the most conceptually related books, without having to individually compare your question against every single book in the library one by one.",
+          "keyPoints": [
+            "Vector databases store embeddings and enable fast approximate-nearest-neighbor similarity search at scale.",
+            "Brute-force comparison against every stored vector doesn't scale — specialized indexes (like HNSW) make it fast.",
+            "Popular options: Pinecone, Weaviate, pgvector (Postgres extension), Chroma, Qdrant.",
+            "The core RAG pipeline: embed the query, search the vector DB for similar content, inject results as context into the prompt.",
+            "Choosing chunk size (how documents are split before embedding) significantly affects retrieval quality."
+          ],
+          "code": "// Conceptual vector DB usage in a RAG pipeline\nawait vectorDb.upsert(documents.map(doc => ({\n  id: doc.id,\n  vector: embed(doc.text),\n  metadata: { text: doc.text, source: doc.source },\n})));\n\nconst queryVector = embed(userQuery);\nconst results = await vectorDb.query(queryVector, { topK: 5 });\n// results contain the most semantically similar document chunks",
+          "situations": [
+            {
+              "question": "Your RAG-powered search feature returns technically relevant but oddly incomplete or out-of-context document snippets. What would you investigate first?",
+              "answer": "The document chunking strategy — if chunks are too small, individual snippets can lose important surrounding context, and if they're too large, irrelevant content dilutes the embedding's semantic focus, hurting retrieval precision. I'd experiment with chunk size and overlap (including some overlapping context between adjacent chunks), and consider whether chunking is respecting natural document boundaries (paragraphs, sections) rather than splitting at arbitrary fixed character counts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai-engineering-production",
+      "title": "AI Engineering in Production",
+      "emoji": "🏭",
+      "topics": [
+        {
+          "id": "latency-cost-optimization",
+          "title": "Latency & Cost Optimization",
+          "summary": "Techniques for making AI-powered features fast and affordable to run at scale.",
+          "explanation": "LLM API calls are billed per token (input + output) and have meaningfully higher latency than typical API calls, so production AI features need deliberate optimization: choosing the smallest/cheapest model that meets quality requirements (not always the flagship model), caching repeated/similar queries, using streaming to improve perceived latency, minimizing prompt length (fewer input tokens = lower cost and faster time-to-first-token), setting appropriate max_tokens limits to prevent runaway generation costs, and batching requests where possible. For very latency-sensitive features, smaller specialized/fine-tuned models sometimes outperform larger general-purpose models on both speed and cost for a narrow task.",
+          "analogy": "Optimizing LLM cost/latency is like optimizing a delivery service — you don't always need express overnight shipping (the flagship model) for every package; matching the shipping tier to what the situation actually requires, batching orders, and avoiding unnecessarily large packages (long prompts/responses) all add up to a much more efficient, affordable system at scale.",
+          "keyPoints": [
+            "Choose the smallest/cheapest model that reliably meets quality requirements — not always the flagship model.",
+            "Cache responses for repeated or highly similar queries to avoid redundant API calls entirely.",
+            "Minimize prompt length — fewer input tokens directly reduce cost and improve time-to-first-token.",
+            "Set sensible max_tokens limits to bound worst-case response length and cost.",
+            "Streaming improves perceived latency even when total generation time is unchanged."
+          ],
+          "code": "// Simple caching layer for repeated LLM queries\nconst cache = new Map();\n\nasync function cachedLLMCall(prompt) {\n  const key = hashPrompt(prompt);\n  if (cache.has(key)) return cache.get(key);\n\n  const result = await llm.generate(prompt);\n  cache.set(key, result);\n  return result;\n}",
+          "situations": [
+            {
+              "question": "Your company's AI feature costs have grown 5x in a month with only 2x user growth. How would you diagnose and reduce the cost?",
+              "answer": "I'd first break down the cost by feature/endpoint to find where the disproportionate growth is concentrated, then check whether prompts have grown longer over time (e.g. accumulating conversation history unnecessarily, or an overly verbose system prompt), whether the flagship/most expensive model is being used for tasks that a cheaper model could handle just as well, and whether there's an opportunity for caching on repeated queries — often a combination of prompt trimming, model right-sizing, and caching yields significant cost reduction without a noticeable quality drop."
+            }
+          ]
+        },
+        {
+          "id": "guardrails-safety",
+          "title": "Guardrails & Safety",
+          "summary": "Preventing harmful, off-topic, or manipulated outputs from an AI feature in production.",
+          "explanation": "Guardrails are checks and constraints applied around an LLM to keep its behavior safe, on-topic, and resistant to misuse — including input validation/filtering (blocking obviously malicious prompts), output filtering (checking generated content against policy before showing it to users), prompt injection defenses (since untrusted user input or retrieved documents could contain text trying to override your system instructions), rate limiting to prevent abuse, and clear scoping of what the assistant will/won't discuss via the system prompt. Defense-in-depth matters — no single guardrail is perfectly reliable, so layering multiple checks reduces the risk of any single failure causing a harmful outcome.",
+          "analogy": "Guardrails around an AI feature are like the multiple safety systems in a car — seatbelts, airbags, anti-lock brakes — none of them individually prevents every possible accident, but layered together they significantly reduce the chance and severity of something going wrong, rather than relying on just one single safety measure.",
+          "keyPoints": [
+            "Input validation/filtering blocks obviously malicious or out-of-scope requests before they reach the model.",
+            "Output filtering checks generated content against safety/policy rules before showing it to users.",
+            "Prompt injection is a real risk — untrusted input (user text, retrieved documents) can try to override system instructions.",
+            "System prompts should clearly scope what the assistant will and won't do, reducing off-topic/misuse surface area.",
+            "Defense-in-depth (multiple layered checks) is more reliable than relying on any single guardrail mechanism."
+          ],
+          "code": "// Conceptual layered guardrails\nasync function safeGenerate(userInput) {\n  if (containsBlockedPatterns(userInput)) {\n    return { error: 'Request could not be processed.' };\n  }\n\n  const response = await llm.generate({\n    system: 'You only answer questions about our product. Politely decline anything else.',\n    messages: [{ role: 'user', content: userInput }],\n  });\n\n  if (await violatesContentPolicy(response.text)) {\n    return { error: 'Response did not meet content guidelines.' };\n  }\n\n  return response;\n}",
+          "situations": [
+            {
+              "question": "A user manages to get your customer-support chatbot to ignore its instructions and respond as an unrelated, unfiltered persona by embedding hidden instructions in their message. What's this attack called, and how would you mitigate it?",
+              "answer": "This is a prompt injection attack. Mitigations include: treating all user input (and any retrieved/external content) as untrusted data rather than instructions, structurally separating system instructions from user content where the API supports it, adding output-side checks that verify responses stay within the intended scope/persona, and monitoring/logging unusual outputs to catch new injection patterns — no single defense is fully bulletproof, so layering multiple mitigations reduces the risk rather than eliminating it entirely."
+            }
+          ]
+        },
+        {
+          "id": "evaluation-testing-ai-features",
+          "title": "Evaluation & Testing AI Features",
+          "summary": "Why testing AI features requires different approaches than traditional deterministic software testing.",
+          "explanation": "Traditional software tests assert exact expected outputs, but LLM outputs are non-deterministic and highly variable in phrasing even when 'correct' — so evaluation needs different techniques: golden datasets (a curated set of representative test cases with known-good expected behavior, evaluated with fuzzy/semantic matching or an LLM-as-judge approach rather than exact string equality), tracking quality metrics over time (especially after prompt or model changes, to catch regressions), human evaluation for subjective quality dimensions (helpfulness, tone), and A/B testing changes in production with real user feedback signals, since offline evaluation can't capture everything about real-world usage quality.",
+          "analogy": "Testing AI features is less like grading a math test with one exact correct answer, and more like grading an essay — you need a rubric (evaluation criteria), sample essays with known quality levels to calibrate against (a golden dataset), and often a human or expert judge (or another AI acting as a judge) rather than a simple exact-match checker.",
+          "keyPoints": [
+            "LLM outputs are non-deterministic and vary in phrasing — exact string matching is rarely the right evaluation approach.",
+            "Golden datasets (curated representative test cases) with fuzzy/semantic or LLM-as-judge evaluation are common.",
+            "Track quality metrics over time, especially after prompt/model changes, to catch silent quality regressions.",
+            "Human evaluation remains important for subjective quality dimensions (tone, helpfulness) that automated metrics miss.",
+            "Production A/B testing with real user feedback signals captures quality aspects offline evaluation can't."
+          ],
+          "code": "// Conceptual LLM-as-judge evaluation\nasync function evaluateResponse(question, expectedAnswer, actualAnswer) {\n  const judgment = await llm.generate({\n    system: 'You are an evaluator. Score how well the actual answer matches the expected answer\\'s meaning, from 1-5.',\n    messages: [{ role: 'user', content: `Question: ${question}\\nExpected: ${expectedAnswer}\\nActual: ${actualAnswer}` }],\n  });\n  return parseScore(judgment.text);\n}",
+          "situations": [
+            {
+              "question": "Your team wants to add automated tests for an AI feature before deploying prompt changes, but standard unit test assertions (expect(output).toBe(...)) don't work well since responses vary each time. How would you set up meaningful automated evaluation?",
+              "answer": "I'd build a golden dataset of representative test inputs with known-good expected behavior (not exact text, but key facts/criteria the response must satisfy), and evaluate actual outputs against that dataset using either semantic similarity checks, rule-based checks for required elements, or an LLM-as-judge approach that scores whether the response meets the criteria — run as part of CI whenever the prompt or model changes, to catch quality regressions before they reach production, rather than relying on exact-match assertions that would fail on every non-deterministic run."
+            }
+          ]
+        },
+        {
+          "id": "ethical-considerations-bias",
+          "title": "Ethical Considerations & Bias",
+          "summary": "Understanding how bias enters AI systems and the responsibility of building AI features thoughtfully.",
+          "explanation": "AI models learn patterns from their training data, and if that data contains historical biases (underrepresentation of certain groups, skewed associations), the model can learn and even amplify those biases in its outputs — affecting fairness in areas like hiring tools, loan approval, content moderation, and more. Responsible AI engineering involves: auditing training/evaluation data and model outputs for disparate impact across groups, being transparent with users about AI involvement and its limitations, providing human oversight/appeal mechanisms for consequential decisions, and considering who might be harmed by a system's failure modes, not just its average-case performance.",
+          "analogy": "An AI model trained on biased historical data is like a new employee who learns 'how things are done' purely by observing a company's past decisions — if those past decisions were unfairly skewed against certain groups, the new employee will unknowingly learn and repeat those same unfair patterns, believing they're simply following the standard, correct approach.",
+          "keyPoints": [
+            "Models can learn and amplify biases present in their training data, affecting fairness across different groups.",
+            "Auditing for disparate impact across demographic groups is important, not just measuring average accuracy.",
+            "High-stakes decisions (hiring, lending, moderation) warrant human oversight and appeal mechanisms, not full automation.",
+            "Transparency about AI involvement and its limitations builds appropriate user trust and understanding.",
+            "Consider failure modes and who is harmed by them, not just average-case performance metrics."
+          ],
+          "code": "// Conceptual bias-aware evaluation — checking metrics across subgroups, not just overall\nfunction evaluateFairness(predictions, groundTruth, groupLabels) {\n  const overallAccuracy = computeAccuracy(predictions, groundTruth);\n  const perGroupAccuracy = {};\n  for (const group of uniqueGroups(groupLabels)) {\n    perGroupAccuracy[group] = computeAccuracy(\n      filterByGroup(predictions, groupLabels, group),\n      filterByGroup(groundTruth, groupLabels, group)\n    );\n  }\n  // A large gap between per-group accuracies signals a fairness/bias concern,\n  // even if overall accuracy looks acceptable.\n  return { overallAccuracy, perGroupAccuracy };\n}",
+          "situations": [
+            {
+              "question": "Your company wants to use an LLM to automatically screen and rank job applicant resumes. What ethical concerns would you raise before building this?",
+              "answer": "I'd raise that resume screening is a high-stakes decision directly affecting people's livelihoods, and an LLM trained on historical hiring-related text could easily learn and replicate existing biases (e.g. against certain names, schools, or employment gaps) present in that data, even without explicit demographic fields being used. I'd advocate for auditing the system's outputs for disparate impact across groups before deployment, keeping a human meaningfully in the loop for final decisions rather than full automation, being transparent with candidates about AI involvement, and providing a way to contest or review an automated screening decision."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

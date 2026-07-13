@@ -1,0 +1,466 @@
+{
+  "skill": "Node.js",
+  "icon": "🟢",
+  "color": "#68a063",
+  "sections": [
+    {
+      "id": "core-runtime",
+      "title": "Core Runtime & Event Loop",
+      "emoji": "⚙️",
+      "topics": [
+        {
+          "id": "nodejs-architecture",
+          "title": "Node.js Architecture & libuv",
+          "summary": "How Node combines V8, libuv, and a single-threaded event loop to handle concurrency without OS threads per request.",
+          "explanation": "Node.js embeds Google's V8 engine to execute JavaScript and pairs it with libuv, a C library that provides an event loop, a thread pool, and non-blocking I/O primitives across platforms. Your JS code runs on a single main thread, but libuv offloads expensive I/O (file system, DNS, some crypto) to a background thread pool, and network I/O to the OS's native async mechanisms (epoll/kqueue/IOCP), notifying the event loop via callbacks once work completes. This is why Node can handle thousands of concurrent connections with one thread — it's not doing the I/O itself, it's just waiting for the OS/libuv to say 'ready'.",
+          "analogy": "Think of Node as a single waiter (the main thread) in a restaurant who never stands at a table waiting for the kitchen — they take an order, hand it to the kitchen (libuv/OS), and immediately move to the next table, only coming back when the kitchen rings a bell (callback) saying the dish is ready.",
+          "keyPoints": [
+            "V8 executes JS; libuv provides the event loop, thread pool, and async I/O.",
+            "JS execution itself is single-threaded — there is no parallel JS execution by default.",
+            "Network I/O uses the OS's native async APIs (epoll/kqueue/IOCP), no thread pool needed.",
+            "File system, DNS lookups (except dns.resolve), and some crypto use libuv's thread pool (default size 4).",
+            "This architecture is what makes Node efficient for I/O-bound workloads, but poor for CPU-bound ones."
+          ],
+          "code": "// The event loop lets Node do this without blocking:\nconsole.log('1: start');\n\nsetTimeout(() => console.log('2: timeout'), 0);\n\nfs.readFile(__filename, () => console.log('3: file read'));\n\nconsole.log('4: end');\n\n// Output order: 1, 4, 2 or 3 (order between timer/IO varies by context),\n// but '1' and '4' always run first — sync code always completes before callbacks.",
+          "situations": [
+            {
+              "question": "A teammate says 'Node.js is single-threaded so it can't do two things at once.' How do you correct this?",
+              "answer": "I'd clarify that only JS execution is single-threaded. Node itself uses multiple OS threads under the hood via libuv's thread pool for file I/O and some crypto, and the OS's native async I/O for networking — those genuinely run in parallel. What's single-threaded is that your JavaScript callbacks are never executed concurrently with each other; they're interleaved on the main thread via the event loop."
+            },
+            {
+              "question": "Your Node API suddenly becomes unresponsive to all requests under load, even simple ones. What's the likely cause?",
+              "answer": "Almost certainly a CPU-bound synchronous operation blocking the event loop — something like a large JSON.parse, a synchronous crypto hash, an unbounded loop, or a synchronous file read (readFileSync) in the request path. Since the event loop is single-threaded, any long synchronous operation blocks every other request from being processed until it completes. I'd profile with --prof or clinic.js to find the blocking function and move it to a worker thread or an async equivalent."
+            }
+          ]
+        },
+        {
+          "id": "event-loop-phases",
+          "title": "Event Loop Phases",
+          "summary": "The distinct phases (timers, pending callbacks, poll, check, close) the event loop cycles through each tick.",
+          "explanation": "The Node event loop isn't one queue — it cycles through ordered phases each iteration: timers (setTimeout/setInterval callbacks whose time has elapsed), pending callbacks (some system-level callbacks), poll (retrieve new I/O events and execute their callbacks), check (setImmediate callbacks), and close callbacks (like socket.on('close')). Between every phase transition, and after every callback, Node fully drains the microtask queue (process.nextTick, then Promise callbacks) before moving on. Understanding phase order explains why setImmediate vs setTimeout(fn, 0) ordering can differ depending on context.",
+          "analogy": "Picture the event loop as a security guard doing rounds through several checkpoints (timers, I/O, setImmediate) in a fixed order every lap — and at every single checkpoint, before moving to the next, they first clear a special 'urgent notes' inbox (microtasks) completely.",
+          "keyPoints": [
+            "Phases run in order: timers → pending callbacks → poll → check → close callbacks.",
+            "process.nextTick and Promise microtasks drain completely between every phase and callback.",
+            "setImmediate runs in the 'check' phase, always after I/O callbacks in the same poll cycle.",
+            "Inside an I/O callback, setImmediate always fires before setTimeout(fn, 0).",
+            "At the top level (not inside I/O), the order of setTimeout(0) vs setImmediate is not guaranteed."
+          ],
+          "code": "const fs = require('fs');\n\nfs.readFile(__filename, () => {\n  setTimeout(() => console.log('timeout'), 0);\n  setImmediate(() => console.log('immediate'));\n});\n// Inside an I/O callback, 'immediate' always logs before 'timeout' —\n// because the check phase (setImmediate) comes right after poll (I/O).",
+          "situations": [
+            {
+              "question": "A colleague asks why process.nextTick callbacks seem to 'starve' the event loop when called recursively. How do you explain it?",
+              "answer": "process.nextTick queues a callback to run before the event loop continues to the next phase — the nextTick queue is fully drained before anything else happens. If a nextTick callback recursively schedules another nextTick, the queue never actually empties, so the event loop never gets to move on to timers, I/O, or anything else. I/O and timers essentially starve. This is why Node's docs recommend using setImmediate for recursive scheduling instead, which only runs once per event loop iteration."
+            }
+          ]
+        },
+        {
+          "id": "non-blocking-io",
+          "title": "Non-blocking I/O Model",
+          "summary": "How async, callback/promise-based I/O lets Node serve many concurrent requests without one-thread-per-request.",
+          "explanation": "In a traditional blocking-I/O server, each request often ties up a dedicated OS thread while waiting on a database query or file read, so scaling to many concurrent connections means scaling threads (expensive in memory and context-switch overhead). Node's I/O APIs are non-blocking by default — calling fs.readFile or making an HTTP request returns immediately, registers a callback, and the single JS thread moves on to handle other work. When the underlying operation completes, the event loop invokes the registered callback. This means Node can handle thousands of concurrent I/O-bound connections on one thread, since it's never idly blocked waiting.",
+          "analogy": "It's the difference between a chef who starts water boiling and immediately begins chopping vegetables (non-blocking) versus one who stands and stares at the pot until it boils before doing anything else (blocking) — the non-blocking chef gets far more done with the same one pair of hands.",
+          "keyPoints": [
+            "Blocking I/O ties up a thread per in-flight operation; non-blocking I/O doesn't.",
+            "Node's core APIs offer both sync (readFileSync) and async (readFile) variants — always prefer async in server code.",
+            "Non-blocking I/O scales well for I/O-bound workloads (APIs, DB-heavy apps) but not for CPU-bound work.",
+            "The trade-off is code complexity — callbacks/promises/async-await to manage instead of linear blocking code.",
+            "Under the hood, the OS or libuv thread pool does the actual waiting, not the JS thread."
+          ],
+          "code": "// Blocking — freezes the whole process until the read completes\nconst data = fs.readFileSync('file.txt');\nconsole.log(data);\n\n// Non-blocking — process continues immediately, callback runs later\nfs.readFile('file.txt', (err, data) => {\n  console.log(data);\n});\nconsole.log('This logs before the file content in the async version');",
+          "situations": [
+            {
+              "question": "Why would using readFileSync inside an Express route handler be a serious mistake in production?",
+              "answer": "It blocks the single event loop thread for the entire duration of the file read, meaning every other concurrent request — regardless of which route they hit — is frozen and can't be processed until that read finishes. Under real traffic this creates severe latency spikes and can effectively take the whole server down for a slow disk or network filesystem. The fix is always the async fs.promises/fs.readFile variant in request-handling code."
+            }
+          ]
+        },
+        {
+          "id": "commonjs-vs-esm",
+          "title": "Module System: CommonJS vs ESM",
+          "summary": "How require()/module.exports differs from import/export, and how Node resolves and interops between them.",
+          "explanation": "Node originally shipped only CommonJS (CJS): require() is a synchronous function call, module.exports is the object exposed, and the module system resolves and caches modules at require-time. ES Modules (ESM), the standard JS module system, use static import/export syntax resolved before execution, support top-level await, and are always strict mode. Node supports both, distinguishing them via file extension (.cjs vs .mjs) or the package.json 'type' field. Interop has rules: ESM can import CJS (getting the default export as module.exports), but CJS require() cannot synchronously import an ESM module — dynamic import() must be used instead.",
+          "analogy": "CommonJS is like ordering food by walking up to the counter and waiting right there until it's ready (synchronous require). ESM is like submitting an order online ahead of time (static analysis) where the whole menu structure is known before you even start eating.",
+          "keyPoints": [
+            "CJS: require()/module.exports, synchronous, resolved and cached at call time.",
+            "ESM: import/export, statically analyzed before execution, supports top-level await.",
+            "File extension or package.json 'type': 'module' determines which system a file uses.",
+            "ESM importing CJS is generally seamless; CJS requiring ESM is not supported synchronously.",
+            "Tree-shaking (used by bundlers) is only reliably possible with ESM's static import/export."
+          ],
+          "code": "// CommonJS (math.cjs)\nfunction add(a, b) { return a + b; }\nmodule.exports = { add };\n\n// ESM (math.mjs)\nexport function add(a, b) { return a + b; }\n\n// Consuming ESM from another ESM file:\nimport { add } from './math.mjs';\nconsole.log(add(2, 3));",
+          "situations": [
+            {
+              "question": "Your team is migrating a Node backend from CommonJS to ESM. What's a common pitfall you'd warn them about?",
+              "answer": "A few: __dirname and __filename don't exist in ESM (you need import.meta.url with fileURLToPath instead), JSON imports need an explicit assertion/attribute in some Node versions, and any package still shipping CJS-only needs to be imported carefully since default-export interop isn't always 1:1. I'd also flag that mixing require() calls into an ESM file simply won't work — you'd need createRequire() as a bridge if absolutely necessary during a gradual migration."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "async-streams",
+      "title": "Async Patterns & Streams",
+      "emoji": "🔁",
+      "topics": [
+        {
+          "id": "callbacks-promises-async",
+          "title": "Callbacks, Promises & Async/Await in Node",
+          "summary": "The evolution of async patterns in Node, and how to bridge callback-based APIs into promise-based code.",
+          "explanation": "Node's earliest APIs used the 'error-first callback' convention: fn(args, (err, result) => {...}). This works but leads to 'callback hell' with deeply nested error handling. Promises formalized async composition with .then/.catch chains, and async/await (built on promises) lets async code read like synchronous code. Node provides util.promisify to convert legacy callback-style functions into promise-returning ones, and most core modules now ship a .promises variant (fs.promises, dns.promises) directly.",
+          "analogy": "Error-first callbacks are like a walkie-talkie where every message has to explicitly start with 'is there a problem, over?' before the actual content — async/await is like finally getting a phone call where you just talk normally and a try/catch handles the rare dropped call.",
+          "keyPoints": [
+            "Error-first callback convention: the first argument is always the error (or null).",
+            "util.promisify(fn) converts an error-first callback function into one returning a Promise.",
+            "Many core modules expose a require('module').promises namespace directly (fs.promises, dns.promises).",
+            "async/await is syntactic sugar over promises — errors surface via try/catch, not .catch().",
+            "Mixing callback-style and promise-style code in the same function is a common source of bugs (forgotten awaits, double callbacks)."
+          ],
+          "code": "const fs = require('fs').promises;\n\nasync function readConfig() {\n  try {\n    const data = await fs.readFile('config.json', 'utf8');\n    return JSON.parse(data);\n  } catch (err) {\n    console.error('Failed to read config:', err.message);\n    throw err;\n  }\n}",
+          "situations": [
+            {
+              "question": "You inherit a codebase full of nested error-first callbacks 5 levels deep. How would you approach cleaning it up safely?",
+              "answer": "I'd avoid a risky big-bang rewrite. Instead, I'd wrap the legacy callback functions with util.promisify (or use the built-in .promises variants where available) one at a time, convert their call sites to async/await incrementally, and add tests around each converted piece before moving to the next, so I can verify behavior is unchanged at every step rather than at the very end."
+            }
+          ]
+        },
+        {
+          "id": "streams-backpressure",
+          "title": "Streams & Backpressure",
+          "summary": "Readable, Writable, Duplex, and Transform streams, and how backpressure prevents memory blowups.",
+          "explanation": "Streams let you process data piece-by-piece instead of loading it entirely into memory — essential for large files, network responses, or data pipelines. Node has four stream types: Readable (a source), Writable (a sink), Duplex (both), and Transform (a duplex that modifies data as it passes through, like zlib.createGzip()). Backpressure is the mechanism that prevents a fast producer from overwhelming a slow consumer: write() returns false when the internal buffer is full, signaling the producer to pause until a 'drain' event fires. The .pipe() method (or pipeline() for proper error handling) automatically manages this for you.",
+          "analogy": "Streams with backpressure are like a conveyor belt with a sensor — if the packing station at the end falls behind, the sensor slows or stops the belt automatically so boxes don't pile up and crash to the floor, rather than blindly feeding boxes at a fixed rate regardless of downstream capacity.",
+          "keyPoints": [
+            "Four stream types: Readable, Writable, Duplex, Transform.",
+            "Backpressure: write() returns false when the internal buffer exceeds highWaterMark; wait for 'drain'.",
+            ".pipe(dest) automatically handles backpressure between a Readable and Writable.",
+            "stream.pipeline() (or pipe with manual error handling) is preferred over raw .pipe() for proper cleanup on errors.",
+            "Streams are the backbone of efficient file uploads, HTTP responses, and large data transformations in Node."
+          ],
+          "code": "const { pipeline } = require('stream/promises');\nconst fs = require('fs');\nconst zlib = require('zlib');\n\nasync function compressFile(input, output) {\n  await pipeline(\n    fs.createReadStream(input),\n    zlib.createGzip(),\n    fs.createWriteStream(output)\n  );\n  console.log('Compression complete, with backpressure handled automatically.');\n}",
+          "situations": [
+            {
+              "question": "Your Node service crashes with an out-of-memory error when processing large file uploads. What's your first suspicion?",
+              "answer": "That the code is buffering the entire upload into memory (e.g. concatenating chunks into one big Buffer, or using a body-parsing approach without streaming) instead of processing it as a stream. I'd check whether the upload handling pipes the incoming request stream directly to disk or a processing Transform stream with proper backpressure, rather than accumulating the whole payload in memory before acting on it."
+            }
+          ]
+        },
+        {
+          "id": "eventemitter-pattern",
+          "title": "EventEmitter Pattern",
+          "summary": "Node's core pub/sub primitive underlying streams, HTTP servers, and most async Node APIs.",
+          "explanation": "EventEmitter is the foundational pattern behind much of Node's async architecture — HTTP servers, streams, child processes, and many third-party libraries all extend EventEmitter. You call .on(eventName, listener) to subscribe, and .emit(eventName, ...args) to synchronously invoke every listener for that event, in registration order. Unlike Promises (which settle once), an EventEmitter can fire the same event any number of times over its lifetime, making it suited for genuinely repeating occurrences (a 'data' event firing many times as a stream reads chunks) rather than one-off async results.",
+          "analogy": "An EventEmitter is like a radio station and .on() is tuning in — the station can broadcast the same show's segments (events) repeatedly over time, and every currently-tuned-in listener hears each broadcast, unlike a one-time phone call (a Promise) that only ever delivers one message.",
+          "keyPoints": [
+            "emit() calls all registered listeners for that event synchronously, in registration order.",
+            "Unlike Promises, events can fire zero, one, or many times over an emitter's lifetime.",
+            "Always attach an 'error' event listener — an unhandled 'error' event throws and can crash the process.",
+            "removeListener()/off() is important to avoid memory leaks from listeners that outlive their purpose.",
+            "Streams, http.Server, child_process, and most core async Node APIs are built on EventEmitter."
+          ],
+          "code": "const EventEmitter = require('events');\n\nclass OrderService extends EventEmitter {\n  placeOrder(order) {\n    // ...process order...\n    this.emit('orderPlaced', order);\n  }\n}\n\nconst orders = new OrderService();\norders.on('orderPlaced', (order) => console.log('Notify:', order.id));\norders.on('error', (err) => console.error('Order service error:', err));\n\norders.placeOrder({ id: 42 });",
+          "situations": [
+            {
+              "question": "Your app logs a warning: 'MaxListenersExceededWarning: Possible EventEmitter memory leak detected.' What does this mean and how do you fix it?",
+              "answer": "It means more than the default 10 listeners were added for a single event on one emitter — usually a sign that listeners are being added repeatedly without ever being removed, often inside a function that's called on every request (e.g. attaching a new listener to a shared emitter on every HTTP request). I'd find where listeners are added, ensure they're added once (not per-request) or properly removed with off()/removeListener() when no longer needed, rather than just raising the max listener limit to silence the warning."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core-modules",
+      "title": "Core Modules & APIs",
+      "emoji": "📦",
+      "topics": [
+        {
+          "id": "fs-module",
+          "title": "The fs Module",
+          "summary": "Reading, writing, and watching files with the sync, callback, and promise-based fs APIs.",
+          "explanation": "The fs module provides three parallel APIs for nearly every operation: synchronous (fs.readFileSync, blocks the event loop), callback-based (fs.readFile, the classic async style), and promise-based (fs.promises.readFile or fs/promises, used with async/await). It also supports streaming file access (fs.createReadStream/createWriteStream) for large files, and watching for changes (fs.watch). Choosing the right variant matters: sync methods are acceptable at startup/CLI-script scope, but should never be used in request-handling paths of a server.",
+          "analogy": "The three fs variants are like three ways to check your mailbox: standing there until mail physically arrives (sync), asking a neighbor to knock on your door when mail arrives (callback), or getting a notification on your phone you can await at your leisure (promise-based) — all get the mail, but only the sync approach ties you up completely while waiting.",
+          "keyPoints": [
+            "fs.readFileSync/writeFileSync block the event loop — fine for startup scripts, avoid in server request paths.",
+            "fs.readFile/writeFile use error-first callbacks.",
+            "require('fs/promises') gives promise-returning versions for use with async/await.",
+            "fs.createReadStream/createWriteStream stream large files instead of loading them fully into memory.",
+            "fs.watch/fs.watchFile can observe file changes, though watch behavior varies subtly across OSes."
+          ],
+          "code": "const fs = require('fs/promises');\n\nasync function appendLog(message) {\n  await fs.appendFile('app.log', `${new Date().toISOString()} - ${message}\\n`);\n}\n\nappendLog('Server started').catch(console.error);",
+          "situations": [
+            {
+              "question": "A CLI tool you're writing needs to read a config file before doing anything else. Is fs.readFileSync acceptable here?",
+              "answer": "Yes — for a short-lived CLI script that isn't serving concurrent requests, there's no event loop contention to worry about, and sync code is simpler to reason about for a linear startup sequence. The rule against sync fs calls is really about not blocking a long-running server's event loop while it's serving other concurrent work, which doesn't apply to a single-purpose CLI script."
+            }
+          ]
+        },
+        {
+          "id": "http-module",
+          "title": "http/https Module & Creating a Server",
+          "summary": "Building a raw HTTP server without a framework, and understanding what Express abstracts away.",
+          "explanation": "Node's built-in http module lets you create a server with http.createServer((req, res) => {...}), where req is a readable stream (for reading the request body) and res is a writable stream (for sending the response). Every framework like Express is ultimately a layer of routing, middleware, and convenience methods built on top of this same primitive. Understanding the raw module clarifies what frameworks are actually doing: parsing URLs, matching routes, calling res.writeHead/res.end, and managing the request/response stream lifecycle.",
+          "analogy": "The raw http module is like being handed a bare telephone line — you get a direct connection, but you have to build your own switchboard, greeting script, and call routing; Express is the pre-built office phone system on top of that same physical line.",
+          "keyPoints": [
+            "http.createServer(handler) takes a (req, res) callback invoked per incoming request.",
+            "req is a Readable stream — you must listen for 'data'/'end' or use a body-parsing helper to read the body.",
+            "res is a Writable stream — res.end() finalizes and sends the response.",
+            "Frameworks like Express add routing, middleware chaining, and convenience methods on top of this raw API.",
+            "https module works nearly identically, just requiring TLS certificate/key configuration."
+          ],
+          "code": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  if (req.url === '/health' && req.method === 'GET') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ status: 'ok' }));\n  } else {\n    res.writeHead(404);\n    res.end('Not found');\n  }\n});\n\nserver.listen(3000, () => console.log('Listening on 3000'));",
+          "situations": [
+            {
+              "question": "In an interview, you're asked to explain what Express actually does under the hood. How would you answer using your knowledge of the http module?",
+              "answer": "I'd explain that Express wraps http.createServer's single handler function with a routing and middleware layer: it maintains an ordered list of middleware/route handlers, and for each incoming request, it walks through them matching against the request's method and path, calling next() to proceed to the next matching handler. Under the hood, req and res are still the same core http.IncomingMessage and http.ServerResponse objects — Express just augments them with convenience methods like res.json() and req.params."
+            }
+          ]
+        },
+        {
+          "id": "path-os-modules",
+          "title": "path & os Modules",
+          "summary": "Cross-platform file path handling and system information APIs.",
+          "explanation": "The path module provides platform-safe utilities for constructing and manipulating file paths — path.join(), path.resolve(), path.basename(), path.extname() — critical because Windows uses backslashes while POSIX systems use forward slashes, and hardcoding separators breaks cross-platform compatibility. The os module exposes system-level information: os.platform(), os.cpus(), os.totalmem(), os.homedir() — useful for adapting behavior to the runtime environment or reporting system health.",
+          "analogy": "Using string concatenation for file paths is like giving driving directions using only 'turn left/right' without knowing which country's roads (path separator conventions) you're actually driving on — path.join() is the GPS that adapts automatically to whatever system you're on.",
+          "keyPoints": [
+            "path.join() and path.resolve() correctly handle platform-specific separators — never concatenate paths with strings manually.",
+            "path.resolve() produces an absolute path; path.join() just joins segments (may remain relative).",
+            "os.cpus().length is commonly used to size a cluster or worker thread pool to available cores.",
+            "os.platform() ('win32', 'linux', 'darwin') lets code branch on OS when truly necessary.",
+            "__dirname combined with path.join() is the standard way to build paths relative to the current module (in CJS)."
+          ],
+          "code": "const path = require('path');\nconst os = require('os');\n\nconst configPath = path.join(__dirname, 'config', 'settings.json');\nconsole.log('CPU cores available:', os.cpus().length);\nconsole.log('Platform:', os.platform());",
+          "situations": [
+            {
+              "question": "A file-processing script works fine on your Mac but fails to find files when a teammate runs it on Windows. What's the likely bug?",
+              "answer": "The code is probably building paths with manual string concatenation using forward slashes (e.g. `dir + '/' + file`), which breaks on Windows where the native separator is a backslash and mixed separators can cause path resolution failures depending on the API used. The fix is to always use path.join()/path.resolve() instead of manual string concatenation for file paths."
+            }
+          ]
+        },
+        {
+          "id": "buffer-binary-data",
+          "title": "Buffer & Binary Data",
+          "summary": "Working with raw binary data in Node — encoding, decoding, and why Buffer exists outside the JS spec.",
+          "explanation": "JavaScript strings are UTF-16 and weren't originally designed for raw binary data handling. Node's Buffer class (a subclass-like structure of Uint8Array) provides a way to work with raw bytes directly — essential for file I/O, network protocols, cryptography, and image/binary processing. Buffers support various encodings (utf8, base64, hex, ascii) for converting to/from strings, and understanding when data is a Buffer vs a string is important since many Node APIs return Buffers by default unless you specify an encoding.",
+          "analogy": "A Buffer is like a sealed box of raw ingredients (bytes) versus a String which is more like an already-prepared dish described in a specific recipe language (UTF-16) — Buffer lets you work with the raw ingredients directly regardless of what 'dish' they'll eventually become.",
+          "keyPoints": [
+            "Buffer is Node's primitive for handling raw binary data, distinct from JS strings.",
+            "Buffer.from(str, encoding) and buffer.toString(encoding) convert between binary and string representations.",
+            "Many fs/network APIs return a Buffer by default unless you pass an encoding option (e.g. fs.readFile(path, 'utf8')).",
+            "Common encodings: utf8, base64, hex, ascii, binary/latin1.",
+            "Buffers are fixed-size and allocated outside the regular V8 JS heap for efficiency with large binary payloads."
+          ],
+          "code": "const buf = Buffer.from('Hello, Node!', 'utf8');\nconsole.log(buf); // <Buffer 48 65 6c 6c 6f 2c 20 4e 6f 64 65 21>\nconsole.log(buf.toString('base64')); // base64-encoded string\nconsole.log(buf.length); // byte length, not character length",
+          "situations": [
+            {
+              "question": "You log a value from fs.readFile and see `<Buffer 7b 22 6e 61 6d 65 22 3a...>` instead of readable JSON text. What happened, and how do you fix it?",
+              "answer": "fs.readFile returns a Buffer by default when no encoding is specified — the hex bytes shown are the raw file content, not an error. The fix is to either pass an encoding argument (fs.readFile(path, 'utf8', callback)) so it returns a string directly, or call .toString('utf8') on the returned Buffer before parsing it, e.g. with JSON.parse."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "building-apis",
+      "title": "Building APIs with Express/Node",
+      "emoji": "🌐",
+      "topics": [
+        {
+          "id": "express-middleware",
+          "title": "Express Middleware Pipeline",
+          "summary": "How Express chains request-handling functions with next(), and how order determines behavior.",
+          "explanation": "Express middleware are functions with the signature (req, res, next) that execute in the order they're registered via app.use()/app.get() etc. Each middleware can inspect/modify req and res, end the request-response cycle (res.send/res.json), or call next() to pass control to the next matching middleware. This composable pipeline is how cross-cutting concerns (auth, logging, body parsing, error handling) are layered onto route handlers without duplicating logic in every route.",
+          "analogy": "Express middleware is an assembly line — each station (middleware) can inspect and modify the product (request) as it passes through, and either pass it down the line (next()) or pull it off the line entirely to ship it out (send a response) right there.",
+          "keyPoints": [
+            "Middleware signature: (req, res, next) — calling next() proceeds to the next matching middleware/route.",
+            "Order matters: middleware registered earlier via app.use() runs before later ones for a matching request.",
+            "Error-handling middleware has a special 4-argument signature: (err, req, res, next).",
+            "Middleware can be scoped globally (app.use), per-path (app.use('/api', mw)), or per-route (app.get('/x', mw, handler)).",
+            "Forgetting to call next() (when not ending the response) causes the request to hang indefinitely."
+          ],
+          "code": "app.use((req, res, next) => {\n  console.log(`${req.method} ${req.url}`);\n  next();\n});\n\napp.use('/api', requireAuth); // scoped middleware\n\napp.get('/api/users', (req, res) => {\n  res.json({ users: [] });\n});\n\n// Error-handling middleware (4 args) — placed after all routes\napp.use((err, req, res, next) => {\n  res.status(500).json({ error: err.message });\n});",
+          "situations": [
+            {
+              "question": "A request to your Express API just hangs forever with no response and no error. What's the first thing you check?",
+              "answer": "I'd check whether every middleware in the chain that doesn't itself end the response (res.send/res.json/res.end) is actually calling next(). A single middleware that forgets to call next() (e.g. inside a conditional branch that doesn't cover every case) silently stalls the request forever, since nothing downstream ever gets invoked and the client just waits."
+            }
+          ]
+        },
+        {
+          "id": "rest-api-design",
+          "title": "REST API Design",
+          "summary": "Resource-oriented URLs, HTTP methods/status codes, and versioning conventions for well-designed APIs.",
+          "explanation": "REST API design centers on treating URLs as nouns representing resources (/users, /users/:id/orders) and using HTTP methods as verbs (GET for read, POST for create, PUT/PATCH for update, DELETE for remove) rather than encoding actions into the URL itself. Status codes should accurately reflect outcomes (200 OK, 201 Created, 204 No Content, 400 Bad Request, 401/403 for auth issues, 404 Not Found, 409 Conflict, 500 Internal Server Error). Consistent conventions (pagination, filtering via query params, versioning via URL prefix or header) make an API predictable and easier for consumers to integrate with.",
+          "analogy": "A well-designed REST API is like a well-organized library's catalog system — resources are shelved logically by category (nouns as URLs), and there's a consistent, universal set of actions (verbs: checkout, return, renew) you can perform on any item, rather than a different unique procedure for every single book.",
+          "keyPoints": [
+            "URLs should represent resources (nouns): /orders/:id, not /getOrder?id=5.",
+            "Use HTTP methods semantically: GET (read, no side effects), POST (create), PUT/PATCH (update), DELETE (remove).",
+            "Return accurate status codes — don't return 200 for an error the client needs to handle differently.",
+            "PUT is idempotent (same request repeated = same result); POST generally is not.",
+            "Version APIs explicitly (/v1/users) to allow evolving the contract without breaking existing consumers."
+          ],
+          "code": "// Resource-oriented routes\napp.get('/api/v1/orders', listOrders);\napp.get('/api/v1/orders/:id', getOrder);\napp.post('/api/v1/orders', createOrder);\napp.patch('/api/v1/orders/:id', updateOrder);\napp.delete('/api/v1/orders/:id', deleteOrder);\n\n// Accurate status codes\nres.status(201).json(newOrder); // Created\nres.status(404).json({ error: 'Order not found' });",
+          "situations": [
+            {
+              "question": "A junior developer designs an endpoint POST /getUserById. What feedback would you give in code review?",
+              "answer": "I'd point out this mixes REST conventions incorrectly — 'get' actions with no side effects should be GET requests with the ID as a path or query param (GET /users/:id), not a POST with an action verb baked into the URL. Using POST for reads breaks caching semantics, browser back-button behavior, and violates the principle that GET should be safe and idempotent — it also makes the API inconsistent and harder for consumers to predict."
+            }
+          ]
+        },
+        {
+          "id": "error-handling-middleware",
+          "title": "Error Handling Middleware",
+          "summary": "Centralizing error handling in Express so route handlers don't need repetitive try/catch boilerplate.",
+          "explanation": "Express recognizes middleware with 4 parameters (err, req, res, next) as error handlers, invoked when next(err) is called or a synchronous error is thrown inside a route handler (Express 5 also catches rejected promises automatically; Express 4 requires manually catching async errors and calling next(err)). Centralizing error handling in one place means route handlers can focus on business logic while a single middleware maps errors to consistent, well-formed HTTP responses, logs them, and avoids leaking internal details (stack traces) in production responses.",
+          "analogy": "Centralized error-handling middleware is like a hospital's triage desk — instead of every single department needing its own separate policy for handling emergencies, all problems get routed to one place that knows how to assess severity and respond appropriately and consistently.",
+          "keyPoints": [
+            "Error middleware is identified by having exactly 4 parameters: (err, req, res, next).",
+            "In Express 4, async route handler errors must be manually forwarded via next(err) or a wrapper utility.",
+            "Express 5 automatically catches rejected promises from async route handlers.",
+            "Centralizing error responses ensures a consistent error shape/status codes across the whole API.",
+            "Never send raw stack traces or internal error details to clients in production — log them server-side instead."
+          ],
+          "code": "// Wrapper to catch async errors in Express 4\nconst asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);\n\napp.get('/api/orders/:id', asyncHandler(async (req, res) => {\n  const order = await db.findOrder(req.params.id);\n  if (!order) {\n    const err = new Error('Order not found');\n    err.status = 404;\n    throw err;\n  }\n  res.json(order);\n}));\n\napp.use((err, req, res, next) => {\n  console.error(err);\n  res.status(err.status || 500).json({ error: err.message });\n});",
+          "situations": [
+            {
+              "question": "In Express 4, an async route handler throws inside a try-less async function, and the client gets no response at all instead of an error. Why?",
+              "answer": "In Express 4, promise rejections from async route handlers aren't automatically caught and passed to error-handling middleware — an unhandled rejection just silently disappears from Express's perspective, leaving the request hanging with no response sent. The fix is wrapping async handlers with a helper that catches rejections and calls next(err), or upgrading to Express 5 which handles this automatically."
+            }
+          ]
+        },
+        {
+          "id": "request-validation",
+          "title": "Request Validation",
+          "summary": "Validating incoming request data with schema libraries like Zod or Joi before it reaches business logic.",
+          "explanation": "Never trust client input — request validation ensures the body, query params, and headers match expected shapes and constraints before your business logic runs, catching malformed or malicious data early with a clear 400 Bad Request rather than letting it cause confusing failures or security issues deeper in the stack. Schema validation libraries (Zod, Joi, Yup) let you declaratively define expected shapes and get both runtime validation and (for Zod/TypeScript) inferred static types from the same schema definition.",
+          "analogy": "Request validation is a bouncer at the door checking IDs before anyone gets into the club — it's far better to catch a problem at the entrance than to let someone in and have chaos break out somewhere inside where it's much harder to trace back to the source.",
+          "keyPoints": [
+            "Never trust client input — validate body, query params, headers explicitly before using them.",
+            "Schema libraries (Zod, Joi) centralize validation rules and produce consistent, clear error messages.",
+            "Validation middleware should run early in the pipeline, before any business logic executes.",
+            "Zod (in TypeScript projects) lets you derive a static type directly from the same schema used for runtime checks.",
+            "Good validation errors tell the client exactly which field failed and why, not just a generic 400."
+          ],
+          "code": "const { z } = require('zod');\n\nconst createOrderSchema = z.object({\n  productId: z.string().uuid(),\n  quantity: z.number().int().positive(),\n});\n\napp.post('/api/orders', (req, res, next) => {\n  const result = createOrderSchema.safeParse(req.body);\n  if (!result.success) {\n    return res.status(400).json({ errors: result.error.flatten() });\n  }\n  // result.data is now validated and typed\n  next();\n});",
+          "situations": [
+            {
+              "question": "Your API accepted a request with quantity: '5' (a string) instead of the expected number, and it caused a downstream calculation bug. How would proper validation have prevented this?",
+              "answer": "A schema validator like Zod with z.number() would have rejected the request outright with a clear 400 error stating quantity must be a number, rather than allowing a string to silently flow through and cause implicit type coercion bugs later (e.g. string concatenation instead of numeric addition somewhere downstream). This is exactly the class of bug that input validation at the API boundary is designed to catch immediately, rather than debugging a confusing symptom several layers deeper in the code."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nodejs-production",
+      "title": "Node.js in Production",
+      "emoji": "🚀",
+      "topics": [
+        {
+          "id": "clustering-worker-threads",
+          "title": "Clustering & Worker Threads",
+          "summary": "Scaling Node across CPU cores with the cluster module and offloading CPU-bound work with worker_threads.",
+          "explanation": "Since Node runs JS on a single thread, a single process only uses one CPU core. The cluster module forks multiple worker processes (typically one per CPU core) that share the same server port, letting the OS load-balance incoming connections across them — good for scaling I/O-bound HTTP traffic. worker_threads, by contrast, let you run actual JS in a separate thread within the same process, sharing memory via SharedArrayBuffer, and are the right tool for offloading genuinely CPU-bound computation (image processing, heavy calculations) without blocking the main event loop.",
+          "analogy": "Clustering is like opening multiple checkout lanes at a grocery store (multiple independent processes handling separate customers/requests), while a worker thread is like calling in a specialist to a back room to handle one complex, time-consuming task (heavy computation) so the front-of-house tellers keep serving everyone else without delay.",
+          "keyPoints": [
+            "cluster forks multiple full Node processes sharing a listening port, load-balanced by the OS/master process.",
+            "Each cluster worker has its own memory — no shared state between them without an external store (Redis, DB).",
+            "worker_threads run JS in a separate thread within the same process, ideal for CPU-bound work.",
+            "worker_threads can share memory efficiently via SharedArrayBuffer, unlike cluster's fully isolated processes.",
+            "Tools like PM2 provide clustering with additional process management (restarts, monitoring) out of the box."
+          ],
+          "code": "// worker_threads for CPU-bound work\nconst { Worker } = require('worker_threads');\n\nfunction runHeavyTask(data) {\n  return new Promise((resolve, reject) => {\n    const worker = new Worker('./heavy-task.js', { workerData: data });\n    worker.on('message', resolve);\n    worker.on('error', reject);\n  });\n}\n\napp.post('/process', async (req, res) => {\n  const result = await runHeavyTask(req.body);\n  res.json(result);\n});",
+          "situations": [
+            {
+              "question": "Your API has one endpoint that does heavy image resizing, and it's causing latency spikes on all other unrelated endpoints. How would you fix this architecturally?",
+              "answer": "I'd move the image resizing work into a worker_threads pool (or, better, out to a separate background job/queue system entirely if it's slow enough), so the CPU-intensive work runs off the main event loop thread and doesn't block other requests. If the whole service is CPU-bound frequently, I'd also consider whether clustering (or horizontally scaling more instances) is needed in addition, since clustering alone doesn't help a single request's CPU-bound work — it only helps distribute separate requests across cores."
+            }
+          ]
+        },
+        {
+          "id": "process-management-pm2",
+          "title": "Process Management (PM2)",
+          "summary": "Keeping a Node process alive, load-balanced, and observable in production with a process manager.",
+          "explanation": "A raw `node server.js` process will exit on an uncaught exception and offers no built-in restart, logging, or multi-core utilization. Process managers like PM2 handle automatic restarts on crash, zero-downtime reloads for deployments, built-in clustering across CPU cores, log aggregation, and monitoring — turning a single fragile process into a resilient, observable production service without hand-rolling that infrastructure yourself.",
+          "analogy": "Running raw `node server.js` in production is like leaving a candle burning unattended — if it goes out, nothing relights it. PM2 is the automatic pilot light system that detects the flame going out and immediately relights it, while also keeping a log of every flicker.",
+          "keyPoints": [
+            "PM2 automatically restarts a crashed process, keeping the service resilient to unexpected failures.",
+            "pm2 start app.js -i max runs the app in cluster mode across all available CPU cores.",
+            "Zero-downtime reloads (pm2 reload) replace worker processes one at a time during deploys.",
+            "PM2 aggregates logs and exposes basic monitoring (CPU/memory) via pm2 monit or a dashboard.",
+            "In containerized/Kubernetes environments, similar resilience is often handled by the orchestrator instead of PM2."
+          ],
+          "code": "// ecosystem.config.js\nmodule.exports = {\n  apps: [{\n    name: 'api',\n    script: './server.js',\n    instances: 'max',\n    exec_mode: 'cluster',\n    max_memory_restart: '500M',\n    env: { NODE_ENV: 'production' },\n  }],\n};\n\n// pm2 start ecosystem.config.js\n// pm2 reload api   -- zero-downtime restart",
+          "situations": [
+            {
+              "question": "Your Node app crashes occasionally in production due to a rare unhandled edge case, causing downtime until someone manually restarts it. What's the quickest mitigation, separate from actually fixing the bug?",
+              "answer": "Running the process under PM2 (or an equivalent supervisor/orchestrator) with automatic restart-on-crash — this doesn't fix the underlying bug, but it converts an unattended crash into a brief automatic recovery instead of extended downtime, buying time to properly diagnose and fix the root cause without users experiencing a prolonged outage."
+            }
+          ]
+        },
+        {
+          "id": "env-config-secrets",
+          "title": "Environment Config & Secrets",
+          "summary": "Managing per-environment configuration and keeping secrets out of source control.",
+          "explanation": "Production Node apps need different configuration per environment (dev/staging/prod) — database URLs, API keys, feature flags — read from environment variables (process.env) rather than hardcoded values. Secrets (API keys, database passwords) should never be committed to source control; use .env files (loaded via dotenv, git-ignored) for local development and a proper secrets manager (AWS Secrets Manager, Vault, or platform-provided environment variable injection) in production, ideally with a startup-time validation step that fails fast if required variables are missing.",
+          "analogy": "Environment variables are like giving the same recipe to kitchens in different cities, where each kitchen substitutes locally-appropriate ingredients (a different database URL, different API endpoint) into the same fixed recipe steps — the code stays identical, only the injected configuration changes per environment.",
+          "keyPoints": [
+            "Never commit secrets (API keys, DB passwords) to source control — use .env files locally, git-ignored.",
+            "In production, secrets should come from the platform's environment injection or a dedicated secrets manager.",
+            "Validate required environment variables at startup and fail fast with a clear error if any are missing.",
+            "Different environments (dev/staging/prod) typically use different config values for the same variable names.",
+            "Avoid checking secrets into environment-specific config files that do get committed — use .gitignore carefully."
+          ],
+          "code": "require('dotenv').config();\n\nconst requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];\nfor (const key of requiredEnvVars) {\n  if (!process.env[key]) {\n    throw new Error(`Missing required environment variable: ${key}`);\n  }\n}\n\nconst config = {\n  port: process.env.PORT || 3000,\n  databaseUrl: process.env.DATABASE_URL,\n  jwtSecret: process.env.JWT_SECRET,\n};",
+          "situations": [
+            {
+              "question": "You discover an API key was accidentally committed to a public GitHub repository. What's your immediate response, beyond just removing it from the latest commit?",
+              "answer": "Removing it from the latest commit is not enough — the key is still visible in the repository's git history. My immediate priority is rotating/revoking the exposed key at the provider immediately (treating it as compromised regardless of how briefly it was exposed), then cleaning the git history if truly necessary (though rotation matters far more than history scrubbing, since the key must be assumed leaked), and adding the file to .gitignore plus a pre-commit secret-scanning hook to prevent recurrence."
+            }
+          ]
+        },
+        {
+          "id": "debugging-profiling",
+          "title": "Debugging & Profiling Node Apps",
+          "summary": "Using the built-in inspector, CPU profiles, and heap snapshots to diagnose performance and memory issues.",
+          "explanation": "Node ships a built-in debugger accessible via `node --inspect`, connectable from Chrome DevTools for breakpoints, stepping, and live variable inspection — invaluable for debugging complex async flows. For performance issues, `node --prof` generates a V8 CPU profile you can analyze to find hot functions, and the `--inspect` flag's Chrome DevTools also supports live CPU profiling and heap snapshots for finding memory leaks (comparing snapshots over time to see what's accumulating). Tools like clinic.js wrap these primitives into more digestible reports.",
+          "analogy": "Debugging with --inspect and Chrome DevTools is like having X-ray vision into a running patient (your live process) instead of only being able to review notes after the fact — you can pause mid-operation, inspect exactly what's happening, and resume, rather than just guessing from logs after something already went wrong.",
+          "keyPoints": [
+            "node --inspect opens a debugging port connectable from chrome://inspect for breakpoints and live inspection.",
+            "node --prof generates a V8 CPU profile; process with node --prof-process to get a readable report.",
+            "Heap snapshots (via DevTools Memory tab or --inspect) reveal memory leaks by comparing growth over time.",
+            "clinic.js (clinic doctor, clinic flame) provides higher-level, easier-to-read performance diagnostics.",
+            "console.time()/console.timeEnd() and process.hrtime() are quick tools for targeted micro-benchmarking."
+          ],
+          "code": "// Start with the inspector enabled\n// node --inspect server.js\n// Then open chrome://inspect in Chrome to attach DevTools\n\n// Quick manual timing\nconsole.time('dbQuery');\nconst result = await db.query('SELECT * FROM orders');\nconsole.timeEnd('dbQuery'); // dbQuery: 42.315ms",
+          "situations": [
+            {
+              "question": "Your Node service's memory usage grows steadily over days until it eventually crashes with an out-of-memory error. How would you diagnose the leak?",
+              "answer": "I'd run the process with --inspect, take a heap snapshot early on, let it run under normal load for a while, then take a second snapshot and use Chrome DevTools' comparison view to see which object types grew unexpectedly between the two — following the retaining path for those objects usually reveals the actual leak (often a growing cache with no eviction, an EventEmitter with accumulating listeners, or closures unintentionally holding references to large objects)."
+            }
+          ]
+        },
+        {
+          "id": "security-best-practices",
+          "title": "Security Best Practices",
+          "summary": "Guarding against common Node/Express vulnerabilities — injection, dependency risk, and unsafe defaults.",
+          "explanation": "Node/Express security involves several layers: validating and sanitizing all input to prevent injection (SQL/NoSQL/command), using parameterized queries for databases, setting secure HTTP headers (via helmet), enforcing rate limiting to prevent abuse, keeping dependencies updated and audited (npm audit) since the npm ecosystem is a common supply-chain attack vector, never using eval() or the Function constructor on untrusted input, and running the process with least-privilege permissions (not as root) in production.",
+          "analogy": "Node app security is like securing a house — you need locks on every door (input validation), a security system for intruders (rate limiting), keeping the building materials from a trusted, inspected supplier (dependency auditing), and not leaving a spare key under the doormat (unsafe defaults/exposed secrets) — one weak point undermines the whole system.",
+          "keyPoints": [
+            "Always use parameterized queries/prepared statements — never string-concatenate user input into SQL/NoSQL queries.",
+            "Use the helmet middleware to set secure HTTP headers (CSP, X-Frame-Options, etc.) with sensible defaults.",
+            "Implement rate limiting (express-rate-limit or similar) on public/auth-sensitive endpoints to prevent abuse.",
+            "Run npm audit regularly and keep dependencies updated — the npm ecosystem is a real supply-chain attack surface.",
+            "Never run a Node process as root in production; use a dedicated low-privilege user."
+          ],
+          "code": "const helmet = require('helmet');\nconst rateLimit = require('express-rate-limit');\n\napp.use(helmet());\napp.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));\n\n// Parameterized query — safe from SQL injection\nconst result = await db.query('SELECT * FROM users WHERE id = $1', [userId]);\n// NEVER: db.query(`SELECT * FROM users WHERE id = ${userId}`)",
+          "situations": [
+            {
+              "question": "A security review flags that your Node API builds SQL queries using template literals with request data directly interpolated in. What's the risk and the fix?",
+              "answer": "This is a direct SQL injection vulnerability — a malicious value in the interpolated field could break out of the intended query structure and execute arbitrary SQL (reading/modifying/deleting data it shouldn't have access to). The fix is switching to parameterized queries/prepared statements, where the database driver treats input strictly as data values, never as executable query syntax, regardless of what characters the input contains."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

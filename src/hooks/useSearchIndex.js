@@ -7,6 +7,8 @@ import { reactQuestions as reactChecklistQuestions } from '../data/reactQuestion
 import { nextjsQuestions } from '../data/nextjsQuestions';
 import { reactNativeQuestions } from '../data/reactNativeQuestions';
 import { essentialsQuestions } from '../data/essentialsQuestions';
+import { nodejsQuestions } from '../data/nodejsQuestions';
+import { aiQuestions } from '../data/aiQuestions';
 
 // ── Fuzzy matching engine ──────────────────────────────────────────────────
 
@@ -99,6 +101,8 @@ const SKILL_FILES = [
   { id: 'typescript', file: '/data/typescript.json', label: 'TypeScript' },
   { id: 'react', file: '/data/react.json', label: 'React' },
   { id: 'react-native', file: '/data/react-native.json', label: 'React Native' },
+  { id: 'nodejs', file: '/data/nodejs.json', label: 'Node.js' },
+  { id: 'ai', file: '/data/ai.json', label: 'Artificial Intelligence' },
   { id: 'senior', file: '/data/senior.json', label: 'Senior Topics' },
   { id: 'personal-behavioral', file: '/data/personal-behavioral.json', label: 'My Personal' },
 ];
@@ -201,6 +205,8 @@ function buildChecklistEntries() {
     nextjs: nextjsQuestions,
     'react-native': reactNativeQuestions,
     essentials: essentialsQuestions,
+    nodejs: nodejsQuestions,
+    ai: aiQuestions,
   };
 
   for (const section of checklistSections) {

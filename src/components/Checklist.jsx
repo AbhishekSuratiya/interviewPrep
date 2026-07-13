@@ -9,6 +9,8 @@ import { typescriptQuestions } from '../data/typescriptQuestions';
 import { reactQuestions } from '../data/reactQuestions';
 import { nextjsQuestions } from '../data/nextjsQuestions';
 import { essentialsQuestions } from '../data/essentialsQuestions';
+import { nodejsQuestions } from '../data/nodejsQuestions';
+import { aiQuestions } from '../data/aiQuestions';
 
 const QUESTION_BANKS = {
   javascript: javascriptQuestions,
@@ -17,6 +19,8 @@ const QUESTION_BANKS = {
   nextjs: nextjsQuestions,
   'react-native': reactNativeQuestions,
   essentials: essentialsQuestions,
+  nodejs: nodejsQuestions,
+  ai: aiQuestions,
 };
 
 const STORAGE_KEY = 'checklist:known';

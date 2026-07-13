@@ -5,6 +5,8 @@ const SKILLS = [
   { id: 'react',        file: '/data/react.json',         icon: '⚛',   color: '#60a5fa', label: 'React' },
   { id: 'react-native', file: '/data/react-native.json',  icon: '📱',  color: '#a78bfa', label: 'React Native' },
   { id: 'typescript',   file: '/data/typescript.json',    icon: 'TS',  color: '#3b82f6', label: 'TypeScript' },
+  { id: 'nodejs',       file: '/data/nodejs.json',        icon: '🟢',  color: '#68a063', label: 'Node.js' },
+  { id: 'ai',           file: '/data/ai.json',            icon: '🤖',  color: '#22d3ee', label: 'Artificial Intelligence' },
   { id: 'senior',       file: '/data/senior.json',        icon: '🎯',  color: '#f59e0b', label: 'Senior Topics' },
   { id: 'personal-behavioral', file: '/data/personal-behavioral.json', icon: '👤',  color: '#ec4899', label: 'My Personal' },
 ];
