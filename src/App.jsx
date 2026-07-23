@@ -13,6 +13,17 @@ import BehavioralSection from './components/BehavioralSection';
 import AuthModal from './components/AuthModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrepJournal from './components/PrepJournal';
+import TopicDetailPage from './components/TopicDetailPage';
+import ScreenPage from './components/ScreenPage';
+
+// Section IDs that have interactive topic detail pages
+const DETAIL_PAGE_SECTIONS = new Set([
+  'new-arch-complete',
+  'storage-types',
+  'performance-libraries',
+  'deep-linking',
+  'app-security',
+]);
 
 function AppShell() {
   const { user, logout } = useAuth();
@@ -41,6 +52,8 @@ function AppShell() {
   const isPersonalBehavioral = activeSkill === 'personal-behavioral';
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // { title, code }
+  const [activeTopic, setActiveTopic] = useState(null); // { sectionId, topicId }
+  const [activeScreen, setActiveScreen] = useState(null); // HTML path for screen pages
 
   const { data, loading, error, config } = useSkillData(activeSkill);
 
@@ -48,7 +61,24 @@ function AppShell() {
     setActiveSkill(id);
     setNavContext(context);
     setSearch(context?.searchQuery || '');
+    setActiveTopic(null);
+    setActiveScreen(null);
   };
+
+  // Navigate to a topic detail page
+  const handleOpenTopic = (sectionId, topicId) => {
+    setActiveTopic({ sectionId, topicId });
+    setActiveScreen(null);
+  };
+
+  // Navigate to a full screen page (standalone HTML)
+  const handleOpenScreen = (htmlPath) => {
+    setActiveScreen(htmlPath);
+    setActiveTopic(null);
+  };
+
+  // Get sections that have detail pages (for TopicDetailPage nav)
+  const detailSections = (data?.sections || []).filter(s => DETAIL_PAGE_SECTIONS.has(s.id));
 
   const q = search.trim().toLowerCase();
 
@@ -106,9 +136,17 @@ function AppShell() {
 
           {/* Normal skill view */}
           {!isCodePractice && !isChecklist && activeSkill !== 'home' && (
-            <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className={activeTopic || activeScreen ? '' : 'max-w-4xl mx-auto px-6 py-8'}>
+              {/* Full screen page (e.g. New Architecture) */}
+              {activeScreen && (
+                <ScreenPage
+                  htmlPath={activeScreen}
+                  onBack={() => setActiveScreen(null)}
+                  isLight={isLight}
+                />
+              )}
               {/* Loading */}
-              {loading && (
+              {!activeScreen && loading && (
                 <div className="flex flex-col items-center justify-center py-32 gap-4">
                   <div className="w-10 h-10 rounded-full border-2 border-blue-400/20 border-t-blue-400 animate-spin" />
                   <p className={`text-sm ${isLight ? 'text-gray-400' : 'text-white/30'}`}>Loading concepts…</p>
@@ -116,7 +154,7 @@ function AppShell() {
               )}
 
               {/* Error */}
-              {error && (
+              {!activeScreen && error && (
                 <div className={`text-center py-32 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
                   <div className="text-4xl mb-4">⚠️</div>
                   <h3 className="font-semibold mb-1">Could not load data</h3>
@@ -124,8 +162,31 @@ function AppShell() {
                 </div>
               )}
 
+              {/* Topic Detail Page */}
+              {!activeScreen && !loading && !error && data && activeTopic && (() => {
+                const section = (data.sections || []).find(s => s.id === activeTopic.sectionId);
+                const topic = section?.topics?.find(t => t.id === activeTopic.topicId);
+                if (!section || !topic) return null;
+                const sectionIndex = detailSections.findIndex(s => s.id === section.id);
+                const topicIndex = section.topics.findIndex(t => t.id === topic.id);
+                return (
+                  <TopicDetailPage
+                    topic={topic}
+                    section={section}
+                    sectionIndex={sectionIndex}
+                    topicIndex={topicIndex}
+                    allTopicsInSection={section.topics}
+                    allSections={detailSections}
+                    isLight={isLight}
+                    onBack={() => setActiveTopic(null)}
+                    onNavigate={(sectionId, topicId) => setActiveTopic({ sectionId, topicId })}
+                    onOpenCode={(title, code) => setModal({ title, code })}
+                  />
+                );
+              })()}
+
               {/* Content */}
-              {!loading && !error && data && (
+              {!activeScreen && !loading && !error && data && !activeTopic && (
                 <>
                   <SkillHero data={data} config={config} isLight={isLight} />
 
@@ -147,6 +208,9 @@ function AppShell() {
                       isLight={isLight}
                       onOpenCode={(title, code) => setModal({ title, code })}
                       search={q}
+                      activeSkill={activeSkill}
+                      onOpenTopic={handleOpenTopic}
+                      onOpenScreen={handleOpenScreen}
                     />
                   ))}
 
@@ -173,6 +237,9 @@ function AppShell() {
                       isLight={isLight}
                       onOpenCode={(title, code) => setModal({ title, code })}
                       search={q}
+                      activeSkill={activeSkill}
+                      onOpenTopic={handleOpenTopic}
+                      onOpenScreen={handleOpenScreen}
                     />
                   ))}
 

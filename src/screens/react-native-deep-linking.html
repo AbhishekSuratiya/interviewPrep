@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Native Deep Linking — Schemes, Universal & App Links</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5;
+  --paper-2:#F7F9FC;
+  --ink:#0E1626;
+  --slate:#4A5670;
+  --line:#C9D1DE;
+  --link:#D97706;
+  --link-bg:#FEF3C7;
+  --universal:#2563EB;
+  --universal-bg:#DBEAFE;
+  --deferred:#7C3AED;
+  --deferred-bg:#EDE9FE;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--link);outline-offset:3px;border-radius:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
+h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+p{margin:0 0 1em}
+.lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.mono{font-family:var(--mono);font-size:.86em}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+
+/* ---------- hero ---------- */
+header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--link);margin-bottom:22px}
+.hero h1 span{display:block}
+.hero h1 .dim{color:var(--slate)}
+.hero .lede{margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.chip{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--paper-2);
+  padding:6px 12px;border-radius:100px;color:var(--slate);
+}
+
+/* ---------- sections ---------- */
+section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:38px}
+.section-head p{color:var(--slate);margin-top:14px}
+
+/* ---------- grid & cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-style:space-between}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+.card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+
+/* ---------- code block ---------- */
+pre{
+  font-family:var(--mono);font-size:.82rem;line-height:1.6;
+  background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;
+  overflow-x:auto;margin:14px 0 0;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:.92rem}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--slate);background:#E4E9F1;
+}
+tbody th{font-weight:600;width:22%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+
+/* ---------- myths & qna ---------- */
+.myth{border-left:3px solid var(--link);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
+
+.qna{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
+.qna-q{font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;gap:8px}
+.qna-a{color:var(--slate);font-size:.93rem;line-height:1.6}
+
+footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag">React Native Navigation & Links</div>
+    <h1>
+      <span>Deep Linking Architecture.</span>
+      <span class="dim">Schemes, Universal Links & App Links.</span>
+    </h1>
+    <p class="lede">Deep links route web URLs and custom protocols into specific React Native screens. Learn how to configure OS-level verification, React Navigation routing, and deferred installation attribution.</p>
+    <div class="hero-meta">
+      <span class="chip">myapp://</span>
+      <span class="chip">Universal Links (iOS)</span>
+      <span class="chip">App Links (Android)</span>
+      <span class="chip">AASA File</span>
+      <span class="chip">assetlinks.json</span>
+      <span class="chip">React Navigation</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Three Types of Deep Links</div>
+      <h2>Deep Link Architecture Comparison</h2>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--link)">Legacy / Basic</div>
+          <h3>Custom URL Schemes</h3>
+          <p>URLs starting with <code>myapp://profile/123</code>. Easy to implement in native manifests. However, browsers prompt a warning, and if the app isn't installed, the link simply fails without web fallback.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--universal)">Modern Standard</div>
+          <h3>Universal & App Links</h3>
+          <p>Standard HTTPS URLs (<code>https://myapp.com/profile/123</code>). Verified via server configuration files (<code>apple-app-site-association</code> and <code>assetlinks.json</code>). Seamlessly opens the app if installed, or falls back to the browser website.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--deferred)">Deferred Attribution</div>
+          <h3>Deferred Deep Links</h3>
+          <p>Preserves link context when a user clicks a link <em>before</em> installing the app. After App Store / Play Store installation, the app reads the initial deferred link and navigates to the target content automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">React Navigation Setup</div>
+      <h2>Configuring React Navigation Link Routing</h2>
+    </div>
+
+    <pre><code>import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+import { Linking } from 'react-native';
+
+const linking: LinkingOptions&lt;RootStackParamList&gt; = {
+  prefixes: [
+    'myapp://',
+    'https://myapp.com',
+    'https://www.myapp.com',
+  ],
+  config: {
+    screens: {
+      Home: '',
+      Profile: 'user/:userId',
+      PostDetails: {
+        path: 'posts/:postId',
+        parse: { postId: (id) => Number(id) },
+      },
+    },
+  },
+  async getInitialURL() {
+    // Cold start link handling
+    const url = await Linking.getInitialURL();
+    return url;
+  },
+};
+
+export default function App() {
+  return (
+    &lt;NavigationContainer linking={linking}&gt;
+      {/* Screens */}
+    &lt;/NavigationContainer&gt;
+  );
+}</code></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Server Verification Specs</div>
+      <h2>Universal Links (AASA) & Android Asset Links</h2>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--universal)">iOS AASA File</div>
+          <p>Must be served at <code>https://myapp.com/.well-known/apple-app-site-association</code> with <code>application/json</code> header.</p>
+          <pre><code>{
+  "applinks": {
+    "apps": [],
+    "details": [{
+      "appID": "TEAMID.com.myapp",
+      "paths": ["/user/*", "/posts/*"]
+    }]
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--universal)">Android assetlinks.json</div>
+          <p>Must be served at <code>https://myapp.com/.well-known/assetlinks.json</code> with SHA-256 fingerprint of release certificate.</p>
+          <pre><code>[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.myapp",
+    "sha256_cert_fingerprints": ["AB:CD:..."]
+  }
+}]</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Interview Pitfalls</div>
+      <h2>Deep Linking Myths</h2>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Custom URL schemes can't be hijacked by other malicious apps."</div>
+      <p class="truth"><b>False.</b> Multiple apps on Android or iOS can register the same custom scheme (e.g. <code>myapp://</code>). Universal Links / App Links solve this because the OS verifies ownership via server-side SSL domain association.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    React Native Deep Linking Guide — Senior Interview Prep.
+  </div>
+</footer>
+</body>
+</html>

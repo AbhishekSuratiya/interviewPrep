@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Native Storage Matrix — From volatile state to hardware vaults</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5;
+  --paper-2:#F7F9FC;
+  --ink:#0E1626;
+  --slate:#4A5670;
+  --line:#C9D1DE;
+  --mmkv:#0B7A64;
+  --mmkv-bg:#E2F2ED;
+  --keychain:#9A5B06;
+  --keychain-bg:#FBEEDA;
+  --async:#B0175C;
+  --async-bg:#FBE9F1;
+  --sqlite:#2563EB;
+  --sqlite-bg:#EFF6FF;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--async);outline-offset:3px;border-radius:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
+h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+p{margin:0 0 1em}
+.lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.mono{font-family:var(--mono);font-size:.86em}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+
+/* ---------- hero ---------- */
+header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mmkv);margin-bottom:22px}
+.hero h1 span{display:block}
+.hero h1 .dim{color:var(--slate)}
+.hero .lede{margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.chip{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--paper-2);
+  padding:6px 12px;border-radius:100px;color:var(--slate);
+}
+
+/* ---------- sections ---------- */
+section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:38px}
+.section-head p{color:var(--slate);margin-top:14px}
+
+/* ---------- interactive storage finder ---------- */
+.finder-box{
+  background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:28px;
+}
+.finder-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.finder-tab{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--paper);color:var(--slate);
+  padding:10px 18px;border-radius:100px;cursor:pointer;transition:all .18s;
+}
+.finder-tab[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.recommendation-card{
+  background:#fff;border:2px solid var(--line);border-radius:14px;padding:24px;
+  animation:rise .35s ease both;
+}
+.recommendation-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.badge{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:6px;font-weight:600}
+.badge.mmkv{background:var(--mmkv-bg);color:var(--mmkv);border:1px solid var(--mmkv)}
+.badge.keychain{background:var(--keychain-bg);color:var(--keychain);border:1px solid var(--keychain)}
+.badge.sqlite{background:var(--sqlite-bg);color:var(--sqlite);border:1px solid var(--sqlite)}
+.badge.fs{background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE}
+
+/* ---------- grid & cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+.card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+
+/* ---------- code block ---------- */
+pre{
+  font-family:var(--mono);font-size:.82rem;line-height:1.6;
+  background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;
+  overflow-x:auto;margin:14px 0 0;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:.92rem}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--slate);background:#E4E9F1;
+}
+tbody th{font-weight:600;width:20%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+
+/* ---------- myths & qna ---------- */
+.myth{border-left:3px solid var(--async);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
+
+.qna{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
+.qna-q{font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;gap:8px}
+.qna-a{color:var(--slate);font-size:.93rem;line-height:1.6}
+
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){
+  .finder-tabs{flex-direction:column}
+  .finder-tab{width:100%;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag">React Native Data Persistence</div>
+    <h1>
+      <span>Storage Types & Architecture.</span>
+      <span class="dim">Choosing the right engine for the payload.</span>
+    </h1>
+    <p class="lede">From user settings to auth tokens, relational offline feeds, and media caches — storing data in React Native requires matching your read frequency, security posture, and data size with the underlying storage layer.</p>
+    <div class="hero-meta">
+      <span class="chip">AsyncStorage</span>
+      <span class="chip">MMKV (JSI)</span>
+      <span class="chip">Keychain / Keystore</span>
+      <span class="chip">WatermelonDB</span>
+      <span class="chip">SQLite</span>
+      <span class="chip">react-native-fs</span>
+    </div>
+  </div>
+</header>
+
+<!-- INTERACTIVE STORAGE DECISION ENGINE -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Interactive Decision Matrix</div>
+      <h2>What are you trying to store?</h2>
+      <p>Select a data scenario below to view the architectural recommendation, throughput speed, encryption model, and code pattern.</p>
+    </div>
+
+    <div class="finder-box">
+      <div class="finder-tabs" role="tablist" aria-label="Storage scenarios">
+        <button class="finder-tab" aria-selected="true" onclick="selectScenario('prefs')">⚙️ App Settings & Theme</button>
+        <button class="finder-tab" aria-selected="false" onclick="selectScenario('auth')">🔑 JWT & Refresh Tokens</button>
+        <button class="finder-tab" aria-selected="false" onclick="selectScenario('feed')">💬 Social Feed & Offline Posts</button>
+        <button class="finder-tab" aria-selected="false" onclick="selectScenario('media')">🖼️ Cached Images & PDF Files</button>
+        <button class="finder-tab" aria-selected="false" onclick="selectScenario('analytics')">📊 Unsent Analytics Batch</button>
+      </div>
+
+      <div id="recommendation-target"></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEEP DIVE: STORAGE ENGINES -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Deep Dive Analysis</div>
+      <h2>The Four Pillars of React Native Storage</h2>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--mmkv)">Synchronous & Fast</div>
+          <h3>MMKV Storage (JSI)</h3>
+          <p>Multi-Map Key-Value created by WeChat. In React Native, <code>react-native-mmkv</code> connects directly to JS via <strong>JSI</strong>. Reads and writes run synchronously on memory-mapped files without passing through any async serialization queue.</p>
+          <p><strong>Throughput:</strong> ~4,800 operations/ms (~50x faster than AsyncStorage). Native AES-256 encryption supported out of the box.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--keychain)">Hardware Encrypted</div>
+          <h3>Keychain / KeyStore</h3>
+          <p>Hardware-backed security utilizing iOS <strong>Secure Enclave</strong> and Android <strong>KeyStore</strong>. Keys never touch plain disk memory unencrypted. Supports biometric lockouts (Face ID / Fingerprint).</p>
+          <p><strong>Use Case:</strong> Auth tokens, refresh tokens, private keys. <em>Warning:</em> Data persists across reinstalls on iOS unless explicitly cleared.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--sqlite)">Relational & Offline-First</div>
+          <h3>WatermelonDB / SQLite</h3>
+          <p>For complex relational schemas (threads, comments, messages). WatermelonDB sits on SQLite and uses lazy loading — only fetching objects currently rendered on screen, keeping RAM footprint low.</p>
+          <p><strong>Reactivity:</strong> Observable queries automatically trigger component re-renders when underlying DB records change.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="k" style="color:var(--async)">Legacy / Async</div>
+          <h3>AsyncStorage</h3>
+          <p>The original key-value store. Asynchronous Promise-based API that serializes every object to JSON over the bridge (or async native queue). Unencrypted text files on disk.</p>
+          <p><strong>Verdict:</strong> Legacy choice. Fine for basic demos or small projects, but replaced by MMKV in production codebases.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENCHMARK & COMPARISON TABLE -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Technical Comparison</div>
+      <h2>Storage Engines Side-by-Side</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Engine</th>
+            <th scope="col">Access Model</th>
+            <th scope="col">Speed / Throughput</th>
+            <th scope="col">Encryption</th>
+            <th scope="col">Data Model</th>
+            <th scope="col">Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">MMKV</th>
+            <td>Synchronous (JSI)</td>
+            <td style="color:var(--mmkv);font-weight:600">~4,800 ops/ms (Ultra fast)</td>
+            <td>AES-256 built-in</td>
+            <td>Key-Value (Primitive & JSON)</td>
+            <td>App prefs, flags, fast state hydration</td>
+          </tr>
+          <tr>
+            <th scope="row">Keychain / KeyStore</th>
+            <td>Asynchronous (Native OS)</td>
+            <td>~50 ops/ms (OS hardware call)</td>
+            <td style="color:var(--keychain);font-weight:600">Hardware Secure Enclave / KeyStore</td>
+            <td>Key-Value (Small strings)</td>
+            <td>JWT, Auth tokens, Secrets, Biometrics</td>
+          </tr>
+          <tr>
+            <th scope="row">WatermelonDB / SQLite</th>
+            <td>Async / Sync (op-sqlite JSI)</td>
+            <td>High (Indexed SQL queries)</td>
+            <td>SQLCipher extension</td>
+            <td>Relational (Tables & Foreign keys)</td>
+            <td>Offline-first feeds, chats, thousands of rows</td>
+          </tr>
+          <tr>
+            <th scope="row">AsyncStorage</th>
+            <td>Asynchronous (Promises)</td>
+            <td style="color:var(--async)">~90 ops/ms (Bridge/Async serialization)</td>
+            <td>None (Plain text disk)</td>
+            <td>String Key-Value</td>
+            <td>Simple non-sensitive prototypes</td>
+          </tr>
+          <tr>
+            <th scope="row">File System (RNFS)</th>
+            <td>Asynchronous (Stream / Buffer)</td>
+            <td>I/O Disk Bound</td>
+            <td>Manual stream encryption</td>
+            <td>Raw Binary / Files</td>
+            <td>Images, PDFs, Audio, Video downloads</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- INTERVIEW MYTHS & PITFALLS -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Interview Corrections</div>
+      <h2>Common Myths & Misconceptions</h2>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"AsyncStorage is fine for storing access tokens as long as the phone has a passcode."</div>
+      <p class="truth"><b>False.</b> AsyncStorage writes plain text files into the app's sandboxed document directory. On rooted Android devices or backed-up unencrypted iOS devices, third-party tools or malware can inspect and extract these plain-text token files. Always use <code>react-native-keychain</code> for auth tokens.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"MMKV is asynchronous because disk reads take time."</div>
+      <p class="truth"><b>False.</b> MMKV uses <code>mmap</code> (memory-mapped files) to map disk files directly into virtual memory. Combined with JSI, JavaScript reads MMKV values directly in memory synchronously without <code>await</code> or thread switches.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Keychain data is wiped when an iOS app is uninstalled."</div>
+      <p class="truth"><b>False.</b> iOS Keychain items belong to the provisioning bundle ID and persist across app uninstalls by default. If a user uninstalls and reinstalls your app, old keychain tokens remain unless you handle first-launch cleanup logic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SENIOR INTERVIEW SCENARIOS -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Senior Developer Q&A</div>
+      <h2>Real-World Architectural Scenarios</h2>
+    </div>
+
+    <div class="qna">
+      <div class="qna-q">
+        <span>💬</span>
+        <span><strong>Question:</strong> "Your app suffers from a 100ms flash of blank content when booting because it awaits AsyncStorage to load theme preferences. How do you fix it?"</span>
+      </div>
+      <div class="qna-a">
+        <strong>Answer:</strong> Migrate from AsyncStorage to MMKV. Because MMKV uses JSI for synchronous reads, you can read the theme setting synchronously during the initial render state setup (e.g. <code>const [theme] = useState(() => storage.getString('theme') ?? 'light')</code>). This eliminates the asynchronous loading spinner or blank screen flash entirely on boot.
+      </div>
+    </div>
+
+    <div class="qna">
+      <div class="qna-q">
+        <span>💬</span>
+        <span><strong>Question:</strong> "How do you implement biometric-protected login (Face ID / Touch ID) for storing a user's refreshToken?"</span>
+      </div>
+      <div class="qna-a">
+        <strong>Answer:</strong> Use <code>react-native-keychain</code> with <code>ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE</code>. When calling <code>setGenericPassword()</code>, pass this access control option alongside <code>ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY</code>. When the app later calls <code>getGenericPassword()</code>, the OS automatically halts execution and triggers the native Face ID / Fingerprint prompt before returning the decrypted token.
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    React Native Storage Deep Dive Reference. Built for senior engineering interview preparation.
+  </div>
+</footer>
+
+<script>
+const SCENARIOS = {
+  prefs: {
+    title: "App Preferences & Theme Settings",
+    engine: "MMKV Storage",
+    badgeClass: "badge mmkv",
+    summary: "Preferences need instant synchronous access during render without layout flashes or async loading spinners.",
+    details: [
+      "Synchronous JSI reads mean initial state can be populated in useState initializers directly.",
+      "Supports listeners to keep Zustand/Redux state synced automatically across screens.",
+      "30-50x faster than AsyncStorage."
+    ],
+    code: `import { MMKV } from 'react-native-mmkv';
+
+export const storage = new MMKV();
+
+// Read synchronously on first render — NO await!
+const theme = storage.getString('user_theme') ?? 'dark';
+
+// Write instantly
+storage.set('user_theme', 'light');`
+  },
+  auth: {
+    title: "JWT Access Tokens & Refresh Secrets",
+    engine: "iOS Keychain / Android KeyStore",
+    badgeClass: "badge keychain",
+    summary: "Sensitive auth tokens must be stored in hardware-encrypted vaults, never in plain-text disk storage.",
+    details: [
+      "Hardware-backed encryption (Secure Enclave on iOS, KeyStore on Android).",
+      "Optionally gate token retrieval behind Face ID / Touch ID / Fingerprint.",
+      "Protects tokens from root/jailbreak inspection tools."
+    ],
+    code: `import * as Keychain from 'react-native-keychain';
+
+// Save token securely with Biometric access control
+await Keychain.setGenericPassword('auth_token', tokenValue, {
+  service: 'com.app.auth',
+  accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+});
+
+// Retrieve — triggers OS Face ID / Fingerprint prompt
+const credentials = await Keychain.getGenericPassword({ service: 'com.app.auth' });`
+  },
+  feed: {
+    title: "Social Feed, Chat Threads & Offline Items",
+    engine: "WatermelonDB or op-sqlite",
+    badgeClass: "badge sqlite",
+    summary: "Large structured dataset (1,000+ items) requiring fast queries, relationship indexing, and offline sync.",
+    details: [
+      "Built on top of SQLite with C++ JSI bindings for high-performance indexing.",
+      "Lazy loading ensures only visible items are kept in JavaScript memory.",
+      "Observable query subscriptions automatically update UI components when records mutate."
+    ],
+    code: `import { Database } from '@nozbe/watermelondb';
+import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
+
+// WatermelonDB lazy query
+const posts = database.get('posts').query(
+  Q.where('user_id', userId),
+  Q.sortBy('created_at', Q.desc)
+);`
+  },
+  media: {
+    title: "Downloaded Images, PDFs & Audio Files",
+    engine: "File System (react-native-fs) + FastImage",
+    badgeClass: "badge fs",
+    summary: "Large binary assets belong directly on the device file system, storing only file URIs in state/DB.",
+    details: [
+      "Store binary files in RNFS.DocumentDirectoryPath or CachesDirectoryPath.",
+      "Keep local file paths (e.g. file:///data/...) in MMKV or SQLite.",
+      "FastImage automatically handles disk/memory caching for image URLs."
+    ],
+    code: `import RNFS from 'react-native-fs';
+
+const localFilePath = \`\${RNFS.DocumentDirectoryPath}/downloaded_doc.pdf\`;
+
+await RNFS.downloadFile({
+  fromUrl: 'https://example.com/file.pdf',
+  toFile: localFilePath,
+}).promise;`
+  },
+  analytics: {
+    title: "Offline Analytics Event Queue",
+    engine: "MMKV Array / SQLite Queue",
+    badgeClass: "badge mmkv",
+    summary: "High-frequency event queue that persists events when offline and flushes when connection restores.",
+    details: [
+      "MMKV allows fast synchronous appending of analytics events without blocking UI thread.",
+      "Atomic operations prevent data corruption if the app crashes while offline.",
+      "Flush batch to server on network restore and purge items."
+    ],
+    code: `const queue = JSON.parse(storage.getString('analytics_queue') ?? '[]');
+queue.push({ event: 'button_click', timestamp: Date.now() });
+storage.set('analytics_queue', JSON.stringify(queue));`
+  }
+};
+
+function selectScenario(key) {
+  const tabs = document.querySelectorAll('.finder-tab');
+  tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+  event.target.setAttribute('aria-selected', 'true');
+
+  const data = SCENARIOS[key];
+  const target = document.getElementById('recommendation-target');
+
+  target.innerHTML = `
+    <div class="recommendation-card">
+      <div class="recommendation-header">
+        <h3 style="font-size:1.2rem;margin:0">${data.title}</h3>
+        <span class="${data.badgeClass}">${data.engine}</span>
+      </div>
+      <p style="color:var(--slate);margin-bottom:16px">${data.summary}</p>
+      
+      <div style="margin-bottom:16px">
+        <h4 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--slate);margin:0 0 8px">Key Highlights</h4>
+        <ul style="margin:0;padding-left:20px;color:var(--ink);font-size:0.92rem">
+          ${data.details.map(d => `<li style="margin-bottom:4px">${d}</li>`).join('')}
+        </ul>
+      </div>
+
+      <h4 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--slate);margin:16px 0 6px">Implementation Snippet</h4>
+      <pre><code>${escapeHtml(data.code)}</code></pre>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Default select
+selectScenario('prefs');
+</script>
+</body>
+</html>

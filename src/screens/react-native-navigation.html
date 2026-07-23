@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Native Navigation — React Navigation 6 Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5;
+  --paper-2:#F7F9FC;
+  --ink:#0E1626;
+  --slate:#4A5670;
+  --line:#C9D1DE;
+  --nav:#2563EB;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
+h3{font-size:1.12rem;font-weight:600}
+p{margin:0 0 1em}
+.lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--nav);margin-bottom:22px}
+.hero h1 .dim{color:var(--slate)}
+.hero .lede{margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
+section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--nav)}
+pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag">React Navigation Architecture</div>
+    <h1>
+      <span>Native Stack & Flow Design.</span>
+      <span class="dim">Nested Navigators, Auth Gates & State.</span>
+    </h1>
+    <p class="lede">Build scalable app navigation using Native Stack, Bottom Tabs, Drawer, conditional auth state routing, and type-safe params.</p>
+    <div class="hero-meta">
+      <span class="chip">createNativeStackNavigator</span>
+      <span class="chip">createBottomTabNavigator</span>
+      <span class="chip">Auth Gating</span>
+      <span class="chip">Type-Safe Params</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Navigator Types</div>
+    <h2>Choosing Navigators</h2>
+    <div class="grid" style="margin-top:28px">
+      <div class="card">
+        <div>
+          <div class="k">Native Performance</div>
+          <h3>Native Stack</h3>
+          <p>Wraps iOS <code>UINavigationController</code> and Android <code>Fragment</code>. Hardware-accelerated native push/pop transitions at 60 FPS.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div>
+          <div class="k">Main Hierarchy</div>
+          <h3>Bottom Tabs</h3>
+          <p>Provides persistent tab-bar navigation for core app sections (Home, Search, Notifications, Profile).</p>
+        </div>
+      </div>
+      <div class="card">
+        <div>
+          <div class="k">Authentication State</div>
+          <h3>Conditional Gating</h3>
+          <p>Swaps root stack screens based on auth status rather than pushing/popping screens manually.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Implementation Pattern</div>
+    <h2>Conditional Auth Stack & Type-Safe Params</h2>
+    <pre><code>import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+export type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+  Profile: { userId: string };
+};
+
+const Stack = createNativeStackNavigator&lt;RootStackParamList&gt;();
+
+export function RootNavigator({ userToken }: { userToken: string | null }) {
+  return (
+    &lt;Stack.Navigator screenOptions={{ headerShown: false }}&gt;
+      {userToken == null ? (
+        &lt;Stack.Screen name="Auth" component={AuthScreen} /&gt;
+      ) : (
+        &lt;Stack.Screen name="Main" component={MainTabNavigator} /&gt;
+      )}
+    &lt;/Stack.Navigator&gt;
+  );
+}</code></pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">React Native Navigation Guide — Senior Interview Prep.</div>
+</footer>
+</body>
+</html>
