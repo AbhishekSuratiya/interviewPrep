@@ -1245,6 +1245,7 @@ export const checklistSections = [
         topics: [
           'Linking native modules (iOS/Android)',
           'Writing a simple native module (concept)',
+          'Native Module Creation: Old Architecture (Bridge) vs New Architecture (TurboModules)',
           'Permissions handling (camera, location, notifications)',
           'Device APIs: Camera, Geolocation, Sensors',
           'AsyncStorage / MMKV for local persistence',

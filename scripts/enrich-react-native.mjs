@@ -271,6 +271,17 @@ const map = {
       "Use event emitters for async device callbacks.",
     ],
   },
+  'native-module-creation-comparison': {
+    analogy: "Old Bridge native modules were built using runtime reflection and manually registered packages over an async queue; TurboModules use a TypeScript spec contract, compile-time Codegen, and direct JSI execution without a bridge.",
+    keyPoints: [
+      "Step 1: Old Arch writes Kotlin class directly; New Arch writes TypeScript spec (NativeMyModule.ts).",
+      "Step 2: Old Arch uses @ReactMethod + reflection; New Arch uses Codegen to generate NativeMyModuleSpec.",
+      "Step 3: Old Arch requires custom ReactPackage & createNativeModules(); New Arch uses Codegen delegate registration.",
+      "Step 4: Old Arch accesses via NativeModules.MyModule (Bridge async queue); New Arch imports generated spec directly via JSI.",
+      "Removed: @ReactMethod reflection, Bridge serialization, manual createNativeModules, NativeModules.MyModule.",
+      "Added: TS Spec contract, Codegen build step, generated C++/Java bindings, direct JSI calls, compile-time type safety.",
+    ],
+  },
   'native-ui-components': {
     analogy: "A Fabric Native Component is wrapping a native gadget (camera view, signature pad) in a React-shaped frame: JS sets props and listens for events while the real native view does the drawing.",
     keyPoints: [
