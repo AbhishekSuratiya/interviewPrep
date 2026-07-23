@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Native, from JSX to pixels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5;
+  --paper-2:#F7F9FC;
+  --ink:#0E1626;
+  --slate:#4A5670;
+  --line:#C9D1DE;
+  --legacy:#B0175C;
+  --legacy-bg:#FBE9F1;
+  --modern:#0B7A64;
+  --modern-bg:#E2F2ED;
+  --hermes:#9A5B06;
+  --hermes-bg:#FBEEDA;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--legacy);outline-offset:3px;border-radius:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
+h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+p{margin:0 0 1em}
+.lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.mono{font-family:var(--mono);font-size:.86em}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+
+/* ---------- hero ---------- */
+header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--legacy);margin-bottom:22px}
+.hero h1 span{display:block}
+.hero h1 .dim{color:var(--slate)}
+.hero .lede{margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.chip{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--paper-2);
+  padding:6px 12px;border-radius:100px;color:var(--slate);
+}
+
+/* ---------- sections ---------- */
+section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:38px}
+.section-head p{color:var(--slate);margin-top:14px}
+
+/* ---------- signature: thread lanes ---------- */
+.switch{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:100px;padding:4px;gap:4px;margin-bottom:28px}
+.switch button{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  border:0;background:transparent;color:var(--slate);padding:9px 18px;border-radius:100px;cursor:pointer;
+  transition:background .18s,color .18s;
+}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper-2)}
+
+.lanes{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper-2);
+}
+.lane-head{
+  padding:14px 16px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);
+  background:#E4E9F1;
+}
+.lane-head:last-child{border-right:0}
+.lane-head b{display:block;font-family:var(--body);font-size:.92rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink);margin-top:3px}
+
+.stage{
+  grid-column:var(--col);
+  margin:10px;padding:14px 15px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;
+  animation:rise .35s ease both;
+}
+.stage.span{grid-column:1 / -1}
+.stage h3{font-size:.98rem}
+.stage p{margin:5px 0 0;font-size:.86rem;color:var(--slate);line-height:1.5}
+.stage .tick{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;color:var(--slate);display:block;margin-bottom:6px}
+.stage.hot{border-color:var(--legacy);background:var(--legacy-bg)}
+.stage.hot .tick,.stage.hot h3{color:var(--legacy)}
+.stage.good{border-color:var(--modern);background:var(--modern-bg)}
+.stage.good .tick,.stage.good h3{color:var(--modern)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.stage{animation:none}}
+.lane-note{margin-top:16px;font-size:.9rem;color:var(--slate);max-width:70ch}
+
+/* ---------- steps ---------- */
+.steps{display:grid;gap:0;border-top:1px solid var(--line)}
+.step{
+  display:grid;grid-template-columns:64px 1fr;gap:22px;
+  padding:24px 0;border-bottom:1px solid var(--line);align-items:start;
+}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--legacy);padding-top:4px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:66ch}
+.step-body .thread{
+  display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--slate);border:1px solid var(--line);border-radius:3px;padding:2px 7px;margin-left:10px;vertical-align:3px;
+}
+section.modern .step-n{color:var(--modern)}
+
+/* ---------- pillar cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--modern);margin-bottom:9px}
+.card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+.card p + p{margin-top:10px}
+
+/* ---------- hermes timeline ---------- */
+.tl{border-left:2px solid var(--line);margin-left:8px;padding-left:26px;display:grid;gap:30px}
+.tl-item{position:relative}
+.tl-item::before{
+  content:"";position:absolute;left:-33px;top:8px;width:11px;height:11px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--hermes);
+}
+.tl-item .when{font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;color:var(--hermes);text-transform:uppercase}
+.tl-item p{color:var(--slate);margin:6px 0 0;max-width:66ch}
+
+/* ---------- compare table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--slate);background:#E4E9F1;
+}
+tbody th{font-weight:600;width:23%}
+td:last-child{color:var(--modern)}
+td:nth-child(2){color:var(--legacy)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+
+/* ---------- myths ---------- */
+.myth{border-left:3px solid var(--legacy);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:14px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
+
+footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){
+  .lanes{grid-template-columns:1fr}
+  .stage,.stage.span{grid-column:1}
+  .lane-head{border-right:0}
+  .step{grid-template-columns:1fr;gap:6px}
+  .step-n{padding-top:0}
+  tbody th{width:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag">React Native internals</div>
+    <h1>
+      <span>JavaScript at the top.</span>
+      <span class="dim">Pixels at the bottom.</span>
+    </h1>
+    <p class="lede">Everything interesting in React Native happens in the gap between those two lines — which thread the work runs on, how it crosses into native code, and what has to be serialized to get there. The old architecture and the new one answer that differently.</p>
+    <div class="hero-meta">
+      <span class="chip">Metro + Babel</span>
+      <span class="chip">Fiber</span>
+      <span class="chip">Bridge → JSI</span>
+      <span class="chip">Paper → Fabric</span>
+      <span class="chip">TurboModules</span>
+      <span class="chip">Codegen</span>
+      <span class="chip">JSC → Hermes</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The whole thing, on three threads</div>
+      <h2>Where the work actually runs</h2>
+      <p>React Native has always had three threads that matter. The architectures differ mainly in how much sits in the middle column and what it costs to get there. Flip the switch.</p>
+    </div>
+
+    <div class="switch" role="group" aria-label="Choose architecture">
+      <button id="btn-old" aria-pressed="true" onclick="setArch('old')">Old — Paper</button>
+      <button id="btn-new" aria-pressed="false" onclick="setArch('new')">New — Fabric</button>
+    </div>
+
+    <div class="lanes" id="lanes"></div>
+    <p class="lane-note" id="lane-note"></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Legacy pipeline</div>
+      <h2>The old architecture, step by step</h2>
+      <p>This is roughly what shipped from 2015 until the new architecture went default. Every stage is still worth knowing — most of it survives, just relocated.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Metro bundles, Babel transpiles<span class="thread">Build time</span></h3>
+          <p>Metro is the bundler. Babel is the transform that turns JSX into <code>React.createElement</code> calls and modern syntax into something the engine accepts. The output is one JavaScript bundle. Metro doesn't understand JSX itself — it orchestrates Babel.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>React builds an element tree<span class="thread">JS thread</span></h3>
+          <p>Running the bundle produces a tree of React elements — plain objects describing what the UI should be. There is no DOM here, so calling it a "virtual DOM" is a web habit. In React Native it's just the element tree.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>The stack reconciler diffs it<span class="thread">JS thread</span></h3>
+          <p>Recursive traversal, comparing the new tree against the previous one to decide what mounts, updates, and unmounts. It uses the same heuristics that keep diffing at O(n) instead of O(n³): different element types replace the subtree, and keys identify siblings across renders. Because it's a recursive call stack, it cannot be interrupted — once a render starts, it runs to completion.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Changes are serialized across the bridge<span class="thread">Bridge</span></h3>
+          <p>The JS side batches its native calls, encodes them as JSON, and posts them over an asynchronous queue. Native decodes and applies them. Two runtimes that share no memory, talking by message passing.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>The shadow tree is built and laid out<span class="thread">Shadow thread</span></h3>
+          <p>Native constructs a parallel tree of shadow nodes and hands it to Yoga, the C++ Flexbox engine, which computes every frame's position and size. Yoga has been here since the beginning — it did not arrive with the new architecture.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">06</div>
+        <div class="step-body">
+          <h3>UIManager mounts real views<span class="thread">UI thread</span></h3>
+          <p>The computed layout is applied to actual <code>UIView</code> and <code>android.view.View</code> instances. This renderer is the one now called Paper — the name was invented retroactively, once Fabric needed something to be distinguished from.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Why it was replaced</div>
+      <h2>Three things the bridge could not do</h2>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--legacy)">Asynchronous only</div>
+        <h3>No synchronous reads</h3>
+        <p>Everything is a queued message, so JavaScript can never ask native a question and get an answer in the same tick. Measuring a view, reading scroll offset, or responding to a gesture on the same frame was impossible.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--legacy)">Serialization cost</div>
+        <h3>Everything becomes JSON</h3>
+        <p>Every prop, every event, every frame of a scroll or animation gets encoded to a string and decoded on the other side. The cost scales with how much you're moving, which is exactly wrong for high-frequency interaction.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--legacy)">Congestion</div>
+        <h3>One queue, no priorities</h3>
+        <p>A large list update and a touch response sit in the same queue in arrival order. Bursts of traffic delay the messages that actually needed to land this frame — the classic dropped-frame-while-scrolling problem.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="modern">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">New architecture</div>
+      <h2>Four pieces, one idea</h2>
+      <p>The idea is shared memory instead of message passing. Everything below follows from being able to hold a native object directly from JavaScript.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="k">Foundation</div>
+        <h3>JSI — JavaScript Interface</h3>
+        <p>A thin C++ layer that lets JavaScript hold references to native objects and call their methods directly, synchronously, with no serialization. It also decouples React Native from any one engine: JSC, Hermes, or in principle V8 all sit behind the same interface.</p>
+        <p>Everything else here is built on top of this one capability.</p>
+      </div>
+
+      <div class="card">
+        <div class="k">Renderer</div>
+        <h3>Fabric</h3>
+        <p>The rendering system rewritten in C++ and shared across platforms. React's committed tree drives the creation of an immutable shadow tree; Yoga computes layout; the mount phase applies it to native views. Because there's no queue, the pipeline can run synchronously when a frame demands it.</p>
+        <p>Immutability is what makes concurrent rendering safe — an in-progress tree is a new tree, not a mutation of the one on screen.</p>
+      </div>
+
+      <div class="card">
+        <div class="k">Native modules</div>
+        <h3>TurboModules</h3>
+        <p>Native modules exposed through JSI as objects JavaScript can call directly. The big win is laziness: modules are instantiated the first time they're actually used, rather than every module being constructed at startup because the bridge needed the full registry up front.</p>
+        <p>Faster cold start, and calls that can return a value synchronously when appropriate.</p>
+      </div>
+
+      <div class="card">
+        <div class="k">Type safety</div>
+        <h3>Codegen</h3>
+        <p>You declare a module or component's interface in typed JavaScript — a TypeScript or Flow spec file. At build time, Codegen generates the matching C++, Objective-C, and Java glue.</p>
+        <p>This is what makes the other two safe. Without a shared contract, direct memory access between an untyped language and a typed one is a crash waiting to happen. Mismatches become build errors instead of runtime errors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="modern">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">React side</div>
+      <h2>Fiber, and what it did not change</h2>
+      <p>Fiber is a React change, not a React Native change — but it's the reason the new renderer can be interrupted at all.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>The tree becomes a linked list</h3>
+          <p>Each fiber node holds <code>child</code>, <code>sibling</code>, and <code>return</code> pointers, plus state, props, effects, and the work still to do. Traversal no longer needs the call stack, because the tree carries its own cursor.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Two trees: current and work-in-progress</h3>
+          <p>React builds the next tree alongside the one on screen and swaps them on commit. Rendering can be abandoned halfway with nothing visible ever having been touched.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>The work loop and scheduler</h3>
+          <p>Work is processed in units. After each unit React checks whether it should yield to something more urgent — typing, a gesture — and resume later. Priority lanes decide what jumps the line.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>The diffing algorithm is unchanged</h3>
+          <p>Same heuristics, same O(n), same rules about types and keys. Fiber changed the data structure and the scheduling around the diff — not the comparison itself. There is no "new diffing algorithm" to name.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The engine</div>
+      <h2>JSC to Hermes, and why no JIT</h2>
+      <p>A separate story from the renderer, often conflated with it. This one is about how the JavaScript itself gets executed.</p>
+    </div>
+
+    <div class="tl">
+      <div class="tl-item">
+        <div class="when">Starting point — JavaScriptCore</div>
+        <h3>Borrowed from Safari</h3>
+        <p>React Native shipped on JSC. On iOS it's part of the OS. On Android there is no system engine, so a full copy of JSC was bundled into the APK — a general-purpose desktop-class engine, tuned for long-lived browser sessions rather than an app that opens and closes.</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="when">The mismatch</div>
+        <h3>Optimized for the wrong shape of workload</h3>
+        <p>A browser engine assumes it has time to warm up: parse, interpret, watch which functions are hot, then compile those to machine code. A mobile screen is judged on the first few hundred milliseconds. Parsing a large bundle before anything can run was a direct cost on time-to-interactive, and the engine binary itself added weight and memory.</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="when">2019 — Hermes on Android</div>
+        <h3>Move the parsing to build time</h3>
+        <p>Hermes compiles the bundle to its own bytecode ahead of time, during the build. The app ships bytecode instead of source, so startup skips parsing entirely and can memory-map the file rather than loading it. Smaller download, lower memory, faster first frame.</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="when">2021 onward</div>
+        <h3>iOS support, then the default</h3>
+        <p>Hermes became available on iOS and is now the default engine for new projects. JSI is what made the swap tractable — the renderer talks to an interface, not to a specific engine.</p>
+      </div>
+
+      <div class="tl-item">
+        <div class="when">The constraint</div>
+        <h3>Interpretation, not JIT</h3>
+        <p>Hermes executes bytecode with an interpreter. It does not compile to machine code at runtime. On iOS that isn't a choice — App Store rules forbid writing to memory pages and then executing them, which is what a JIT fundamentally does. Hermes stays within the rules on both platforms by not having one.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:44px">
+      <div class="eyebrow">The tradeoff</div>
+      <h3 style="font-size:1.3rem;margin-bottom:12px">What you give up without a JIT</h3>
+      <p style="color:var(--slate);max-width:68ch">A JIT watches code as it runs. When a function turns out to be hot and to always receive, say, two numbers, it compiles a specialized machine-code version for that exact case and guards it — if a string ever shows up, it bails back to the interpreter. That's how a browser makes a tight loop fast, and it's precisely what Hermes cannot do. Repeated work stays at interpreter speed.</p>
+      <p style="color:var(--slate);max-width:68ch">Which is also the answer to "why not just compile JavaScript to machine code up front?" You can't produce good machine code without knowing types, and JavaScript doesn't have them until runtime. Ahead-of-time compilation either emits generic code that type-checks on every operation — no faster than interpreting — or emits a specialized variant for every combination the compiler can imagine, which explodes the binary. The type information only exists while the program is running, so the optimization has to happen there too.</p>
+      <p style="color:var(--slate);max-width:68ch">Hermes takes the deal because mobile apps are dominated by startup and by UI work, not by long-running numeric loops. Bytecode is also architecture-neutral: the same artifact runs on ARM and x86, on both platforms. Machine code would not be.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Reference</div>
+      <h2>Side by side</h2>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Concern</th><th scope="col">Old</th><th scope="col">New</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">JS ↔ native</th><td>Bridge, async JSON queue</td><td>JSI, direct C++ references</td></tr>
+          <tr><th scope="row">Renderer</th><td>Paper, per-platform</td><td>Fabric, shared C++ core</td></tr>
+          <tr><th scope="row">Reconciler</th><td>Stack, uninterruptible</td><td>Fiber, interruptible work loop</td></tr>
+          <tr><th scope="row">Diff algorithm</th><td>O(n) heuristic</td><td>Same O(n) heuristic</td></tr>
+          <tr><th scope="row">Layout engine</th><td>Yoga</td><td>Yoga, unchanged</td></tr>
+          <tr><th scope="row">Shadow tree</th><td>Mutable, native side</td><td>Immutable, shared C++</td></tr>
+          <tr><th scope="row">Native modules</th><td>All initialized at startup</td><td>TurboModules, lazy</td></tr>
+          <tr><th scope="row">Type contract</th><td>Hand-written, unchecked</td><td>Codegen from typed specs</td></tr>
+          <tr><th scope="row">Sync calls</th><td>Not possible</td><td>Possible where needed</td></tr>
+          <tr><th scope="row">Default engine</th><td>JavaScriptCore</td><td>Hermes, bytecode AOT</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Corrections worth having ready</div>
+      <h2>Things that sound right and aren't</h2>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"The new architecture uses a new diffing algorithm."</div>
+      <p class="truth">The diff is the same. <b>Fiber changed the data structure and the scheduler</b> around it, which is what enables pausing and resuming. If you're asked to name the new algorithm, the correct answer is that there isn't one.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Yoga came with Fabric."</div>
+      <p class="truth">Yoga has computed Flexbox layout since the original architecture. <b>What changed is where the shadow tree lives</b> and that reaching it no longer requires a serialized hop.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"React Native has a virtual DOM."</div>
+      <p class="truth">There's no DOM on mobile. <b>It's a React element tree, and after reconciliation, a fiber tree.</b> The shadow tree is the native-side counterpart.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Hermes made the app faster to run."</div>
+      <p class="truth">Hermes mainly improves <b>startup time, bundle size, and memory</b>. Without a JIT, steady-state execution of hot code is generally slower than JSC on a warmed-up path. The win is at the beginning, which is where mobile is judged.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"JSI replaced the bridge, so the bridge is gone."</div>
+      <p class="truth">In a fully migrated app, yes — but <b>the bridge remains for interop</b> while legacy modules and components are still in the tree. Migration is incremental, and most real codebases run both for a while.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Built as a study reference. Every claim here is worth checking against the current React Native docs before an interview — the new architecture became the default recently and the details keep moving.
+  </div>
+</footer>
+
+<script>
+const DATA = {
+  old: {
+    note: "The bridge spans all three lanes because that is exactly the problem: every crossing is a queued, serialized message, and nothing can wait for a reply.",
+    stages: [
+      {col:1, tick:"01", t:"Metro + Babel", d:"JSX and modern syntax compiled to a plain JS bundle at build time."},
+      {col:1, tick:"02", t:"React element tree", d:"Plain objects describing the intended UI."},
+      {col:1, tick:"03", t:"Stack reconciler", d:"Recursive diff. Runs to completion, cannot be interrupted."},
+      {span:true, tick:"04", t:"The bridge", d:"Batched, asynchronous, JSON-serialized message queue. No synchronous reads.", cls:"hot"},
+      {col:2, tick:"05", t:"Shadow tree + Yoga", d:"Native shadow nodes; Flexbox layout computed in C++."},
+      {col:3, tick:"06", t:"UIManager + Paper", d:"Real UIView and android.view.View instances mounted."}
+    ]
+  },
+  new: {
+    note: "JSI is drawn as a thin seam rather than a lane. It is not a stage the data passes through — it is the fact that the lanes share memory, which is why the shadow tree can now be built from the JS side without a hop.",
+    stages: [
+      {col:1, tick:"01", t:"Metro + Babel + Hermes", d:"Bundle compiled ahead of time into Hermes bytecode."},
+      {col:1, tick:"02", t:"Fiber tree", d:"Linked-list nodes. Current and work-in-progress trees."},
+      {col:1, tick:"03", t:"Work loop + scheduler", d:"Interruptible, prioritized. Same diff as before."},
+      {span:true, tick:"04", t:"JSI — direct C++ references", d:"No queue, no JSON. Synchronous calls where a frame needs them.", cls:"good"},
+      {col:2, tick:"05", t:"Immutable shadow tree + Yoga", d:"Built in shared C++, safe to construct off the committed tree."},
+      {col:3, tick:"06", t:"Fabric mount phase", d:"Native views updated. TurboModules loaded lazily, typed by Codegen."}
+    ]
+  }
+};
+
+const HEADS = [
+  ["Lane 01","JS thread"],
+  ["Lane 02","Shadow thread"],
+  ["Lane 03","UI thread"]
+];
+
+function setArch(which){
+  document.getElementById('btn-old').setAttribute('aria-pressed', which === 'old');
+  document.getElementById('btn-new').setAttribute('aria-pressed', which === 'new');
+
+  const lanes = document.getElementById('lanes');
+  lanes.innerHTML = '';
+
+  HEADS.forEach(function(h){
+    const d = document.createElement('div');
+    d.className = 'lane-head';
+    d.innerHTML = h[0] + '<b>' + h[1] + '</b>';
+    lanes.appendChild(d);
+  });
+
+  DATA[which].stages.forEach(function(s, i){
+    const el = document.createElement('div');
+    el.className = 'stage' + (s.span ? ' span' : '') + (s.cls ? ' ' + s.cls : '');
+    if(!s.span){ el.style.setProperty('--col', s.col); }
+    el.style.animationDelay = (i * 45) + 'ms';
+    el.innerHTML = '<span class="tick">' + s.tick + '</span><h3>' + s.t + '</h3><p>' + s.d + '</p>';
+    lanes.appendChild(el);
+  });
+
+  document.getElementById('lane-note').textContent = DATA[which].note;
+}
+
+setArch('old');
+</script>
+</body>
+</html>
