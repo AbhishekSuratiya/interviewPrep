@@ -3,22 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>React Native Testing — Detox Gray-Box E2E & RNTL</title>
+<title>React Native Testing — Unit, Integration & E2E</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#EDF0F5;
-  --paper-2:#F7F9FC;
-  --ink:#0E1626;
-  --slate:#4A5670;
-  --line:#C9D1DE;
-  --test:#2563EB;
-  --display:"Bricolage Grotesque",Georgia,serif;
-  --body:"IBM Plex Sans",system-ui,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,monospace;
-  --maxw:1080px;
+  --paper:#EDF0F5;--paper-2:#F7F9FC;--ink:#0E1626;--slate:#4A5670;--line:#C9D1DE;
+  --test:#2563EB;--unit:#059669;--integ:#D97706;--e2e:#7C3AED;
+  --good:#059669;--bad:#B0175C;--info:#2563EB;
+  --display:"Bricolage Grotesque",Georgia,serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;--maxw:1080px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -28,21 +22,72 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--test);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
-.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--test)}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+.card p{margin-top:8px;color:var(--slate);font-size:.93rem}
+.card h3{color:var(--ink)}
+.card ul{margin:10px 0 0;padding-left:18px;color:var(--slate);font-size:.9rem;line-height:1.6}
+
+/* pyramid */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px}
+.tier{border-radius:10px;padding:14px 18px;color:#fff;text-align:center;font-family:var(--mono);font-size:.8rem;letter-spacing:.04em}
+.t-e2e{width:44%;background:var(--e2e)}
+.t-integ{width:66%;background:var(--integ)}
+.t-unit{width:88%;background:var(--unit)}
+.tier b{font-family:var(--body);font-weight:600;font-size:.92rem;display:block}
+
 pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0;font-weight:600}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.9rem}
+th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+tbody th{font-weight:600;width:18%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.good{border-left-color:var(--good)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+.qna{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:16px}
+.qna .qh{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--test);margin-bottom:10px}
+.qna ul{margin:0;padding-left:20px;color:var(--slate);font-size:.93rem;line-height:1.7}
+.qna li{margin-bottom:7px}
+.qna b{color:var(--ink);font-weight:600}
+
+.myth{border-left:3px solid var(--test);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
 </style>
 </head>
@@ -51,77 +96,214 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
   <div class="wrap">
     <div class="hero-tag">Senior Level Testing</div>
     <h1>
-      <span>Detox E2E & RNTL.</span>
-      <span class="dim">Gray-Box Testing, Idle Monitoring & Mocking.</span>
+      <span>Unit, Integration &amp; E2E.</span>
+      <span class="dim">The right test at the right level.</span>
     </h1>
-    <p class="lede">Build reliable automated test suites using Detox for gray-box end-to-end testing on real simulators, and React Native Testing Library for integration testing.</p>
+    <p class="lede">A senior answer isn't “we use Jest.” It's knowing what each test <em>level</em> proves, which tool fits it, and why you want many cheap unit tests and only a few expensive end-to-end ones. This walks the pyramid, the tools for each rung, and the questions you'll actually be asked.</p>
     <div class="hero-meta">
-      <span class="chip">Detox Gray-Box</span>
-      <span class="chip">JS Idle Auto-Wait</span>
-      <span class="chip">RNTL Integration</span>
-      <span class="chip">Jest Native Matchers</span>
+      <span class="chip">Jest</span>
+      <span class="chip">RN Testing Library</span>
+      <span class="chip">MSW</span>
+      <span class="chip">Detox</span>
+      <span class="chip">Maestro</span>
+      <span class="chip">Appium</span>
     </div>
   </div>
 </header>
 
+<!-- PYRAMID -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Testing Pyramid</div>
-    <h2>Testing Strategies for Mobile</h2>
-    <div class="grid" style="margin-top:28px">
-      <div class="card">
-        <div>
-          <div class="k">Gray-Box E2E</div>
-          <h3>Detox E2E Testing</h3>
-          <p>Monitors JS thread and native animation idle states automatically. Waits for network / animation completion before asserting, eliminating arbitrary test sleeps.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">Integration</div>
-          <h3>React Native Testing Library</h3>
-          <p>Tests component user interactions without relying on implementation details. Queries components via accessibility roles, labels, and text.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">Native Layer Mocking</div>
-          <h3>Jest Mocks</h3>
-          <p>Mock native TurboModules and third-party libraries (MMKV, NetInfo, Reanimated) in <code>jest.setup.js</code> to keep unit tests fast and deterministic.</p>
-        </div>
-      </div>
+    <div class="section-head">
+      <div class="eyebrow">The testing pyramid</div>
+      <h2>Three levels, three purposes</h2>
+      <p>Cost and confidence rise as you climb; speed and count fall. Write lots of the bottom, few of the top.</p>
+    </div>
+
+    <div class="pyramid">
+      <div class="tier t-e2e"><b>End-to-End</b>few · slow · whole app</div>
+      <div class="tier t-integ"><b>Integration</b>some · medium · units together</div>
+      <div class="tier t-unit"><b>Unit</b>many · fast · one piece</div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:32px">
+      <table>
+        <thead><tr><th scope="col">Level</th><th scope="col">What it tests</th><th scope="col">Tools</th><th scope="col">Speed / count</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" style="color:var(--unit)">Unit</th><td>One function, hook, reducer, or util in isolation — dependencies mocked.</td><td><code>Jest</code>; <code>renderHook</code> (RNTL) for hooks.</td><td>Milliseconds · hundreds</td></tr>
+          <tr><th scope="row" style="color:var(--integ)">Integration</th><td>Several units together: a component with its state, context, navigation, and mocked network/native.</td><td><code>React Native Testing Library</code> + Jest; <code>MSW</code> for network; jest mocks for native.</td><td>Fast · dozens</td></tr>
+          <tr><th scope="row" style="color:var(--e2e)">End-to-End</th><td>The real app on a simulator/device — real navigation, real rendering, top to bottom.</td><td><code>Detox</code>, <code>Maestro</code>, <code>Appium</code>.</td><td>Seconds–minutes · a handful</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
+<!-- UNIT -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Detox E2E Example</div>
-    <h2>Checkout Flow Test in Detox</h2>
-    <pre><code>describe('Checkout Flow', () => {
-  beforeAll(async () => {
-    await device.launchApp({ newInstance: true });
-  });
+    <div class="section-head">
+      <div class="eyebrow">Level 1 · Unit testing</div>
+      <h2>One piece, in isolation</h2>
+      <p>A unit test verifies a single unit of logic — a pure function, a custom hook, a reducer — with everything it depends on mocked, so a failure points at exactly one place.</p>
+    </div>
+    <p class="body-copy"><strong>Tools:</strong> <code>Jest</code> is the runner + assertion library + mocker. For hooks, <code>renderHook</code> from React Native Testing Library. Keep them deterministic — no real timers, network, or native modules.</p>
+<pre><code><span class="c">// util.test.ts — a pure function, no rendering</span>
+import { formatPrice } from './util';
+test('formats cents to currency', () =&gt; {
+  expect(formatPrice(1999)).toBe('$19.99');
+});
 
-  beforeEach(async () => {
-    await device.reloadReactNative();
-  });
+<span class="c">// a custom hook</span>
+import { renderHook, act } from '@testing-library/react-native';
+test('useCounter increments', () =&gt; {
+  const { result } = renderHook(() =&gt; useCounter());
+  act(() =&gt; result.current.increment());
+  expect(result.current.count).toBe(1);
+});</code></pre>
+    <div class="qna">
+      <div class="qh">Likely interview questions</div>
+      <ul>
+        <li><b>What makes a good unit test?</b> Fast, isolated, deterministic, tests behavior not implementation, one reason to fail.</li>
+        <li><b>How do you test a custom hook?</b> <code>renderHook</code> + <code>act()</code> around state updates.</li>
+        <li><b>Mock vs stub vs spy?</b> Spy observes calls; stub returns canned values; mock asserts on interactions.</li>
+        <li><b>Why avoid testing implementation details?</b> Tests break on refactors that don't change behavior.</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-  it('should complete checkout successfully', async () => {
+<!-- INTEGRATION -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Level 2 · Integration testing</div>
+      <h2>Units working together</h2>
+      <p>Integration tests render a component (or a screen) with its real children, state, context, and navigation, mocking only the boundaries — network and native modules. This is where most RN value lives: it proves the wiring works.</p>
+    </div>
+    <p class="body-copy"><strong>Tools:</strong> <code>React Native Testing Library</code> (query by accessibility role/label/text, fire user events), Jest, <code>MSW</code> (Mock Service Worker) to intercept network at the fetch layer, and jest mocks for native modules (MMKV, NetInfo, Reanimated) in <code>jest.setup.js</code>.</p>
+<pre><code>import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+
+test('submitting the form shows a success message', async () =&gt; {
+  render(&lt;LoginScreen /&gt;);                       <span class="c">// real component + state</span>
+  fireEvent.changeText(screen.getByLabelText('Email'), 'a@b.com');
+  fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+  <span class="c">// network mocked by MSW; wait for the resulting UI</span>
+  expect(await screen.findByText('Welcome back')).toBeVisible();
+});</code></pre>
+    <div class="qna">
+      <div class="qh">Likely interview questions</div>
+      <ul>
+        <li><b>Unit vs integration — where's the line?</b> Unit mocks collaborators; integration exercises real collaborators, mocking only I/O boundaries.</li>
+        <li><b>Why query by role/label instead of testID?</b> It tests what users perceive and doubles as an accessibility check.</li>
+        <li><b>How do you handle async UI?</b> <code>findBy*</code> / <code>waitFor</code> — never arbitrary <code>sleep</code>.</li>
+        <li><b>How do you mock the network?</b> MSW at the request layer keeps components unaware they're mocked.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- E2E -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Level 3 · End-to-end testing</div>
+      <h2>The whole app, driven like a user</h2>
+      <p>E2E runs the actual build on a simulator/device and drives it through real flows — launch, navigate, tap, type, assert. Slow and flakier, so reserve it for a few critical journeys (login, checkout).</p>
+    </div>
+
+    <h4 class="subhead">Which tool for E2E?</h4>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Tool</th><th scope="col">Style</th><th scope="col">Strength</th><th scope="col">Trade-off</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Detox</th><td>Gray-box (RN-aware)</td><td>Hooks into the RN/native idle state to <b>auto-wait</b> for the JS thread, animations, timers, and network — far less flaky, no <code>sleep</code>.</td><td>RN-specific; more setup; you instrument the app.</td></tr>
+          <tr><th scope="row">Maestro</th><td>Black-box</td><td>Dead-simple YAML flows, quick to write, built-in flakiness tolerance. Great DX.</td><td>Less fine-grained control than Detox for complex assertions.</td></tr>
+          <tr><th scope="row">Appium</th><td>Black-box (WebDriver)</td><td>Cross-platform (native, hybrid, web) with a huge ecosystem; language-agnostic.</td><td>Flakier and slower for RN; no RN idle awareness → manual waits.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="codecap">Detox — a checkout flow (auto-waits, no sleeps)</p>
+<pre><code>describe('Checkout', () =&gt; {
+  beforeAll(async () =&gt; device.launchApp({ newInstance: true }));
+  beforeEach(async () =&gt; device.reloadReactNative());
+
+  it('completes a purchase', async () =&gt; {
     await element(by.id('cart-button')).tap();
     await element(by.id('checkout-button')).tap();
     await element(by.id('input-card')).typeText('4242424242424242');
     await element(by.text('Confirm Payment')).tap();
-
-    // Detox auto-waits for JS thread to settle before checking visibility
+    <span class="g">// Detox waits for the JS thread + animations to settle before asserting</span>
     await expect(element(by.text('Order Successful'))).toBeVisible();
   });
 });</code></pre>
+
+    <div class="qna">
+      <div class="qh">Likely interview questions</div>
+      <ul>
+        <li><b>Gray-box vs black-box?</b> Gray-box (Detox) sees app internals to synchronize; black-box (Appium/Maestro) only sees the UI.</li>
+        <li><b>Why is Detox less flaky?</b> It waits on RN idle instead of fixed timeouts.</li>
+        <li><b>What belongs in E2E vs integration?</b> Only critical end-to-end journeys; push everything else down the pyramid for speed.</li>
+        <li><b>How do you keep E2E stable in CI?</b> Stable testIDs, deterministic seed data, retry on known flake, run on a device farm.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- MOCKING + STRATEGY -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Cross-cutting</div>
+      <h2>Mocking &amp; strategy</h2>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--unit)">Native mocks</div>
+        <h3>Keep tests off native</h3>
+        <p>Mock TurboModules and native libs (MMKV, NetInfo, Reanimated, Gesture Handler) in <code>jest.setup.js</code> so unit/integration tests run in Node, fast and deterministic.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--integ)">Network</div>
+        <h3>MSW over hand mocks</h3>
+        <p>Intercept at the request layer so components stay unaware; reuse the same handlers across many tests and even Storybook.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--e2e)">Coverage ≠ quality</div>
+        <h3>Test behavior, not lines</h3>
+        <p>Chase critical-path confidence, not a coverage number. One good checkout E2E beats 100% coverage of getters.</p>
+      </div>
+    </div>
+    <div class="note good">
+      <span class="tag">The senior framing</span>
+      Push tests <b>down</b> the pyramid: if a bug can be caught by a unit or integration test, don't spend a slow, flaky E2E on it. Reserve E2E for a few money-path journeys, make everything else fast, and query by what the user sees so tests survive refactors.
+    </div>
+  </div>
+</section>
+
+<!-- MYTHS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Interview Pitfalls</div>
+    <h2>Testing Myths</h2>
+    <div class="myth">
+      <div class="claim">"React Native Testing Library is for unit tests."</div>
+      <p class="truth"><b>Mostly integration.</b> RNTL renders a component with its real children/state and fires user events — that's integration. Pure-logic units are just Jest, no rendering.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"100% coverage means well-tested."</div>
+      <p class="truth"><b>False.</b> Coverage measures lines executed, not behaviors verified. You can have 100% coverage and zero meaningful assertions. Test critical paths and edge cases.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"E2E should cover everything for maximum confidence."</div>
+      <p class="truth"><b>Anti-pattern.</b> E2E is slow and flaky; an all-E2E suite is unmaintainable. Keep it thin and lean on fast unit/integration tests below.</p>
+    </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">React Native Testing Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native Testing guide — senior interview prep. Library APIs (RNTL queries, Detox/Maestro setup) change across versions — verify against current docs.</div>
 </footer>
 </body>
 </html>

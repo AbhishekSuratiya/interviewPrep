@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>React Native CI/CD & Release Engineering — Fastlane, EAS & OTA Updates</title>
+<title>React Native CI/CD & Release Engineering — Fastlane, Bitrise, EAS & OTA Updates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +15,12 @@
   --slate:#4A5670;
   --line:#C9D1DE;
   --ci:#7C3AED;
+  --good:#059669;
+  --good-bg:#D1FAE5;
+  --bad:#B0175C;
+  --bad-bg:#FBE9F1;
+  --info:#2563EB;
+  --warn:#D97706;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -28,98 +34,400 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ci);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--ci)}
+.card p{margin-top:8px;color:var(--slate);font-size:.93rem}
+.card h3{color:var(--ink)}
+.card ol,.card ul{margin:10px 0 0;padding-left:18px;color:var(--slate);font-size:.9rem;line-height:1.6}
+.card li{margin-bottom:5px}
+
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--ci);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
+
 pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.9rem}
+th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+tbody th{font-weight:600;width:20%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--good)}
+.note.amber{border-left-color:var(--warn)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+.ce{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.ce > div{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--paper-2)}
+.ce h4{font-size:1rem;margin-bottom:10px}
+.ce ul{margin:0;padding-left:18px;font-size:.9rem;color:var(--slate);line-height:1.65}
+.ce li{margin-bottom:6px}
+.ce .pro{border-color:var(--good)}.ce .pro h4{color:var(--good)}
+.ce .con{border-color:var(--bad)}.ce .con h4{color:var(--bad)}
+.tick{color:var(--good);font-weight:600}.cross{color:var(--bad);font-weight:600}
+@media (max-width:640px){.ce{grid-template-columns:1fr}}
+
+.myth{border-left:3px solid var(--ci);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){.step{grid-template-columns:1fr;gap:4px}.step-n{padding-top:0}}
 </style>
 </head>
 <body>
 <header class="hero">
   <div class="wrap">
-    <div class="hero-tag">Release Engineering & Automation</div>
+    <div class="hero-tag">Release Engineering &amp; Automation</div>
     <h1>
-      <span>CI/CD & OTA Updates.</span>
-      <span class="dim">Fastlane, EAS Build & Phased Rollouts.</span>
+      <span>CI/CD &amp; OTA Updates.</span>
+      <span class="dim">Fastlane, Bitrise, EAS &amp; the JS bundle.</span>
     </h1>
-    <p class="lede">Automate code signing, native cloud compilation, TestFlight/Play Console uploads, and over-the-air JS bundle updates.</p>
+    <p class="lede">Two problems live here: automating native builds/signing/uploads so a release is one command, and shipping JavaScript fixes over-the-air without waiting on store review. The second one is only safe if you understand exactly what a “bundle” is and where the app loads it from.</p>
     <div class="hero-meta">
-      <span class="chip">Fastlane Match</span>
+      <span class="chip">Fastlane</span>
+      <span class="chip">Bitrise</span>
       <span class="chip">EAS Build / Submit</span>
+      <span class="chip">GitHub Actions</span>
       <span class="chip">CodePush / EAS Update</span>
-      <span class="chip">Phased Rollout</span>
+      <span class="chip">main.jsbundle</span>
     </div>
   </div>
 </header>
 
+<!-- PILLARS -->
 <section>
   <div class="wrap">
     <div class="eyebrow">Release Architecture</div>
-    <h2>Build Pipeline Components</h2>
+    <h2>The three jobs of a release pipeline</h2>
     <div class="grid" style="margin-top:28px">
       <div class="card">
-        <div>
-          <div class="k">Code Signing</div>
-          <h3>Fastlane Match</h3>
-          <p>Syncs iOS certificates and provisioning profiles across team members and CI machines via an encrypted private Git repository.</p>
-        </div>
+        <div class="k">Code Signing</div>
+        <h3>Certificates &amp; profiles</h3>
+        <p>Sync iOS certs/provisioning profiles and Android keystores across the team and CI. <b>Fastlane Match</b> stores them in an encrypted git repo so every machine signs identically.</p>
       </div>
       <div class="card">
-        <div>
-          <div class="k">Native Cloud Builds</div>
-          <h3>EAS Build / Gym</h3>
-          <p>Compiles production <code>.ipa</code> and <code>.aab</code> native binaries in isolated cloud runner containers without local Mac hardware requirements.</p>
-        </div>
+        <div class="k">Native Build &amp; Submit</div>
+        <h3>Compile &amp; upload</h3>
+        <p>Produce a release <code>.ipa</code> / <code>.aab</code> on a clean runner and push to TestFlight / Play Console. <b>EAS Build</b>, <b>Fastlane gym/gradle</b>, or a Bitrise workflow do this without a developer's laptop.</p>
       </div>
       <div class="card">
-        <div>
-          <div class="k">Live Hotfixes</div>
-          <h3>OTA Bundle Updates</h3>
-          <p>Deploys JS bundle patches over-the-air (CodePush / EAS Update) directly to active users without App Store review cycles.</p>
-        </div>
+        <div class="k">Live JS Updates</div>
+        <h3>OTA bundle push</h3>
+        <p>Ship JavaScript &amp; asset fixes straight to installed apps (<b>CodePush / EAS Update</b>) — no new binary, no store review — for the class of changes that are JS-only.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- AUTOMATION SERVICES -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Configuration Code</div>
-    <h2>Fastlane Fastfile & EAS Build Config</h2>
-    <pre><code># Fastfile lane
+    <div class="section-head">
+      <div class="eyebrow">Automation services · compared</div>
+      <h2>Who actually runs the build</h2>
+      <p>“Fastlane” is automation <em>scripting</em>; “Bitrise / EAS / GitHub Actions” are the <em>machines</em> that run it. You usually combine one runner with Fastlane lanes.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Tool</th><th scope="col">What it is</th><th scope="col">Best for</th><th scope="col">Watch-outs</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Fastlane</th><td>Ruby automation with reusable “lanes” (<code>match</code>, <code>gym</code>, <code>pilot</code>, <code>supply</code>). Runs anywhere.</td><td>Scripting signing, build, and store upload once and reusing it on any CI.</td><td>You still need a machine to run it (esp. a Mac for iOS). Ruby env upkeep.</td></tr>
+          <tr><th scope="row">Bitrise</th><td>Mobile-first CI/CD SaaS: visual workflow of prebuilt “Steps,” managed macOS/Linux runners, RN stacks.</td><td>Teams wanting managed Mac runners and a low-config, mobile-tuned pipeline.</td><td>Paid build minutes; vendor workflow lock-in; can wrap Fastlane steps.</td></tr>
+          <tr><th scope="row">EAS (Expo)</th><td>Expo's cloud <code>build</code> / <code>submit</code> / <code>update</code> for RN &amp; Expo apps.</td><td>Expo/bare RN teams wanting builds + OTA (EAS Update) from one vendor.</td><td>Tied to Expo tooling &amp; credentials model; queue times on lower tiers.</td></tr>
+          <tr><th scope="row">GitHub Actions</th><td>Generic CI runners (incl. macOS) driven by YAML; runs Fastlane or EAS.</td><td>Repos already on GitHub wanting everything in one place.</td><td>You assemble the mobile pipeline yourself; macOS minutes are pricier.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-copy" style="margin-top:14px"><em>Also seen:</em> Codemagic (mobile CI similar to Bitrise). Microsoft App Center is <strong>retired (2025)</strong> — its CodePush now lives on as self-hosted / community tooling or you migrate to EAS Update.</p>
+
+    <h4 class="subhead">Integrating them — the short version</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k">Fastlane</div>
+        <h3>Scripted lanes</h3>
+        <ol>
+          <li><code>gem install fastlane</code>, then <code>fastlane init</code> in <code>ios/</code> and <code>android/</code>.</li>
+          <li>Set up signing: <code>fastlane match</code> (iOS) / keystore for Android.</li>
+          <li>Write a lane: build (<code>gym</code>/<code>gradle</code>) → upload (<code>pilot</code>/<code>supply</code>).</li>
+          <li>Store secrets in env vars; call the lane from any CI.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="k">Bitrise</div>
+        <h3>Managed workflow</h3>
+        <ol>
+          <li>Connect the repo; Bitrise auto-detects the RN project.</li>
+          <li>Add Steps (install deps, cache, build iOS/Android, deploy) in the editor.</li>
+          <li>Upload signing files to the Code Signing tab.</li>
+          <li>Set triggers (push/tag/PR) → runs on managed runners.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="k">EAS</div>
+        <h3>Cloud build + submit</h3>
+        <ol>
+          <li><code>npm i -g eas-cli</code>, <code>eas login</code>, <code>eas build:configure</code>.</li>
+          <li>Define profiles/channels in <code>eas.json</code>.</li>
+          <li><code>eas build --profile production</code> → cloud <code>.ipa</code>/<code>.aab</code>.</li>
+          <li><code>eas submit</code> to push to the stores.</li>
+        </ol>
+      </div>
+    </div>
+
+    <p class="codecap">Fastlane lane + eas.json</p>
+<pre><code><span class="c"># Fastfile — one command to ship a beta</span>
 lane :beta do
   increment_build_number
-  match(type: 'appstore') # Sync certs from git repo
-  gym(scheme: 'MyApp', configuration: 'Release')
-  pilot(skip_waiting_for_build_processing: true) # Upload to TestFlight
+  match(type: 'appstore')                          <span class="c"># sync certs from encrypted git</span>
+  gym(scheme: 'MyApp', configuration: 'Release')   <span class="c"># build .ipa</span>
+  pilot(skip_waiting_for_build_processing: true)   <span class="c"># upload to TestFlight</span>
 end
 
-# eas.json
-{
-  "build": {
-    "production": {
-      "autoIncrement": true,
-      "channel": "production"
-    }
-  }
+<span class="c">// eas.json — cloud build tied to an OTA channel</span>
+{ "build": { "production": { "autoIncrement": true, "channel": "production" } } }</code></pre>
+  </div>
+</section>
+
+<!-- OTA DEEP DIVE -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">OTA / CodePush · the real mechanism</div>
+      <h2>How over-the-air bundle updates work</h2>
+      <p>A React Native app is a <strong>native shell</strong> plus a <strong>JavaScript bundle</strong>. OTA updates swap the bundle — not the shell. Everything about when it's safe follows from that one fact.</p>
+    </div>
+
+    <h4 class="subhead">What is “the bundle,” and where is it loaded?</h4>
+    <p class="body-copy">At build time, <strong>Metro</strong> bundles all your JS/TS into a single file, plus the images Metro packs. That file ships <em>inside</em> the native binary:</p>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th scope="col">Platform</th><th scope="col">Bundle file</th><th scope="col">Loaded by</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">iOS</th><td><code>main.jsbundle</code> (in the app bundle)</td><td><code>AppDelegate</code> — the <code>sourceURLForBridge</code> / <code>bundleURL</code> method returns the bundle URL (Metro dev server in debug, the embedded file in release).</td></tr>
+          <tr><th scope="row">Android</th><td><code>index.android.bundle</code> (in <code>assets/</code>)</td><td><code>MainApplication</code> — the <code>ReactNativeHost</code>'s <code>getJSBundleFile()</code> (defaults to the embedded asset).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">The hook that makes OTA possible</span>
+      CodePush/EAS <b>override that bundle location</b>. Instead of always returning the embedded file, <code>sourceURLForBridge</code> (iOS) / <code>getJSBundleFile()</code> (Android) return <code>[CodePush bundleURL]</code> — which points to a <b>newer bundle downloaded to local storage</b> if one exists, and falls back to the embedded bundle otherwise. That's the entire trick: the OS loads whatever file that method returns.
+    </div>
+
+    <p class="codecap">Pointing the app at the OTA bundle</p>
+<pre><code><span class="c">// iOS · AppDelegate.mm</span>
+- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge {
+#if DEBUG
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return <span class="g">[CodePush bundleURL]</span>; <span class="c">// downloaded bundle, else embedded main.jsbundle</span>
+#endif
+}
+
+<span class="c">// Android · MainApplication (ReactNativeHost)</span>
+@Override protected String getJSBundleFile() {
+  return <span class="g">CodePush.getJSBundleFile()</span>;
 }</code></pre>
+
+    <h4 class="subhead">How the app fetches &amp; applies an update</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Check</h3>
+          <p><code>codePush.sync()</code> runs (on launch/resume) and asks the update server: “for this app's <b>binary/runtime version</b> and deployment key, is there a newer bundle than the one I'm running?” It sends the current package hash.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Download</h3>
+          <p>If yes, the SDK downloads the new JS bundle + assets (often a delta against the current one) into the app's local storage — silently, in the background.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Install (timing you choose)</h3>
+          <p><code>ON_NEXT_RESTART</code> (default) applies on the next cold start; <code>ON_NEXT_RESUME</code> on next foreground; <code>IMMEDIATE</code> restarts now. “Apply” just means the overridden bundle path now resolves to the new file.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Confirm or roll back</h3>
+          <p>The new bundle must call <code>codePush.notifyAppReady()</code> (sync does this) to be marked good. If it <b>crashes before</b> that, CodePush automatically reverts to the last working bundle on next launch — your safety net against a bad push.</p>
+        </div>
+      </div>
+    </div>
+
+    <h4 class="subhead">Integrating CodePush — short pointers</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k">Setup</div>
+        <ol>
+          <li>Create an app + <b>Staging/Production</b> deployments on your CodePush server; grab deployment keys.</li>
+          <li><code>npm i react-native-code-push</code> (autolinks native).</li>
+          <li>iOS: return <code>[CodePush bundleURL]</code> + add key to <code>Info.plist</code>. Android: override <code>getJSBundleFile()</code> + add key to <code>strings.xml</code>.</li>
+          <li>Wrap the root: <code>export default codePush(App)</code>, set <code>checkFrequency</code> / install mode.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="k">Release</div>
+        <ol>
+          <li>Make a <b>JS-only</b> change.</li>
+          <li>Push to a deployment, targeting the installed binary versions: <br><code>code-push release-react MyApp ios -d Production -t "1.4.x"</code>.</li>
+          <li>Test on Staging, then <b>promote</b> Staging → Production.</li>
+          <li>Roll out to a % of users; watch crash rate; <b>rollback</b> instantly if needed.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="k">EAS Update alt.</div>
+        <ol>
+          <li><code>eas update:configure</code>; add <code>expo-updates</code>; set a <code>runtimeVersion</code> policy.</li>
+          <li>Build with a <b>channel</b> (maps builds → update branch).</li>
+          <li>Publish: <code>eas update --branch production -m "fix"</code>.</li>
+          <li>App checks on launch, downloads, applies next launch.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHEN / WHY / LIMITS -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The decision · when to reach for OTA</div>
+      <h2>Exactly what you may (and may not) push</h2>
+      <p>The rule is mechanical, not a matter of taste: an OTA bundle is bound to the native binary already installed. Push code that expects native code the binary doesn't have, and it crashes.</p>
+    </div>
+
+    <h4 class="subhead">At which point do you update the JS bundle?</h4>
+    <p class="body-copy">Only when the change is <strong>entirely in the JS layer</strong> — JS/TS logic, React components, styling, or Metro-bundled assets (images, JSON). That's when you cut a new bundle and OTA it, skipping store review. If <em>anything</em> native changed, you must ship a new binary through the stores instead — and bump the target/runtime version so old OTA bundles don't land on it.</p>
+
+    <div class="ce">
+      <div class="pro">
+        <h4>✓ Safe to OTA</h4>
+        <ul>
+          <li>Bug fixes in JS/TS, logic, or state.</li>
+          <li>UI tweaks, copy/text, styling.</li>
+          <li>Feature flags &amp; config toggles.</li>
+          <li>New/updated images &amp; assets bundled by Metro.</li>
+          <li>Pure-JS libraries (no native module).</li>
+        </ul>
+      </div>
+      <div class="con">
+        <h4>✗ Needs a store binary</h4>
+        <ul>
+          <li>Any new/changed <b>native module</b> or native dependency.</li>
+          <li>Permissions, entitlements, app icon, splash.</li>
+          <li>React Native version / native SDK upgrades.</li>
+          <li>Anything touching <code>ios/</code> or <code>android/</code> native code.</li>
+          <li>Major new features (store-policy territory — see below).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4 class="subhead">Benefits vs. cons</h4>
+    <div class="ce">
+      <div class="pro">
+        <h4>Benefits</h4>
+        <ul>
+          <li><span class="tick">✓</span> <b>Instant fixes</b> — hours, not a multi-day review cycle.</li>
+          <li><span class="tick">✓</span> <b>Phased rollout</b> to a % of users, with metrics.</li>
+          <li><span class="tick">✓</span> <b>Instant rollback</b> and auto-revert on crash.</li>
+          <li><span class="tick">✓</span> Fast iteration / A-B of JS features.</li>
+        </ul>
+      </div>
+      <div class="con">
+        <h4>Cons &amp; limitations</h4>
+        <ul>
+          <li><span class="cross">✗</span> <b>JS + assets only</b> — never native code.</li>
+          <li><span class="cross">✗</span> Bundle must match the installed <b>binary/runtime version</b>, or it crashes.</li>
+          <li><span class="cross">✗</span> Store policy: Apple 3.3.2 forbids OTA that <b>changes the app's purpose or adds unreviewed features</b>.</li>
+          <li><span class="cross">✗</span> Rollback only works if <code>notifyAppReady()</code> is reached.</li>
+          <li><span class="cross">✗</span> Extra SDK weight, version sprawl, and a channel you must <b>sign</b> so no one pushes a malicious bundle.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note good">
+      <span class="tag">When TO use</span>
+      Emergency JS bug fixes, small UI/copy/config changes, and phased rollout of JS-only features where waiting days for review is unacceptable.
+    </div>
+    <div class="note warn">
+      <span class="tag">When NOT to use</span>
+      Any native change; large feature launches (ship &amp; get them reviewed); regulated apps that <b>require</b> review of each release; or using OTA to routinely dodge the store — that risks rejection or removal.
+    </div>
+  </div>
+</section>
+
+<!-- MYTHS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Interview Pitfalls</div>
+    <h2>Release &amp; OTA Myths</h2>
+
+    <div class="myth">
+      <div class="claim">"CodePush can update the whole app over the air."</div>
+      <p class="truth"><b>False.</b> Only the JS bundle and Metro-bundled assets. Native modules, permissions, and the RN runtime live in the binary and require a store release.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"You can push any JS change to any installed version."</div>
+      <p class="truth"><b>False.</b> A bundle is tied to a target <b>binary/runtime version</b>. If it calls a native module that version doesn't include, it crashes. Always scope releases to compatible binary versions.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"OTA lets you skip App Store review entirely."</div>
+      <p class="truth"><b>Dangerous.</b> Apple guideline 3.3.2 permits OTA of interpreted JS only if it doesn't change the app's purpose or add unreviewed features. Shipping major features OTA to dodge review risks rejection or removal.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"Fastlane is a CI service."</div>
+      <p class="truth"><b>No.</b> Fastlane is automation <em>scripting</em> that still needs a machine to run on. The CI/CD <em>runners</em> are Bitrise, EAS, GitHub Actions, Codemagic — which often execute Fastlane lanes.</p>
+    </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">React Native Release Engineering Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native Release Engineering guide — senior interview prep. App Center/CodePush hosting and store OTA policies change; verify current CodePush (self-hosted/community), EAS Update, and Apple/Google guidelines before relying on them.</div>
 </footer>
 </body>
 </html>

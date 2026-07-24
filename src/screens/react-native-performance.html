@@ -22,6 +22,8 @@
   --reanimated-bg:#FEF3C7;
   --zustand:#7C3AED;
   --zustand-bg:#EDE9FE;
+  --bad:#B0175C;
+  --bad-bg:#FBE9F1;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -43,6 +45,7 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{
@@ -52,6 +55,7 @@ p{margin:0 0 1em}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
 .mono{font-family:var(--mono);font-size:.86em}
 code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+strong{font-weight:600}
 
 /* ---------- hero ---------- */
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
@@ -70,6 +74,9 @@ header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
 .section-head{max-width:64ch;margin-bottom:38px}
 .section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.5rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
 
 /* ---------- interactive library explorer ---------- */
 .finder-box{
@@ -96,9 +103,18 @@ section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
 
 /* ---------- grid & cards ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
 .card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+.card p:first-of-type{margin-top:12px}
+
+/* ---------- numbered steps ---------- */
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--flash);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
 
 /* ---------- code block ---------- */
 pre{
@@ -106,6 +122,11 @@ pre{
   background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;
   overflow-x:auto;margin:14px 0 0;
 }
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}          /* comment */
+pre .g{color:#7EE0C0}          /* good / highlight */
+pre .r{color:#F3A7C4}          /* bad / warning */
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0}
 
 /* ---------- table ---------- */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
@@ -117,6 +138,50 @@ thead th{
 }
 tbody th{font-weight:600;width:22%}
 tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+/* ---------- callouts ---------- */
+.note{border-left:3px solid var(--image);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--flash)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+/* ---------- cause / effect ---------- */
+.ce{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.ce > div{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--paper-2)}
+.ce .bad{border-color:var(--bad);background:var(--bad-bg)}
+.ce .good{border-color:var(--flash);background:var(--flash-bg)}
+.ce h4{font-size:1rem;margin-bottom:8px}
+.ce ul{margin:0;padding-left:18px;font-size:.9rem;color:var(--slate);line-height:1.6}
+.ce .bad h4{color:var(--bad)}
+.ce .good h4{color:var(--flash)}
+@media (max-width:640px){.ce{grid-template-columns:1fr}}
+
+/* ---------- flame graph ---------- */
+.flame{border:1px solid var(--line);border-radius:12px;background:#0E1626;padding:16px;overflow-x:auto;margin-top:8px}
+.flame-inner{min-width:560px;display:flex;flex-direction:column;gap:4px}
+.flame-row{display:flex;gap:4px}
+.frame{
+  font-family:var(--mono);font-size:.66rem;color:#0E1626;
+  padding:7px 8px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  line-height:1;font-weight:500;
+}
+.f-cool{background:#7EE0C0}
+.f-warm{background:#FCD34D}
+.f-hot{background:#FB923C}
+.f-crit{background:#F87171;color:#3A0A14}
+.f-idle{background:#334155;color:#94A3B8}
+.flame-axis{font-family:var(--mono);font-size:.62rem;color:#7C8AA5;display:flex;justify-content:space-between;margin-top:10px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-family:var(--mono);font-size:.68rem;color:var(--slate)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* ---------- perf monitor mock ---------- */
+.perfmon{font-family:var(--mono);font-size:.72rem;background:#0E1626;color:#E2F2ED;border-radius:10px;padding:14px 16px;line-height:1.7;margin-top:8px;max-width:320px}
+.perfmon .row{display:flex;justify-content:space-between;gap:20px}
+.perfmon .ok{color:#7EE0C0}
+.perfmon .warnv{color:#F87171}
 
 /* ---------- myths & qna ---------- */
 .myth{border-left:3px solid var(--reanimated);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
@@ -127,6 +192,8 @@ tr:last-child th,tr:last-child td{border-bottom:0}
 .qna{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
 .qna-q{font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;gap:8px}
 .qna-a{color:var(--slate);font-size:.93rem;line-height:1.6}
+.qna-a ol{margin:8px 0 0;padding-left:20px;line-height:1.7}
+.qna-a li{margin-bottom:8px}
 
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
@@ -134,6 +201,8 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
 @media (max-width:720px){
   .finder-tabs{flex-direction:column}
   .finder-tab{width:100%;text-align:center}
+  .step{grid-template-columns:1fr;gap:4px}
+  .step-n{padding-top:0}
 }
 </style>
 </head>
@@ -144,16 +213,16 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
     <div class="hero-tag">React Native Performance Engineering</div>
     <h1>
       <span>The 60 FPS Stack.</span>
-      <span class="dim">Eliminating jank across lists, images & animations.</span>
+      <span class="dim">Eliminating jank across lists, images &amp; animations.</span>
     </h1>
-    <p class="lede">High-performance React Native applications bypass common bottlenecks by using view recycling for lists, native disk/memory image caching, UI-thread worklet animations, and atomic global state management.</p>
+    <p class="lede">Most React Native jank is one of three things: a list that rebuilds views instead of recycling them, a render function that re-runs the whole tree on every keystroke, or an animation stuck behind a busy JS thread. This guide covers all three — and, just as importantly, how to <em>measure</em> which one you actually have before you touch a line of code.</p>
     <div class="hero-meta">
-      <span class="chip">FlashList</span>
-      <span class="chip">FastImage</span>
-      <span class="chip">Reanimated v3</span>
-      <span class="chip">Gesture Handler</span>
-      <span class="chip">Zustand + MMKV</span>
-      <span class="chip">React.memo</span>
+      <span class="chip">FlatList → FlashList</span>
+      <span class="chip">React.memo / useCallback</span>
+      <span class="chip">Flame graphs</span>
+      <span class="chip">Hermes</span>
+      <span class="chip">ProGuard / R8</span>
+      <span class="chip">Inline requires</span>
     </div>
   </div>
 </header>
@@ -164,7 +233,7 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
     <div class="section-head">
       <div class="eyebrow">Performance Tooling Suite</div>
       <h2>Select a Bottleneck to Solve</h2>
-      <p>Explore how modern libraries target specific performance problems in mobile apps.</p>
+      <p>Four libraries, each targeting one class of performance problem. Tap a tab to see what it fixes and the exact pattern to reach for.</p>
     </div>
 
     <div class="finder-box">
@@ -180,11 +249,356 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
   </div>
 </section>
 
+<!-- ========================================================= -->
+<!-- LISTS: THE DEFAULT, AND WHERE IT BREAKS                    -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Lists · Part 1</div>
+      <h2>Start with the default: <code>FlatList</code></h2>
+      <p>Before reaching for a library, know what the built-in list already does. Most people underestimate <code>FlatList</code> — and then misuse it in the ways that make it slow.</p>
+    </div>
+
+    <p style="color:var(--slate);max-width:66ch"><code>FlatList</code> is React Native's virtualized list. Unlike <code>ScrollView</code>, which mounts <em>every</em> child up front, <code>FlatList</code> only renders the items in (and just around) the viewport. As you scroll, items that leave the <strong>window</strong> are unmounted and new ones are mounted. That windowing is why it can handle thousands of rows at all.</p>
+
+    <div class="note">
+      <span class="tag">The distinction that matters</span>
+      <code>ScrollView</code> renders <b>all</b> children immediately — fine for a handful of items, fatal for a feed. <code>FlatList</code> <b>virtualizes</b>: it keeps a small window of mounted rows and blank-space placeholders for the rest. If your data set is bounded and tiny, <code>ScrollView</code> is actually fine and simpler. Everything below assumes a long, scrolling list.
+    </div>
+
+    <h4 class="subhead">The props that control how much work FlatList does</h4>
+    <p>These are the levers. Most jank is a FlatList using defaults that don't match the shape of its data.</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Prop</th><th scope="col">What it does</th><th scope="col">When to tune it</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><code>keyExtractor</code></th><td>Gives each row a stable identity so React can reuse rather than recreate rows across renders.</td><td>Always. Return a stable unique id — never the array index.</td></tr>
+          <tr><th scope="row"><code>getItemLayout</code></th><td>Tells the list each row's height up front, so it can skip on-the-fly measurement and jump instantly.</td><td>When all rows are a fixed, known height. Big win for scroll-to-index and initial layout.</td></tr>
+          <tr><th scope="row"><code>windowSize</code></th><td>How many screens' worth of content to keep mounted (default 21 = 10 above + 10 below + current).</td><td>Lower it (e.g. 5–11) to cut memory and mounted rows; too low reveals blank space on fast scroll.</td></tr>
+          <tr><th scope="row"><code>maxToRenderPerBatch</code> / <code>updateCellsBatchingPeriod</code></th><td>How many rows render per batch, and how often batches run.</td><td>Balance blank-space-on-scroll against JS-thread pressure.</td></tr>
+          <tr><th scope="row"><code>initialNumToRender</code></th><td>How many rows to render on first paint.</td><td>Set to roughly one screenful — no more. Over-rendering delays time-to-interactive.</td></tr>
+          <tr><th scope="row"><code>removeClippedSubviews</code></th><td>Detaches off-screen native views from the hierarchy.</td><td>Can help on Android with heavy rows; test — it occasionally causes disappearing content.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">Where FlatList actually breaks</span>
+      Even tuned perfectly, <code>FlatList</code> <b>creates and destroys</b> component + native view instances as items cross the viewport edge. On a fast fling, it can't mount rows fast enough — you get <b>blank white cells</b> that fill in a beat later. That mount/unmount churn is the ceiling you hit on image-heavy feeds, and it's the exact thing FlashList removes.
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- FLATLIST VS FLASHLIST                                      -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Lists · Part 2</div>
+      <h2><code>FlatList</code> vs <code>FlashList</code></h2>
+      <p>FlashList (by Shopify) is a near drop-in replacement built on native cell recycling. Same mental model, very different engine underneath.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Concern</th><th scope="col">FlatList</th><th scope="col">FlashList</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Off-screen rows</th><td style="color:var(--slate)">Unmounts &amp; destroys the view</td><td style="color:var(--flash);font-weight:600">Recycles the view, swaps its data</td></tr>
+          <tr><th scope="row">Fast-scroll blank cells</th><td style="color:var(--slate)">Common (mount can't keep up)</td><td style="color:var(--flash);font-weight:600">Largely eliminated</td></tr>
+          <tr><th scope="row">Sizing</th><td style="color:var(--slate)">Measures each row, or needs <code>getItemLayout</code></td><td style="color:var(--flash);font-weight:600">Uses <code>estimatedItemSize</code> to pre-allocate</td></tr>
+          <tr><th scope="row">Memory on long lists</th><td style="color:var(--slate)">Grows with window size</td><td style="color:var(--flash);font-weight:600">Roughly constant (bounded pool)</td></tr>
+          <tr><th scope="row">Mixed row types</th><td style="color:var(--slate)">No first-class support</td><td style="color:var(--flash);font-weight:600"><code>getItemType</code> keeps separate recycle pools</td></tr>
+          <tr><th scope="row">API</th><td style="color:var(--slate)">Baseline</td><td style="color:var(--flash);font-weight:600">Nearly identical — usually a rename + one prop</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">How recycling actually works</span>
+      Instead of one native view per data row, FlashList keeps a small <b>pool</b> of views — roughly “one screen plus a margin.” When a row scrolls off the top, its view isn't destroyed; it's moved to the bottom and <b>re-bound to new data</b>. This is the same idea as Android's <code>RecyclerView</code> and iOS's <code>UICollectionView</code>. Because there's no create/destroy on scroll, the CPU spikes that cause blank cells disappear.
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- FLASHLIST PROPS + BEST WAY                                 -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Lists · Part 3</div>
+      <h2>The FlashList props that matter</h2>
+      <p>Recycling only pays off if you feed it the right hints. These are the props interviewers expect you to name.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Prop</th><th scope="col">Why it matters</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><code>estimatedItemSize</code></th><td>The one required hint. FlashList uses it to size the recycle pool and lay out before real measurements arrive. Set it to your <em>average</em> row height (check the dev-mode warning — it prints the ideal value).</td></tr>
+          <tr><th scope="row"><code>getItemType</code></th><td>Return a type string per row (e.g. <code>'header' | 'post' | 'ad'</code>). FlashList keeps a <b>separate recycle pool per type</b>, so a text row never gets re-bound into a video cell. Essential for mixed feeds.</td></tr>
+          <tr><th scope="row"><code>keyExtractor</code></th><td>Stable identity across data changes — same rule as FlatList. Never the index.</td></tr>
+          <tr><th scope="row"><code>overrideItemLayout</code></th><td>For lists where rows vary in size in a predictable way (e.g. spans in a masonry/grid). Lets you set size/span per index precisely.</td></tr>
+          <tr><th scope="row"><code>drawDistance</code></th><td>How far beyond the viewport (in px) to pre-render. Higher = fewer blanks on fling, more work; lower = leaner.</td></tr>
+          <tr><th scope="row"><code>estimatedListSize</code></th><td>Skips the initial layout pass measurement when you already know the list's on-screen dimensions.</td></tr>
+          <tr><th scope="row"><code>onBlankArea</code></th><td>Diagnostic callback that reports blank space during scroll — use it to verify your <code>estimatedItemSize</code> is right.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 class="subhead">The best way to use FlashList</h4>
+    <p>Recycling changes one rule you can get away with breaking in FlatList: <strong>a recycled row must never keep its own local state</strong>, because that state will leak into whatever data it's re-bound to next.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Set a realistic <code>estimatedItemSize</code></h3>
+          <p>Run once in dev — FlashList logs the exact average it observed. Use that. A wildly wrong estimate reintroduces blank space and layout thrash.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Give every distinct row shape a <code>getItemType</code></h3>
+          <p>Headers, ads, text posts, and media posts should each be their own type. This keeps recycle pools clean and stops layout jumps when different shapes share a cell.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Keep rows stateless and derive everything from props</h3>
+          <p>No <code>useState</code> that must persist per item. Drive selected/expanded/liked state from the parent store keyed by item id, so a recycled view always reflects the data it currently shows.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Memoize the row and its callbacks</h3>
+          <p>Wrap the row in <code>React.memo</code> and pass <code>renderItem</code> / callbacks via <code>useCallback</code> — exactly as with FlatList (next section). Recycling reduces native churn; memoization reduces JS re-renders. You want both.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="codecap">Best-practice FlashList</p>
+<pre><code>const renderItem = useCallback(({ item }) =&gt; (
+  &lt;PostCard post={item} onLike={handleLike} /&gt;
+), [handleLike]);
+
+const keyExtractor = useCallback((item) =&gt; item.id, []);
+
+&lt;FlashList
+  data={posts}
+  renderItem={renderItem}
+  keyExtractor={keyExtractor}
+  <span class="g">estimatedItemSize={120}</span>            <span class="c">// required — use the dev-logged average</span>
+  <span class="g">getItemType={(item) =&gt; item.type}</span>   <span class="c">// separate recycle pool per shape</span>
+  drawDistance={250}
+/&gt;</code></pre>
+  </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- MEMOIZATION DEEP DIVE                                      -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Re-renders · The other half of list performance</div>
+      <h2>Why your list re-renders every row</h2>
+      <p>Swapping to FlashList fixes <em>native</em> churn. But if the JS side re-renders all rows on every parent update, you've only solved half the problem. This is the single most common list mistake in interviews and in production.</p>
+    </div>
+
+    <p style="color:var(--slate);max-width:66ch">Every time the parent screen re-renders (a state change, a new fetch, a keystroke in a search box), any <strong>inline function</strong> you pass to the list is created fresh — a brand-new function identity. React compares old props to new by reference, sees a “different” <code>renderItem</code> / <code>onPress</code>, and re-renders the rows. Do that per item across a long list and you get frame drops on interactions that shouldn't cost anything.</p>
+
+    <div class="ce">
+      <div class="bad">
+        <h4>✗ What happens without memoization</h4>
+        <ul>
+          <li>Inline <code>renderItem</code> / <code>onPress</code> get a new reference on every parent render.</li>
+          <li>Props look “changed” by reference → <b>every visible row re-renders</b>.</li>
+          <li>A search box that filters the list re-runs all rows on each keystroke.</li>
+          <li>JS thread saturates → dropped frames, laggy scroll, slow taps.</li>
+        </ul>
+      </div>
+      <div class="good">
+        <h4>✓ What memoization buys you</h4>
+        <ul>
+          <li>Stable function identities via <code>useCallback</code> → props compare equal.</li>
+          <li><code>React.memo</code> row skips re-render when its <code>item</code> hasn't changed.</li>
+          <li>Only the rows whose data actually changed re-render.</li>
+          <li>Scroll and interactions stay on-budget.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4 class="subhead">Passing memoized functions to the list</h4>
+    <p>Three things must be stable: the <code>renderItem</code> function, the <code>keyExtractor</code>, and any callback the row calls (like <code>onLike</code>). Wrap each in <code>useCallback</code> so their identity survives across renders.</p>
+
+    <p class="codecap">The problem — new identities every render</p>
+<pre><code><span class="c">// ✗ Each render creates fresh functions → all rows re-render</span>
+function Feed({ posts }) {
+  return (
+    &lt;FlatList
+      data={posts}
+      <span class="r">renderItem={({ item }) =&gt; &lt;PostCard post={item} onLike={() =&gt; like(item.id)} /&gt;}</span>
+      <span class="r">keyExtractor={(item) =&gt; item.id}</span>
+    /&gt;
+  );
+}</code></pre>
+
+    <p class="codecap">The fix — stable identities + a memoized row</p>
+<pre><code>const PostCard = React.memo(function PostCard({ post, onLike }) {
+  <span class="c">// re-renders only when `post` or `onLike` actually change</span>
+  return (
+    &lt;Pressable onPress={() =&gt; onLike(post.id)}&gt;
+      &lt;FastImage source={{ uri: post.image }} /&gt;
+      &lt;Text&gt;{post.title}&lt;/Text&gt;
+    &lt;/Pressable&gt;
+  );
+});
+
+function Feed({ posts }) {
+  const handleLike = useCallback((id) =&gt; like(id), []);          <span class="g">// stable</span>
+  const renderItem = useCallback(({ item }) =&gt; (                 <span class="g">// stable</span>
+    &lt;PostCard post={item} onLike={handleLike} /&gt;
+  ), [handleLike]);
+  const keyExtractor = useCallback((item) =&gt; item.id, []);       <span class="g">// stable</span>
+
+  return (
+    &lt;FlatList
+      data={posts}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+    /&gt;
+  );
+}</code></pre>
+
+    <h4 class="subhead">Why memoize the row component itself</h4>
+    <p>Stable <em>callbacks</em> aren't enough on their own. Even with an unchanged <code>onLike</code>, a parent re-render still walks the tree and re-invokes each row function unless the row is told it can bail out. <code>React.memo</code> is that instruction: it wraps the component in a shallow props comparison, so a row skips rendering when its <code>item</code> and callbacks are reference-equal to last time.</p>
+
+    <div class="note good">
+      <span class="tag">The two pieces only work together</span>
+      <b><code>React.memo</code> on the row</b> makes it <em>able</em> to skip. <b><code>useCallback</code> on the props</b> makes it <em>actually</em> skip — because <code>memo</code>'s shallow compare only passes if the function props are the same reference. Memoize the component but pass an inline arrow, and <code>memo</code> compares equal-value-but-new-reference every time and re-renders anyway. This “I added <code>React.memo</code> and nothing changed” trap is a classic follow-up question.
+    </div>
+
+    <h4 class="subhead">Pure components &amp; custom comparison</h4>
+    <p><code>React.memo</code> is the function-component equivalent of a class <code>PureComponent</code>: both do a <strong>shallow</strong> comparison of props (and, for the class, state) and skip re-rendering when nothing shallow-changed. “Pure” here means the component's output depends only on its props — same props in, same UI out, no side effects — which is exactly what makes skipping safe.</p>
+    <p style="color:var(--slate);max-width:66ch">Shallow comparison only checks one level deep. If a row receives a new object/array literal each render (<code>style={{...}}</code>, <code>data={[...]}</code>), the reference differs and <code>memo</code> re-renders. Fix it by hoisting the object, using <code>StyleSheet.create</code>, or memoizing the value — or pass a custom comparator as <code>memo</code>'s second argument for precise control:</p>
+
+    <p class="codecap">Custom comparator — re-render only on the fields that matter</p>
+<pre><code>const PostCard = React.memo(
+  function PostCard({ post, onLike }) { <span class="c">/* ... */</span> },
+  (prev, next) =&gt;
+    prev.post.id === next.post.id &amp;&amp;
+    prev.post.likes === next.post.likes &amp;&amp;
+    prev.onLike === next.onLike        <span class="c">// return true = skip re-render</span>
+);</code></pre>
+
+    <div class="note warn">
+      <span class="tag">Don't over-memoize</span>
+      Memoization isn't free — <code>useCallback</code>/<code>useMemo</code> store dependencies and run comparisons. On a trivial component that re-renders cheaply, the bookkeeping can cost more than it saves. Reach for it on <b>list rows and expensive subtrees</b>, not every leaf. Measure first (next section), then memoize the hot path.
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- MEASURING PERFORMANCE                                      -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Measure first</div>
+      <h2>You can't fix what you can't see</h2>
+      <p>The senior move isn't reaching for FlashList — it's proving <em>which</em> thread is the bottleneck before changing anything. Guessing wrong wastes a sprint.</p>
+    </div>
+
+    <h4 class="subhead">The two frame rates: JS FPS vs UI FPS</h4>
+    <p>React Native runs two threads that each have a frame budget. Reading them separately tells you where the jank lives.</p>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="k" style="color:var(--reanimated)">JS thread</div>
+        <h3>Where your logic runs</h3>
+        <p>Renders, state updates, data processing, <code>renderItem</code>. If <b>JS FPS</b> drops but UI FPS holds, the problem is re-renders or heavy JS — reach for memoization, lighter renders, or moving work off the render path.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--image)">UI (native) thread</div>
+        <h3>Where views are drawn</h3>
+        <p>Layout, drawing, native view creation. If <b>UI FPS</b> drops, the problem is a heavy view tree or mount/destroy churn — reach for FlashList, flatter view hierarchies, and fewer overdraw layers.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:26px">Toggle the built-in overlay with the <strong>Dev Menu → Show Perf Monitor</strong> (shake the device, or <code>Cmd/Ctrl+M</code> / <code>d</code> in the terminal). It shows both frame rates live while you scroll:</p>
+
+    <div class="perfmon">
+      <div class="row"><span>UI</span><span class="ok">60.0 fps</span></div>
+      <div class="row"><span>JS</span><span class="warnv">38.4 fps</span></div>
+      <div class="row"><span>Views</span><span>412</span></div>
+      <div class="row"><span>RAM</span><span>318 MB</span></div>
+    </div>
+    <p style="color:var(--slate);font-size:.86rem;margin-top:10px">Reading above: UI is fine, JS is dropping to ~38 fps during scroll → the bottleneck is JS-side re-renders, not the native view tree. That points at memoization, not FlashList.</p>
+
+    <h4 class="subhead">Reading a flame graph</h4>
+    <p>A flame graph turns a recording of the JS thread into a picture of <em>where time went</em>. Each bar is a function call; <strong>width = time spent</strong>; bars stacked on top of a bar are the functions it called. You read it left-to-right as time, top-to-bottom as call depth. <strong>Wide bars are your enemy</strong> — they're where the frame budget was burned.</p>
+
+    <div class="flame" role="img" aria-label="Flame graph showing renderItem and an unmemoized PostCard consuming most of the JS frame">
+      <div class="flame-inner">
+        <div class="flame-row"><span class="frame f-cool" style="flex:0 0 100%">FeedScreen render()</span></div>
+        <div class="flame-row"><span class="frame f-warm" style="flex:0 0 88%">FlatList · render window</span><span class="frame f-idle" style="flex:0 0 12%">state</span></div>
+        <div class="flame-row"><span class="frame f-hot" style="flex:0 0 82%">renderItem × 12 (new identity → all re-render)</span><span class="frame f-idle" style="flex:0 0 18%">keyExtractor</span></div>
+        <div class="flame-row"><span class="frame f-crit" style="flex:0 0 70%">PostCard (not memoized)</span><span class="frame f-warm" style="flex:0 0 12%">Avatar</span></div>
+        <div class="flame-row"><span class="frame f-hot" style="flex:0 0 34%">formatDate() every render</span><span class="frame f-warm" style="flex:0 0 22%">&lt;Image&gt;</span><span class="frame f-idle" style="flex:0 0 14%">LikeBtn</span></div>
+      </div>
+      <div class="flame-axis"><span>0 ms</span><span>16.7 ms budget →</span><span>frame overrun</span></div>
+    </div>
+    <div class="legend">
+      <span><i class="f-cool"></i>root / cheap</span>
+      <span><i class="f-warm"></i>moderate</span>
+      <span><i class="f-hot"></i>hot</span>
+      <span><i class="f-crit"></i>critical — fix first</span>
+      <span><i class="f-idle"></i>negligible</span>
+    </div>
+    <p style="color:var(--slate);font-size:.9rem;margin-top:18px">How to read this one: the wide red <code>PostCard (not memoized)</code> bar shows every row re-rendering, and the <code>formatDate()</code> bar underneath shows expensive work running on each of them. Total width blows past the <strong>16.7 ms</strong> budget for 60 fps (a 120 fps display halves that to 8.3 ms). The fix is exactly the previous section: <code>React.memo</code> the row, hoist <code>formatDate</code> or memoize its result. You'd then re-record and confirm the red bar shrank — <strong>measure, change, measure again</strong>.</p>
+
+    <h4 class="subhead">The tools, and how to turn them on</h4>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Tool</th><th scope="col">What it shows</th><th scope="col">How to enable</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Perf Monitor</th><td>Live JS FPS, UI FPS, view count, RAM</td><td>Dev Menu → <b>Show Perf Monitor</b></td></tr>
+          <tr><th scope="row">React DevTools Profiler</th><td>Component render timings, why each re-rendered, commit flame chart</td><td>DevTools → Profiler tab → record an interaction</td></tr>
+          <tr><th scope="row">Hermes Sampling Profiler</th><td>JS call stacks over time → a true flame graph</td><td>Dev Menu → <b>Enable Sampling Profiler</b>, reproduce, then load the <code>.cpuprofile</code> in Chrome DevTools or Perfetto</td></tr>
+          <tr><th scope="row">Flipper</th><td>Layout, network, logs, plugins (React DevTools embedded)</td><td>Attach Flipper to a debug build</td></tr>
+          <tr><th scope="row">Android Studio Profiler / Perfetto (Systrace)</th><td>Native UI-thread work, frame timeline, jank markers</td><td>Record a system trace on a release-like build</td></tr>
+          <tr><th scope="row">Xcode Instruments (Time Profiler / Core Animation)</th><td>Native CPU and rendering hotspots on iOS</td><td>Xcode → Product → Profile</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Always profile a release build</span>
+      Dev builds run un-minified JS, extra warnings, and dev-only checks — they're <b>much</b> slower and can point you at phantom hotspots. Measure JS/native perf on a <b>release (or profiling) build on a real, mid-range device</b>, not a flagship simulator. React DevTools Profiler is the exception — it needs a dev build to read component data.
+    </div>
+  </div>
+</section>
+
 <!-- DEEP DIVE ARCHITECTURE -->
 <section>
   <div class="wrap">
     <div class="section-head">
-      <div class="eyebrow">Architecture & Internals</div>
+      <div class="eyebrow">Architecture &amp; Internals</div>
       <h2>How These Libraries Achieve 60 FPS</h2>
     </div>
 
@@ -193,29 +607,131 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
         <div class="k" style="color:var(--flash)">View Recycling</div>
         <h3>FlashList by Shopify</h3>
         <p>FlatList creates and destroys native view hierarchy instances during scrolling, consuming massive CPU cycles. FlashList recycles existing native views (leveraging Android <code>RecyclerView</code> and iOS <code>UICollectionView</code> patterns).</p>
-        <p><strong>Result:</strong> ~10x performance boost, zero blank spaces during rapid scrolling.</p>
+        <p><strong>Result:</strong> ~10x fewer view creations, near-zero blank spaces during rapid scrolling.</p>
       </div>
 
       <div class="card">
         <div class="k" style="color:var(--image)">Native Image Caching</div>
         <h3>FastImage</h3>
-        <p>React Native's stock <code>&lt;Image&gt;</code> lacks disk caching and re-downloads remote URLs across app launches. FastImage wraps native battle-tested engines: <strong>SDWebImage</strong> (iOS) and <strong>Glide</strong> (Android).</p>
-        <p><strong>Features:</strong> Memory + disk cache, request priority queues, image preloading, and progressive JPEG display.</p>
+        <p>React Native's stock <code>&lt;Image&gt;</code> lacks robust disk caching and re-downloads remote URLs across app launches. FastImage wraps native battle-tested engines: <strong>SDWebImage</strong> (iOS) and <strong>Glide</strong> (Android).</p>
+        <p><strong>Features:</strong> Memory + disk cache, request priority queues, image preloading, and progressive display.</p>
       </div>
 
       <div class="card">
         <div class="k" style="color:var(--reanimated)">UI Thread Worklets</div>
         <h3>Reanimated v3</h3>
-        <p>Standard animations pass frame updates over the JS-bridge. Reanimated uses <strong>Worklets</strong> (small JS functions compiled to execute directly on the UI Thread via JSI).</p>
-        <p><strong>Result:</strong> Animations and gestures remain locked at 60–120 FPS even when the JS Thread is 100% blocked by heavy computation.</p>
+        <p>Standard animations pass frame updates over the async bridge. Reanimated uses <strong>Worklets</strong> — small JS functions compiled to execute directly on the UI Thread via JSI.</p>
+        <p><strong>Result:</strong> Animations and gestures stay at 60–120 FPS even when the JS Thread is 100% blocked by heavy work.</p>
       </div>
 
       <div class="card">
         <div class="k" style="color:var(--zustand)">Zero-Provider State</div>
         <h3>Zustand + MMKV</h3>
-        <p>Large Context Providers trigger re-renders down the entire component subtree. Zustand uses atomic state selectors — re-rendering ONLY components subscribed to the exact changed key.</p>
+        <p>Large Context Providers trigger re-renders down the entire component subtree. Zustand uses atomic state selectors — re-rendering ONLY components subscribed to the exact changed slice.</p>
         <p><strong>Persistence:</strong> Paired with MMKV for instant, synchronous disk persistence without Redux boilerplate.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= -->
+<!-- THE FULL CHECKLIST: BUILD & RUNTIME                        -->
+<!-- ========================================================= -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Beyond lists · Whole-app performance</div>
+      <h2>The performance checklist</h2>
+      <p>Lists and re-renders are the runtime story. The other half is what ships in the binary and how fast it starts. These are the levers interviewers expect a senior to rattle off.</p>
+    </div>
+
+    <h4 class="subhead">Engine &amp; build</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--flash)">Hermes</div>
+        <h3>Ship bytecode, not source</h3>
+        <p>Hermes (default on new RN) compiles your JS to bytecode <b>at build time</b>, so the app skips parsing on startup and memory-maps the bundle instead. Result: faster time-to-interactive, smaller memory, smaller download. It's an interpreter with no JIT — great for startup and UI work, which is what mobile is judged on.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--zustand)">ProGuard / R8 (Android)</div>
+        <h3>Shrink &amp; obfuscate the APK</h3>
+        <p>R8 (the successor to ProGuard) does <b>tree-shaking, minification, and obfuscation</b> of native/Java code in release builds — smaller APK, fewer classes to load. Enable <code>minifyEnabled</code> / <code>enableProguardInReleaseBuilds</code> and keep the rules file tuned so it doesn't strip classes your native modules reflect on.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--image)">New Architecture</div>
+        <h3>Fabric + TurboModules</h3>
+        <p>JSI replaces the async bridge with direct, synchronous native calls; TurboModules load lazily instead of all at startup; Fabric renders concurrently. Migrating removes serialization overhead on the hot path and improves cold start.</p>
+      </div>
+    </div>
+
+    <h4 class="subhead">Startup &amp; bundle</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--reanimated)">Inline requires + RAM bundles</div>
+        <h3>Lazy-load modules</h3>
+        <p>By default the whole JS bundle is evaluated at launch. <b>Inline requires</b> defer a module's evaluation until it's first used, and the <b>RAM bundle</b> format loads modules on demand. Together they cut the work done before the first screen paints — the biggest lever on cold-start time.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--flash)">Lazy screens &amp; code-splitting</div>
+        <h3>Don't mount what isn't seen</h3>
+        <p>Lazy-load heavy screens (e.g. navigator <code>lazy</code> options / dynamic <code>import()</code> where supported), defer non-critical work with <code>InteractionManager.runAfterInteractions</code>, and avoid doing expensive setup in the first render pass.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--zustand)">Bundle size hygiene</div>
+        <h3>Measure what you ship</h3>
+        <p>Audit with a bundle visualizer; drop heavy dependencies and moment-style libraries; import sub-paths instead of whole packages; enable Hermes to shrink further. Smaller bundle = faster parse/load and less memory.</p>
+      </div>
+    </div>
+
+    <h4 class="subhead">Render &amp; assets</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--image)">Images</div>
+        <h3>Right-size and cache</h3>
+        <p>Serve images at display resolution (don't download a 4K image for a 48px avatar), use FastImage for disk/memory caching and priorities, and prefer WebP. Oversized images are a top cause of memory pressure and scroll jank.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--reanimated)">Flatten the view tree</div>
+        <h3>Fewer nodes, less overdraw</h3>
+        <p>Deep nesting and stacked semi-transparent layers cost the UI thread. Collapse unnecessary wrapper <code>View</code>s, avoid overdraw, and keep list rows shallow — the UI thread pays per node, every frame.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--flash)">Keep work off the render path</div>
+        <h3>Memoize &amp; defer</h3>
+        <p><code>useMemo</code> for expensive derived values, <code>useCallback</code> for stable handlers, debounce rapid inputs, and move non-urgent work out of render. The cheapest render is the one that doesn't happen.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--zustand)">Memory &amp; leaks</div>
+        <h3>Clean up what you start</h3>
+        <p>Return cleanup functions from effects: clear <code>setTimeout</code>/<code>setInterval</code>, remove listeners (<code>AppState</code>, <code>Keyboard</code>, event emitters), cancel in-flight requests, and stop animations. Leaked subscriptions keep components alive, grow memory, and fire on unmounted screens — a top cause of slow-then-crash on low-RAM devices.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--reanimated)">Defer past the transition</div>
+        <h3>InteractionManager</h3>
+        <p>Run heavy work — analytics batching, big fetches, expensive setup — <em>after</em> the navigation animation finishes with <code>InteractionManager.runAfterInteractions</code>, so the screen transition stays at 60 fps instead of competing with your data work on the JS thread.</p>
+      </div>
+    </div>
+
+    <p class="codecap">Defer non-critical work so the transition stays smooth</p>
+<pre><code>import { InteractionManager } from 'react-native';
+import { useEffect } from 'react';
+
+function DashboardScreen() {
+  useEffect(() =&gt; {
+    <span class="c">// Wait until the screen-transition animation has finished…</span>
+    const task = InteractionManager.runAfterInteractions(() =&gt; {
+      <span class="g">fetchAnalyticsData();</span> <span class="c">// …then run the expensive work</span>
+    });
+    <span class="c">// Cleanup: cancel the task AND any subscriptions to avoid leaks</span>
+    return () =&gt; task.cancel();
+  }, []);
+
+  return &lt;View&gt;{/* UI */}&lt;/View&gt;;
+}</code></pre>
+
+    <div class="note good">
+      <span class="tag">The order to actually do this in</span>
+      <b>1)</b> Measure and find the hot thread. <b>2)</b> Fix the list: FlashList for native churn, <code>React.memo</code>/<code>useCallback</code> for re-renders. <b>3)</b> Fix images and the view tree. <b>4)</b> Turn on Hermes + R8 and lazy-load the startup path. <b>5)</b> Re-measure on a release build. Reordering this list — optimizing before measuring — is how you spend a week on the wrong thing.
     </div>
   </div>
 </section>
@@ -241,26 +757,38 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
         <tbody>
           <tr>
             <th scope="row">Large List Scrolling</th>
-            <td style="color:var(--slate)">FlatList (Creates/destroys native views)</td>
-            <td style="color:var(--flash);font-weight:600">FlashList (Recycles native views)</td>
-            <td>10x higher FPS, zero blank white boxes during scroll</td>
+            <td style="color:var(--slate)">FlatList (creates/destroys native views)</td>
+            <td style="color:var(--flash);font-weight:600">FlashList (recycles native views)</td>
+            <td>Higher FPS, near-zero blank cells during scroll</td>
           </tr>
           <tr>
-            <th scope="row">Image Loading & Cache</th>
-            <td style="color:var(--slate)">Stock &lt;Image&gt; (No persistent disk cache)</td>
-            <td style="color:var(--image);font-weight:600">FastImage (SDWebImage & Glide)</td>
+            <th scope="row">Row re-renders</th>
+            <td style="color:var(--slate)">Inline renderItem &amp; callbacks</td>
+            <td style="color:var(--flash);font-weight:600">React.memo + useCallback</td>
+            <td>Only changed rows re-render; JS thread stays free</td>
+          </tr>
+          <tr>
+            <th scope="row">Image Loading &amp; Cache</th>
+            <td style="color:var(--slate)">Stock &lt;Image&gt; (no persistent disk cache)</td>
+            <td style="color:var(--image);font-weight:600">FastImage (SDWebImage &amp; Glide)</td>
             <td>Instant load from disk cache across app restarts</td>
           </tr>
           <tr>
-            <th scope="row">Animations & Gestures</th>
-            <td style="color:var(--slate)">Animated API / LayoutAnimation (JS thread bound)</td>
-            <td style="color:var(--reanimated);font-weight:600">Reanimated v3 Worklets (UI Thread)</td>
-            <td>60–120 FPS frame rate even when JS thread is busy</td>
+            <th scope="row">Animations &amp; Gestures</th>
+            <td style="color:var(--slate)">Animated API / LayoutAnimation (JS-thread bound)</td>
+            <td style="color:var(--reanimated);font-weight:600">Reanimated v3 Worklets (UI thread)</td>
+            <td>60–120 FPS even when JS thread is busy</td>
+          </tr>
+          <tr>
+            <th scope="row">Startup time</th>
+            <td style="color:var(--slate)">JSC + eager bundle eval</td>
+            <td style="color:var(--flash);font-weight:600">Hermes bytecode + inline requires</td>
+            <td>Faster cold start, lower memory, smaller download</td>
           </tr>
           <tr>
             <th scope="row">Global State</th>
             <td style="color:var(--slate)">React Context / Redux + AsyncStorage</td>
-            <td style="color:var(--zustand);font-weight:600">Zustand + MMKV Persist</td>
+            <td style="color:var(--zustand);font-weight:600">Zustand + MMKV persist</td>
             <td>Atomic re-renders, instant sync storage hydration</td>
           </tr>
         </tbody>
@@ -274,22 +802,32 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">Interview Pitfalls</div>
-      <h2>Performance Myths & Misconceptions</h2>
+      <h2>Performance Myths &amp; Misconceptions</h2>
     </div>
 
     <div class="myth">
       <div class="claim">"FlatList recycles views just like native RecyclerView on Android."</div>
-      <p class="truth"><b>False.</b> FlatList unmounts and mounts React components and native view instances as items enter and exit the viewport. It does NOT recycle existing view nodes. <b>FlashList</b> is what actually implements native view cell recycling.</p>
+      <p class="truth"><b>False.</b> FlatList unmounts and mounts React components and native view instances as items enter and exit the viewport. It does NOT recycle existing view nodes. <b>FlashList</b> is what actually implements native cell recycling.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Adding React.memo to a list row fixes the re-renders."</div>
+      <p class="truth"><b>Only half true.</b> <code>React.memo</code> lets a row skip rendering, but its shallow compare fails the moment you pass an <b>inline arrow</b> or a fresh object as a prop — a new reference every render. You must also wrap callbacks in <code>useCallback</code> (and styles in <code>StyleSheet.create</code>) or <code>memo</code> re-renders anyway.</p>
     </div>
 
     <div class="myth">
       <div class="claim">"useNativeDriver: true makes all Animated API properties run on the UI thread."</div>
-      <p class="truth"><b>False.</b> <code>useNativeDriver: true</code> only supports non-layout properties like <code>opacity</code> and <code>transform</code>. It cannot animate layout properties like <code>width</code>, <code>height</code>, <code>flex</code>, or <code>backgroundColor</code>. Reanimated 3 supports layout animations on the UI thread via Worklets.</p>
+      <p class="truth"><b>False.</b> <code>useNativeDriver: true</code> only supports non-layout properties like <code>opacity</code> and <code>transform</code>. It cannot animate <code>width</code>, <code>height</code>, <code>flex</code>, or <code>backgroundColor</code>. Reanimated 3 handles layout animations on the UI thread via Worklets.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"You should profile on a debug build in the simulator."</div>
+      <p class="truth"><b>False.</b> Debug builds run un-minified JS with dev checks and are far slower — they invent hotspots that don't exist in production. Profile a <b>release/profiling build on a real mid-range device</b>. (React DevTools Profiler is the one exception; it needs a dev build.)</p>
     </div>
 
     <div class="myth">
       <div class="claim">"FastImage is just a wrapper around Image with a caching header."</div>
-      <p class="truth"><b>False.</b> FastImage replaces the native iOS and Android image rendering pipeline completely with SDWebImage and Glide — native C++/ObjC/Java libraries that handle disk persistence, memory LRU cache, and priority queues.</p>
+      <p class="truth"><b>False.</b> FastImage replaces the native image pipeline with SDWebImage (iOS) and Glide (Android) — native libraries handling disk persistence, memory LRU cache, and priority queues.</p>
     </div>
   </div>
 </section>
@@ -305,16 +843,17 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
     <div class="qna">
       <div class="qna-q">
         <span>💬</span>
-        <span><strong>Question:</strong> "A user reports severe scrolling lag (15–20 FPS) on a feed containing 3,000 posts with images, avatars, and interactive like animations. Walk through your step-by-step diagnostic and optimization plan."</span>
+        <span><strong>Question:</strong> "A user reports severe scrolling lag (15–20 FPS) on a feed of 3,000 posts with images, avatars, and like animations. Walk through your step-by-step diagnostic and optimization plan."</span>
       </div>
       <div class="qna-a">
         <strong>Optimization Plan:</strong>
-        <ol style="margin:8px 0 0;padding-left:20px;line-height:1.7">
-          <td><strong>Audit with React Profiler / Perf Monitor:</strong> Measure JS FPS vs UI FPS to pinpoint whether the bottleneck is on the JS thread (re-renders) or UI thread (heavy view tree).</td>
-          <td><strong>Replace FlatList with FlashList:</strong> Set <code>estimatedItemSize={150}</code> to enable cell recycling. This eliminates native view creation spikes during fast scrolling.</td>
-          <td><strong>Swap Image components with FastImage:</strong> Enable memory and disk caching with priority loading (<code>priority: FastImage.priority.high</code> for visible feed cards).</td>
-          <td><strong>Memoize List Rows:</strong> Wrap row item components in <code>React.memo</code> with custom comparison props, and pass callbacks wrapped in <code>useCallback</code> to avoid breaking row memoization.</td>
-          <td><strong>Move Like Button Animations to Reanimated v3:</strong> Convert scale/heart pop animations to <code>useSharedValue</code> and <code>useAnimatedStyle</code> so heart animations execute on the UI thread without blocking list scroll events.</td>
+        <ol>
+          <li><strong>Measure before touching anything.</strong> Open the Perf Monitor and read JS FPS vs UI FPS while scrolling. Record a flame graph (Hermes sampling profiler) to see which functions eat the frame. This decides whether the fix is JS-side (re-renders) or native-side (view churn).</li>
+          <li><strong>If UI FPS is low — replace FlatList with FlashList.</strong> Set a realistic <code>estimatedItemSize</code> and add <code>getItemType</code> for the different card shapes, so views recycle instead of being created and destroyed on every fling.</li>
+          <li><strong>If JS FPS is low — fix re-renders.</strong> Wrap the row in <code>React.memo</code>, and pass <code>renderItem</code>, <code>keyExtractor</code>, and <code>onLike</code> via <code>useCallback</code> so a parent render doesn't re-render every row. Hoist expensive per-row work (date formatting) or memoize it.</li>
+          <li><strong>Swap Image for FastImage.</strong> Enable memory + disk caching with priority loading (<code>priority: high</code> for visible cards) and right-size the assets so a 48px avatar isn't a 4K download.</li>
+          <li><strong>Move the like animation to Reanimated v3.</strong> Convert the heart-pop to <code>useSharedValue</code> + <code>useAnimatedStyle</code> so it runs on the UI thread and never competes with list scrolling on the JS thread.</li>
+          <li><strong>Re-measure on a release build.</strong> Confirm the flame graph's hot bars shrank and both frame rates hold at 60. If not, the bottleneck was somewhere else — repeat from step 1.</li>
         </ol>
       </div>
     </div>
@@ -323,7 +862,7 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
 
 <footer>
   <div class="wrap">
-    React Native Performance Stack Study Guide. Built for senior engineering interview preparation.
+    React Native Performance Stack study guide. Built for senior engineering interview preparation — always verify library APIs (FlashList, FastImage, Reanimated) against their current docs, as props and defaults shift between versions.
   </div>
 </footer>
 
@@ -333,19 +872,25 @@ const LIBRARIES = {
     title: "FlashList by Shopify",
     badge: "FlashList",
     badgeClass: "badge flash",
-    summary: "Recycles native views (RecyclerView / UICollectionView) for 10x faster infinite lists.",
+    summary: "Recycles native views (RecyclerView / UICollectionView) for far faster infinite lists.",
     highlights: [
       "Drop-in replacement for FlatList with almost identical props.",
-      "Requires estimatedItemSize to pre-allocate recycling pool.",
-      "Eliminates white space flashes during high-velocity scrolling."
+      "Requires estimatedItemSize to pre-allocate the recycling pool.",
+      "getItemType keeps a separate recycle pool per row shape.",
+      "Eliminates white-space flashes during high-velocity scrolling."
     ],
     code: `import { FlashList } from '@shopify/flash-list';
 
+const renderItem = useCallback(({ item }) => (
+  <PostCard post={item} onLike={handleLike} />
+), [handleLike]);
+
 <FlashList
   data={posts}
-  renderItem={({ item }) => <PostCard post={item} />}
-  estimatedItemSize={120} // Required for native recycling!
-  keyExtractor={item => item.id}
+  renderItem={renderItem}
+  keyExtractor={(item) => item.id}
+  estimatedItemSize={120}          // Required for recycling
+  getItemType={(item) => item.type} // Separate pool per shape
 />`
   },
   fastimage: {
@@ -356,7 +901,8 @@ const LIBRARIES = {
     highlights: [
       "Persistent disk caching survives app reboots and offline mode.",
       "Priority loading (high, normal, low) to load visible images first.",
-      "Built-in preload API to pre-fetch upcoming feed images."
+      "Built-in preload API to pre-fetch upcoming feed images.",
+      "Right-size sources so a small avatar isn't a full-res download."
     ],
     code: `import FastImage from 'react-native-fast-image';
 
@@ -377,7 +923,7 @@ const LIBRARIES = {
     summary: "Compiles JavaScript worklets to execute frame-perfect animations directly on the native UI Thread.",
     highlights: [
       "SharedValues bridge JS and UI thread without async serialization overhead.",
-      "Guaranteed 60-120 FPS even when JS thread is heavy with data fetching.",
+      "Holds 60-120 FPS even when the JS thread is heavy with data fetching.",
       "Full gesture integration via react-native-gesture-handler."
     ],
     code: `import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -422,7 +968,8 @@ export const useStore = create(persist(
 function selectLib(key) {
   const tabs = document.querySelectorAll('.finder-tab');
   tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
-  event.target.setAttribute('aria-selected', 'true');
+  const activeTab = [...tabs].find(t => (t.getAttribute('onclick') || '').includes("'" + key + "'"));
+  if (activeTab) activeTab.setAttribute('aria-selected', 'true');
 
   const data = LIBRARIES[key];
   const target = document.getElementById('lib-target');
@@ -434,7 +981,7 @@ function selectLib(key) {
         <span class="${data.badgeClass}">${data.badge}</span>
       </div>
       <p style="color:var(--slate);margin-bottom:16px">${data.summary}</p>
-      
+
       <div style="margin-bottom:16px">
         <h4 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--slate);margin:0 0 8px">Why It Works</h4>
         <ul style="margin:0;padding-left:20px;color:var(--ink);font-size:0.92rem">

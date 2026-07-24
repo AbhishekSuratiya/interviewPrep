@@ -698,6 +698,17 @@ export const checklistSections = [
     color: '#60a5fa',
     groups: [
       {
+        title: 'React Internals & Architecture',
+        topics: [
+          'From JSX to DOM Pixels (End-to-End Pipeline)',
+          'Stack Reconciler vs Fiber Reconciler',
+          'Fiber Node Anatomy & Linked List Traversal',
+          'Render & Commit Phase Split',
+          'The Work Loop & Task Scheduling (MessageChannel)',
+          'Priority Lanes & Concurrent React',
+        ],
+      },
+      {
         title: 'React Fundamentals',
         topics: [
           'What React is — declarative UI and component model',

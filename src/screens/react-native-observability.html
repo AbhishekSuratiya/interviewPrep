@@ -3,22 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>React Native Observability — Sentry, Symbolication & Telemetry</title>
+<title>React Native Observability — Monitoring, Efficient Telemetry & Impression Tracking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#EDF0F5;
-  --paper-2:#F7F9FC;
-  --ink:#0E1626;
-  --slate:#4A5670;
-  --line:#C9D1DE;
-  --obs:#059669;
-  --display:"Bricolage Grotesque",Georgia,serif;
-  --body:"IBM Plex Sans",system-ui,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,monospace;
-  --maxw:1080px;
+  --paper:#EDF0F5;--paper-2:#F7F9FC;--ink:#0E1626;--slate:#4A5670;--line:#C9D1DE;
+  --obs:#059669;--obs-bg:#D1FAE5;--good:#059669;--bad:#B0175C;--bad-bg:#FBE9F1;--info:#2563EB;--warn:#D97706;
+  --display:"Bricolage Grotesque",Georgia,serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;--maxw:1080px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -28,101 +21,292 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--obs);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--obs)}
+.card p{margin-top:8px;color:var(--slate);font-size:.93rem}
+.card h3{color:var(--ink)}
+
 pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0;font-weight:600}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.9rem}
+th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+tbody th{font-weight:600;width:20%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--good)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--obs);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
+
+.myth{border-left:3px solid var(--obs);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){.step{grid-template-columns:1fr;gap:4px}.step-n{padding-top:0}}
 </style>
 </head>
 <body>
 <header class="hero">
   <div class="wrap">
-    <div class="hero-tag">Production Monitoring & Diagnostics</div>
+    <div class="hero-tag">Production Monitoring &amp; Telemetry</div>
     <h1>
-      <span>Observability & Crash Tracking.</span>
-      <span class="dim">Sentry, Symbolication & Breadcrumbs.</span>
+      <span>Observability</span>
+      <span class="dim">without slowing the app down.</span>
     </h1>
-    <p class="lede">Capture dual-layer JS & native crash reports, automatically symbolicate dSYMs and ProGuard maps, and track session breadcrumbs.</p>
+    <p class="lede">Monitoring isn't free — every event is a network request, some CPU, and battery. The senior skill is capturing enough signal to debug and understand production <em>without</em> flooding the user's connection: sample, batch, keep rich context in memory and only send it on failure. This covers the tools, the efficiency techniques, and how to track what users actually see.</p>
     <div class="hero-meta">
-      <span class="chip">Sentry SDK</span>
-      <span class="chip">dSYM Symbolication</span>
-      <span class="chip">ProGuard Mapping</span>
+      <span class="chip">Crashes &amp; errors</span>
+      <span class="chip">Performance / vitals</span>
+      <span class="chip">Sampling &amp; batching</span>
       <span class="chip">Breadcrumbs</span>
-      <span class="chip">Session Replay</span>
+      <span class="chip">Impression tracking</span>
     </div>
   </div>
 </header>
 
+<!-- WHAT TO MONITOR + TOOLS -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Production Telemetry</div>
-    <h2>Crash Reporting Components</h2>
-    <div class="grid" style="margin-top:28px">
-      <div class="card">
-        <div>
-          <div class="k">Native & JS Errors</div>
-          <h3>Dual-Layer Crash Reporting</h3>
-          <p>Captures unhandled JS exceptions, Hermes engine errors, and native C++/ObjC/Java signal crashes in a single dashboard.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">Symbolication</div>
-          <h3>Source Map Uploads</h3>
-          <p>Uploads iOS dSYMs and Android RGuard / ProGuard mapping files to convert raw memory addresses into exact source filenames and line numbers.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">Diagnostic Trail</div>
-          <h3>Breadcrumb History</h3>
-          <p>Automatically records screen navigation events, network request statuses, and UI tap events leading up to a crash incident.</p>
-        </div>
-      </div>
+    <div class="section-head">
+      <div class="eyebrow">The landscape</div>
+      <h2>What you monitor, and with what</h2>
+      <p>Three distinct signals, often three different tools: stability, performance, and product behavior.</p>
+    </div>
+
+    <div class="grid" style="margin-bottom:28px">
+      <div class="card"><div class="k">Stability</div><h3>Crashes &amp; errors</h3><p>Unhandled JS exceptions, native (Java/ObjC/C++) signal crashes, ANRs, and handled errors — with stack traces and device context.</p></div>
+      <div class="card"><div class="k">Performance</div><h3>Vitals &amp; traces</h3><p>Cold/warm start, slow/frozen frames, screen-load and network timings, and traces of slow transactions.</p></div>
+      <div class="card"><div class="k">Product</div><h3>Analytics &amp; funnels</h3><p>Screen views, feature usage, conversion funnels, and impressions — what users do, not just what breaks.</p></div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Tool</th><th scope="col">Covers</th><th scope="col">Notes</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Sentry</th><td>Crashes, errors, performance, session replay</td><td>Most common all-in-one for RN; dual JS + native, symbolication, breadcrumbs.</td></tr>
+          <tr><th scope="row">Firebase Crashlytics</th><td>Crashes / stability</td><td>Free, lightweight, ubiquitous; pair with GA/Firebase Performance.</td></tr>
+          <tr><th scope="row">Datadog / New Relic Mobile</th><td>Full RUM + backend correlation</td><td>Powerful end-to-end observability; heavier and pricier.</td></tr>
+          <tr><th scope="row">Bugsnag / Embrace / Instabug</th><td>Stability, mobile RUM, user feedback</td><td>Embrace &amp; Instabug are mobile-first; Instabug adds in-app bug reports.</td></tr>
+          <tr><th scope="row">Amplitude / Mixpanel / PostHog</th><td>Product analytics</td><td>Funnels, retention, impressions — the “what users do” layer.</td></tr>
+          <tr><th scope="row">OpenTelemetry / Grafana Faro</th><td>Vendor-neutral telemetry</td><td>Standard schema you can route anywhere; avoids vendor lock-in.</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
+<!-- EFFICIENT MONITORING -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Sentry Setup</div>
-    <h2>Sentry Initialization & React Navigation Instrumentation</h2>
-    <pre><code>import * as Sentry from '@sentry/react-native';
+    <div class="section-head">
+      <div class="eyebrow">The cost problem</div>
+      <h2>Monitoring efficiently — don't drown the network</h2>
+      <p>Naive telemetry fires a request per event. On a scrolling feed that's hundreds of requests, draining battery and data and adding latency. Here's how to keep the signal and drop the load.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Technique</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Sampling</th><td>Send a fraction of performance traces and replays (<code>tracesSampleRate: 0.1</code>). Keep <b>100% of crashes</b>, sample the noisy stuff. Use <code>replaysOnErrorSampleRate: 1.0</code> but a low session rate.</td></tr>
+          <tr><th scope="row">Batching / buffering</th><td>Queue events in memory and flush in <b>one request</b> on a size or time threshold — not one request per event. The single biggest lever.</td></tr>
+          <tr><th scope="row">Breadcrumbs</th><td>Keep a rolling in-memory trail (taps, navigations, requests). It costs nothing until an error occurs, then ships <b>with</b> that one report — rich context, near-zero traffic.</td></tr>
+          <tr><th scope="row">Debounce / throttle</th><td>Never emit per-frame. Coalesce high-frequency signals (scroll, keystroke, impressions) before recording.</td></tr>
+          <tr><th scope="row">Offline queue + backoff</th><td>Persist events, send when reachable, retry with backoff, prefer un-metered connections and app-foreground/idle.</td></tr>
+          <tr><th scope="row">Trim the payload</th><td>gzip; drop verbose fields; <b>strip PII</b> in <code>beforeSend</code>. Smaller, safer, cheaper.</td></tr>
+          <tr><th scope="row">Client-side aggregation</th><td>Count/summarize on device (e.g. “42 impressions of card X”) and send the <b>rollup</b>, not 42 events.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note good">
+      <span class="tag">The best-way answer</span>
+      <b>Capture generously in memory, transmit sparingly.</b> Keep 100% of crashes; sample traces/replays; batch everything else into periodic bulk flushes; keep context as breadcrumbs that only ship on error; aggregate high-frequency events on-device; queue offline and send on a good connection. You get debuggable production data at a tiny fraction of the requests.
+    </div>
+  </div>
+</section>
+
+<!-- IMPRESSION TRACKING -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Impression tracking</div>
+      <h2>Capturing “the user actually saw this”</h2>
+      <p>To log that a feed item was <em>seen</em> (not just rendered), FlatList/FlashList expose <code>onViewableItemsChanged</code> — it fires as items cross a visibility threshold. It's the right hook for impressions, ads, and “viewed” analytics.</p>
+    </div>
+
+    <h4 class="subhead">How viewability works</h4>
+    <p class="body-copy"><code>viewabilityConfig</code> defines what “visible” means; <code>onViewableItemsChanged</code> fires with the items that entered/left that state. The key knobs:</p>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th scope="col">Config</th><th scope="col">Meaning</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><code>itemVisiblePercentThreshold</code></th><td>How much of the row must be on-screen to count (e.g. <code>60</code> = 60%).</td></tr>
+          <tr><th scope="row"><code>minimumViewTime</code></th><td>Milliseconds it must stay visible before firing — <b>the anti-fast-scroll filter</b>. Set ~500–1000ms so flinging past doesn't count as an impression.</td></tr>
+          <tr><th scope="row"><code>waitForInteraction</code></th><td>Don't count anything until the user first scrolls/taps.</td></tr>
+          <tr><th scope="row"><code>viewAreaCoveragePercentThreshold</code></th><td>Alternative: % of the viewport the item covers (for big rows).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">The gotcha everyone hits</span>
+      FlatList throws <b>“Changing onViewableItemsChanged on the fly is not supported.”</b> Both the callback and the config must be <b>stable references</b> — define them with <code>useRef</code> (or <code>viewabilityConfigCallbackPairs</code>), never inline. A fresh function each render crashes the list.
+    </div>
+
+    <h4 class="subhead">The best way to integrate it</h4>
+    <div class="steps">
+      <div class="step"><div class="step-n">01</div><div class="step-body"><h3>Stable refs</h3><p>Put <code>onViewableItemsChanged</code> and <code>viewabilityConfig</code> in <code>useRef</code> so their identity never changes across renders.</p></div></div>
+      <div class="step"><div class="step-n">02</div><div class="step-body"><h3>Filter with <code>minimumViewTime</code></h3><p>Require the item to dwell (~500ms+) so a fast scroll doesn't fabricate impressions — this alone kills most of the noise.</p></div></div>
+      <div class="step"><div class="step-n">03</div><div class="step-body"><h3>Dedupe per session</h3><p>Track already-seen ids in a <code>Set</code> so re-scrolling past an item doesn't double-count.</p></div></div>
+      <div class="step"><div class="step-n">04</div><div class="step-body"><h3>Batch, don't fire per item</h3><p>Push impressions into a buffer and flush in <b>bulk</b> on an interval / size threshold (and on screen-blur) — one request for many impressions, matching the efficiency rules above.</p></div></div>
+    </div>
+
+    <p class="codecap">Batched, deduped impression tracking</p>
+<pre><code>function Feed({ posts }) {
+  const seen = useRef(new Set());
+  const buffer = useRef([]);
+
+  <span class="c">// stable config — visible ≥60% for ≥500ms filters out fast scrolls</span>
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 60,
+    minimumViewTime: 500,
+  }).current;
+
+  <span class="c">// stable callback — collect, dedupe; DON'T send per item</span>
+  const onViewableItemsChanged = useRef(({ viewableItems }) =&gt; {
+    for (const { item } of viewableItems) {
+      if (!seen.current.has(item.id)) {
+        seen.current.add(item.id);
+        buffer.current.push({ id: item.id, at: Date.now() });
+      }
+    }
+  }).current;
+
+  <span class="c">// flush the buffer in ONE request, periodically</span>
+  useEffect(() =&gt; {
+    const t = setInterval(() =&gt; {
+      if (buffer.current.length) {
+        <span class="g">analytics.track('impressions', { items: buffer.current });</span>
+        buffer.current = [];
+      }
+    }, 5000);
+    return () =&gt; clearInterval(t);
+  }, []);
+
+  return (
+    &lt;FlatList
+      data={posts}
+      renderItem={renderItem}
+      <span class="g">viewabilityConfig={viewabilityConfig}</span>
+      <span class="g">onViewableItemsChanged={onViewableItemsChanged}</span>
+    /&gt;
+  );
+}</code></pre>
+
+    <div class="note">
+      <span class="tag">Passing it to native analytics</span>
+      Impression capture happens in JS (viewability is a JS-computed event), then the <b>batched rollup</b> is what you hand to the native SDK (Firebase/Amplitude/Sentry) — a single <code>track</code> with many items rather than a native call per row. That keeps the bridge/JSI and the network quiet while still recording every genuine view.
+    </div>
+  </div>
+</section>
+
+<!-- SENTRY SETUP -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Setup</div>
+      <h2>Sentry — sampled, native, PII-stripped</h2>
+    </div>
+<pre><code>import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
   dsn: 'https://key@sentry.io/project-id',
-  tracesSampleRate: 0.2,
-  enableNative: true,
+  enableNative: true,                 <span class="c">// JS + native crashes in one place</span>
   release: 'com.myapp@1.4.0+42',
+  <span class="g">tracesSampleRate: 0.1,</span>              <span class="c">// sample perf — keep 100% of crashes</span>
+  <span class="g">replaysOnErrorSampleRate: 1.0,</span>      <span class="c">// replay only when it matters</span>
+  replaysSessionSampleRate: 0.0,
   beforeSend(event) {
-    // Strip sensitive tokens from URL breadcrumbs
+    <span class="c">// strip sensitive data before it leaves the device</span>
     if (event.breadcrumbs) {
-      event.breadcrumbs = event.breadcrumbs.filter(
-        b => !b.data?.url?.includes('/auth/')
-      );
+      event.breadcrumbs = event.breadcrumbs.filter(b =&gt; !b.data?.url?.includes('/auth/'));
     }
     return event;
   },
 });
 
 export default Sentry.wrap(App);</code></pre>
+    <p class="body-copy" style="margin-top:16px">Upload iOS dSYMs and Android R8/ProGuard mapping files in CI so raw addresses symbolicate into real file + line numbers — otherwise native crashes are unreadable.</p>
+  </div>
+</section>
+
+<!-- MYTHS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Interview Pitfalls</div>
+    <h2>Observability Myths</h2>
+    <div class="myth">
+      <div class="claim">"Track every event in real time for the best data."</div>
+      <p class="truth"><b>Costly and unnecessary.</b> Per-event requests drain battery/data and add latency. Batch, sample, and aggregate on-device — you keep the signal at a fraction of the load.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"onViewableItemsChanged can be an inline function."</div>
+      <p class="truth"><b>No.</b> FlatList throws if the callback or config changes between renders. Wrap both in <code>useRef</code> (or use <code>viewabilityConfigCallbackPairs</code>).</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"An item rendering means the user saw it."</div>
+      <p class="truth"><b>False.</b> Virtualized lists render items just off-screen, and fast scrolls flash items by. Use a visibility threshold <em>and</em> <code>minimumViewTime</code> to count a real impression.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"Sampling means you'll miss crashes."</div>
+      <p class="truth"><b>Not if configured right.</b> Sample <em>performance traces and replays</em>; keep error/crash capture at 100%. They're separate rates.</p>
+    </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">React Native Observability Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native Observability guide — senior interview prep. SDK options (sample rates, replay, viewability config) change across versions — verify against current Sentry / analytics and React Native docs.</div>
 </footer>
 </body>
 </html>

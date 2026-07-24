@@ -1,12 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'prepdocs:journal';
 
 export default function PrepJournal({ isLight }) {
-  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState(() => {
     try {
@@ -25,68 +21,12 @@ export default function PrepJournal({ isLight }) {
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
 
-  // Firestore sync states
-  const lastRemoteValueRef = useRef(null);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const syncing = false;
 
-  // 1. Listen to Firestore in real-time
-  useEffect(() => {
-    if (!user) {
-      setInitialLoadDone(true);
-      return;
-    }
-    setInitialLoadDone(false);
-    setSyncing(true);
-
-    const unsub = onSnapshot(
-      doc(db, 'users', user.uid),
-      (snap) => {
-        setSyncing(false);
-        if (snap.exists() && snap.data().journalNotes) {
-          const remoteNotes = snap.data().journalNotes;
-          lastRemoteValueRef.current = remoteNotes;
-          setItems((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(remoteNotes)) {
-              return remoteNotes;
-            }
-            return prev;
-          });
-        }
-        setInitialLoadDone(true);
-      },
-      (err) => {
-        console.error('Failed to listen to journal from Firestore:', err);
-        setSyncing(false);
-        setInitialLoadDone(true);
-      }
-    );
-
-    return () => unsub();
-  }, [user]);
-
-  // 2. Persist Local & Firestore Sync
+  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-
-    if (user && initialLoadDone) {
-      // Avoid writing if this update came from the server
-      if (
-        lastRemoteValueRef.current &&
-        JSON.stringify(items) === JSON.stringify(lastRemoteValueRef.current)
-      ) {
-        return;
-      }
-
-      setSyncing(true);
-      setDoc(doc(db, 'users', user.uid), { journalNotes: items }, { merge: true })
-        .then(() => setSyncing(false))
-        .catch((err) => {
-          console.error('Failed to sync journal to Firestore:', err);
-          setSyncing(false);
-        });
-    }
-  }, [items, user, initialLoadDone]);
+  }, [items]);
 
   // 4. Form Actions
   const handleAddItem = (e) => {

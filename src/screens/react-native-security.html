@@ -16,6 +16,12 @@
   --line:#C9D1DE;
   --sec:#DC2626;
   --sec-bg:#FEE2E2;
+  --good:#059669;
+  --good-bg:#D1FAE5;
+  --warn:#D97706;
+  --warn-bg:#FEF3C7;
+  --info:#2563EB;
+  --info-bg:#DBEAFE;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -33,23 +39,90 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--sec);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--sec)}
+.card p{margin-top:8px}
+
+/* numbered flow */
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--sec);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
+
+/* code */
 pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:.92rem}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+tbody th{font-weight:600;width:24%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+/* callouts */
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--sec)}
+.note.good{border-left-color:var(--good)}
+.note.amber{border-left-color:var(--warn)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+/* pros / cons */
+.ce{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.ce > div{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--paper-2)}
+.ce h4{font-size:1rem;margin-bottom:10px}
+.ce ul{margin:0;padding-left:18px;font-size:.9rem;color:var(--slate);line-height:1.65}
+.ce li{margin-bottom:6px}
+.ce .pro{border-color:var(--good)}
+.ce .con{border-color:var(--sec)}
+.ce .pro h4{color:var(--good)}
+.ce .con h4{color:var(--sec)}
+.tick{color:var(--good);font-weight:600}
+.cross{color:var(--sec);font-weight:600}
+@media (max-width:640px){.ce{grid-template-columns:1fr}}
+
+/* myths */
 .myth{border-left:3px solid var(--sec);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){
+  .step{grid-template-columns:1fr;gap:4px}
+  .step-n{padding-top:0}
+}
 </style>
 </head>
 <body>
@@ -58,99 +131,390 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
     <div class="hero-tag">React Native Mobile Security</div>
     <h1>
       <span>Defense in Depth.</span>
-      <span class="dim">SSL Pinning, Obfuscation & Root Detection.</span>
+      <span class="dim">SSL Pinning, Obfuscation &amp; Root Detection.</span>
     </h1>
-    <p class="lede">Protect mobile client code and API communication against MITM proxy attacks, reverse engineering, tamper modifications, and rooted environment threats.</p>
+    <p class="lede">Protect client code and API traffic against MITM proxies, reverse engineering, tampering, and rooted devices. The centerpiece is SSL pinning — done wrong it silently bricks every user; done right it's the difference between an intercepted API and one that can't be read even by someone holding a trusted CA.</p>
     <div class="hero-meta">
-      <span class="chip">SSL Pinning</span>
-      <span class="chip">Public Key Hashes</span>
+      <span class="chip">SSL / TLS Pinning</span>
+      <span class="chip">SPKI Public-Key Hash</span>
+      <span class="chip">Backup Pins &amp; Rotation</span>
+      <span class="chip">Native vs Library</span>
       <span class="chip">ProGuard / R8</span>
-      <span class="chip">Hermes Bytecode</span>
-      <span class="chip">JailMonkey</span>
+      <span class="chip">Root Detection</span>
     </div>
   </div>
 </header>
 
+<!-- PILLARS -->
 <section>
   <div class="wrap">
     <div class="eyebrow">Security Architecture Pillars</div>
     <h2>Multi-Layered Client Security</h2>
     <div class="grid" style="margin-top:28px">
       <div class="card">
-        <div>
-          <div class="k">Transport Layer</div>
-          <h3>SSL / TLS Pinning</h3>
-          <p>Pins server public key hashes (SHA-256) inside network config files or native layer. Rejects connections from proxy tools (Charles, Proxyman, Burp) even if device user installs a custom CA certificate.</p>
-        </div>
+        <div class="k">Transport Layer</div>
+        <h3>SSL / TLS Pinning</h3>
+        <p>Pins the server's public-key hash (SHA-256 of the SPKI) in the app. Rejects connections whose certificate doesn't match — even when a proxy tool (Charles, Proxyman, Burp) has installed its own trusted CA on the device.</p>
       </div>
       <div class="card">
-        <div>
-          <div class="k">Code Protection</div>
-          <h3>Hermes + ProGuard / R8</h3>
-          <p>Compiles JS into Hermes bytecode binary. Runs R8 code obfuscation on Android Java bytecode to rename classes and methods, preventing easy decompilation into readable source.</p>
-        </div>
+        <div class="k">Code Protection</div>
+        <h3>Hermes + ProGuard / R8</h3>
+        <p>Ships JS as Hermes bytecode instead of readable source, and runs R8 obfuscation on Android to rename classes/methods — raising the cost of decompilation and static analysis.</p>
       </div>
       <div class="card">
-        <div>
-          <div class="k">Runtime Environment</div>
-          <h3>Root / Jailbreak Detection</h3>
-          <p>Queries native OS flags via <code>JailMonkey</code> or custom native modules to detect Cydia, Magisk, Substrate, or ADB debugging flags, restricting sensitive financial operations.</p>
-        </div>
+        <div class="k">Runtime Environment</div>
+        <h3>Root / Jailbreak Detection</h3>
+        <p>Uses <code>JailMonkey</code> or a native module to detect Magisk, Cydia, Frida hooks, or ADB flags, and gates sensitive financial operations on an untampered device.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- WHAT PINNING IS: THE FULL FLOW -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Implementation Patterns</div>
-    <h2>SSL Pinning & Jailbreak Detection Code</h2>
-    <pre><code>// 1. Jailbreak / Root detection gate
-import JailMonkey from 'react-native-jailmonkey';
+    <div class="section-head">
+      <div class="eyebrow">The mechanism · end to end</div>
+      <h2>What SSL pinning actually does</h2>
+      <p>To understand pinning you have to understand the hole it closes. Normal TLS trusts <em>any</em> certificate signed by a CA the device trusts — and the device trusts hundreds of CAs, plus any a user (or attacker) installs.</p>
+    </div>
+
+    <h4 class="subhead">Keys first: what lives where</h4>
+    <p class="body-copy">The server holds a <strong>private key</strong> that never leaves the server. Its matching <strong>public key</strong> is embedded in the server's TLS <strong>certificate</strong>, which is public by design — anyone connecting receives it. Asymmetric crypto means data (or a signature) produced with the private key can only be verified/undone with the public key, and vice-versa. The client never has the private key; pinning is about the client refusing to trust any public key except the specific one(s) it was told to expect.</p>
+
+    <h4 class="subhead">The handshake, step by step</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Client says hello</h3>
+          <p>The app opens a TLS connection to <code>api.myapp.com</code> — sending supported cipher suites, TLS version, and the hostname (SNI). No secrets yet.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Server presents its certificate chain</h3>
+          <p>The server returns its <strong>leaf certificate</strong> (containing its public key), plus the intermediate CA cert(s) that chain up to a trusted root. Crucially, it also signs part of the handshake with its <strong>private key</strong> — proving it actually holds the key the certificate claims.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Standard validation (this is the weak point)</h3>
+          <p>The OS checks the chain: is it signed by a CA in the device's trust store, is the hostname right, is it unexpired? If yes, TLS is happy — <strong>and it does not care <em>which</em> CA</strong>. A proxy that installed its own CA passes this check.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Pin check (the extra gate you add)</h3>
+          <p>Before trusting the connection, the app computes the SHA-256 hash of the presented certificate's <strong>Subject Public Key Info (SPKI)</strong> and compares it to the pin(s) baked into the app. Match → continue. Mismatch → <strong>abort the connection</strong>, fail closed, no data sent.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>Key exchange &amp; encrypted traffic</h3>
+          <p>Client and server run an (EC)DHE exchange to derive symmetric session keys. All application data is then encrypted with those keys. The private key never travels; it's only used to prove identity during the handshake.</p>
+        </div>
+      </div>
+    </div>
+
+    <h4 class="subhead">How this stops a man-in-the-middle</h4>
+    <p class="body-copy">A MITM proxy sits between the app and the server and installs its own CA certificate on the device (a common “debug” or corporate-managed setup). It then presents the app a certificate for <code>api.myapp.com</code> signed by <em>its</em> CA. Under normal TLS this passes — the device trusts that CA — so the proxy decrypts your traffic, reads it, and re-encrypts to the real server. Nobody notices.</p>
+
+    <div class="note warn">
+      <span class="tag">Why the pin defeats it</span>
+      The proxy does <b>not</b> have your server's private key, so it cannot present your server's public key — it must use its own. When the app hashes the presented public key, it <b>won't match the pin</b>, and the connection is dropped before a single byte of application data is sent. The attacker's certificate is “valid” to the OS but <b>wrong</b> to your app. That's the whole game.
+    </div>
+
+    <div class="note warn">
+      <span class="tag">The one case pinning does NOT save you from</span>
+      If the server's <b>private key itself leaks</b>, the attacker can present your real public key — which <b>matches the pin</b> — and MITM successfully. Pinning trusts that key; a stolen key is trusted too. The only fix is to <b>rotate to a new key pair</b> and get clients onto a new pin (see rotation below). This is exactly why you never pin just one key.
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU PIN -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">What you pin, and why</div>
+      <h2>Hash the public key — and keep more than one</h2>
+      <p>Two decisions define a healthy pinning setup: <em>what</em> value you pin, and <em>how many</em>. Getting either wrong is how teams brick their own apps.</p>
+    </div>
+
+    <h4 class="subhead">Pin the SPKI hash, not the certificate, not the raw key</h4>
+    <p class="body-copy">You pin a <strong>SHA-256 hash of the public key</strong> (the SPKI), typically base64-encoded, rather than the full certificate or the raw key bytes. Why the hash of the <em>public key</em> specifically:</p>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th scope="col">You could pin…</th><th scope="col">Problem</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">The whole certificate</th><td>Certificates expire and get reissued constantly (Let's Encrypt every 90 days). Every renewal changes the cert → every renewal breaks the app. Brittle.</td></tr>
+          <tr><th scope="row">The public key (SPKI) hash <span class="tick">✓</span></th><td>Survives certificate renewal <b>as long as you reuse the same key pair</b> when reissuing. Compact, stable, and it's what OkHttp / <code>network_security_config</code> / TrustKit all expect.</td></tr>
+          <tr><th scope="row">The raw public key bytes</th><td>Works, but larger to embed and no privacy benefit; the hash is the standard, and it's what the tooling emits.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-copy" style="margin-top:16px">You can pin at different levels of the chain: the <strong>leaf</strong> key (strictest, but rotates most often), or an <strong>intermediate CA</strong> key (survives leaf renewals as long as the CA/intermediate is unchanged, at the cost of trusting anything that intermediate signs). A common setup pins the leaf SPKI plus a backup.</p>
+
+    <h4 class="subhead">Why you MUST keep multiple pins</h4>
+    <p class="body-copy">Pins are baked into a released app. If you pin exactly one key and that key ever has to change — expiry, compromise, a CA migration — every installed client that only knows the old pin <strong>can no longer connect</strong>, and you can't fix them without an app-store update that users install on their own slow schedule. You've locked yourself out of your own users.</p>
+
+    <div class="note good">
+      <span class="tag">The backup-pin rule (RFC 7469)</span>
+      Always ship <b>at least two pins</b>: the key currently in use, plus a <b>backup key you are not using yet</b> — generated in advance and kept <b>offline</b> in cold storage. Because clients already trust the backup, you can switch the server to it <b>instantly</b> during an incident with zero client breakage, then generate the next backup. One pin is a single point of failure; the backup is your escape hatch.
+    </div>
+
+    <p class="codecap">What a leaf + backup pin set looks like (Android)</p>
+<pre><code>&lt;pin-set expiration="2026-12-31"&gt;
+  <span class="c">&lt;!-- Current leaf public-key hash --&gt;</span>
+  <span class="g">&lt;pin digest="SHA-256"&gt;r/m5B44373O61nnd94LA67DMq45L8gQI...=&lt;/pin&gt;</span>
+  <span class="c">&lt;!-- Backup key — NOT in use yet, kept offline for rotation --&gt;</span>
+  <span class="g">&lt;pin digest="SHA-256"&gt;YLh1ua5N81AY_MD16AYPq1c5L8gQI...=&lt;/pin&gt;</span>
+&lt;/pin-set&gt;</code></pre>
+  </div>
+</section>
+
+<!-- IMPLEMENTATION: NATIVE VS LIBRARY -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Two ways to implement it</div>
+      <h2>Native pinning vs a JS library</h2>
+      <p>You can enforce pinning at the OS networking layer (native config) or through a React Native library that ships its own network client. They fail in opposite directions — the trade-off is coverage vs. update flexibility.</p>
+    </div>
+
+    <h4 class="subhead">Option A · Native (OS-level)</h4>
+    <p class="body-copy">Android: <code>network_security_config.xml</code> (or OkHttp <code>CertificatePinner</code>). iOS: an <code>NSURLSession</code> auth-challenge delegate or <a>TrustKit</a>. The pin is enforced by the platform's own networking stack, <strong>below</strong> JavaScript.</p>
+    <div class="ce">
+      <div class="pro">
+        <h4>Pros</h4>
+        <ul>
+          <li><span class="tick">✓</span> Covers <b>all</b> traffic automatically — <code>fetch</code>, Axios, image loading, WebViews, and third-party SDKs — because it's enforced at the OS socket layer.</li>
+          <li><span class="tick">✓</span> Hardest to bypass; runs in native code, not the JS bundle.</li>
+          <li><span class="tick">✓</span> Uses first-class platform APIs that track OS TLS changes.</li>
+        </ul>
+      </div>
+      <div class="con">
+        <h4>Cons</h4>
+        <ul>
+          <li><span class="cross">✗</span> The pin is <b>compiled into the binary / native config</b> — you <b>can't update the public key on the fly</b>. Changing it needs a full app-store release.</li>
+          <li><span class="cross">✗</span> Per-platform setup (separate Android and iOS configuration).</li>
+          <li><span class="cross">✗</span> A rotation mistake can only be fixed by shipping and getting users to update — slow and partial.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4 class="subhead">Option B · JS library (e.g. react-native-ssl-pinning)</h4>
+    <p class="body-copy">Libraries like <code>react-native-ssl-pinning</code> expose their <strong>own <code>fetch</code></strong> that performs the pin check. Pinning applies <strong>only to requests made through that function</strong>.</p>
+    <div class="ce">
+      <div class="pro">
+        <h4>Pros</h4>
+        <ul>
+          <li><span class="tick">✓</span> One cross-platform JS API; quick to wire up.</li>
+          <li><span class="tick">✓</span> Pin config lives in JS, so it <b>can be updated via CodePush / OTA</b> without an app-store release (with big caveats — see rotation).</li>
+          <li><span class="tick">✓</span> Easy to point at a remote, signed pin list for dynamic rotation.</li>
+        </ul>
+      </div>
+      <div class="con">
+        <h4>Cons</h4>
+        <ul>
+          <li><span class="cross">✗</span> <b>You can't cover the whole app.</b> Only calls that go through the library's <code>fetch</code> are pinned. Default <code>fetch</code>, Axios, <code>&lt;Image&gt;</code> loads, analytics/ads SDKs, and WebViews are <b>unprotected</b> unless you route every one through it — which is often impossible for third-party code.</li>
+          <li><span class="cross">✗</span> Extra dependency that can lag OS/TLS changes and add native build friction.</li>
+          <li><span class="cross">✗</span> Enforced in the JS layer — a determined attacker on a rooted device (Frida) has an easier hook point than native.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">The senior takeaway</span>
+      <b>Native = total coverage but rigid updates. Library = flexible updates but partial coverage.</b> Many teams use native pinning for whole-app protection and drive it from a <b>remotely fetched, signed pin list</b> so keys can rotate without a store release — getting coverage <em>and</em> flexibility. If you use a library, you must consciously route <b>every</b> network path through its client, or accept that the rest of your traffic isn't pinned.
+    </div>
+  </div>
+</section>
+
+<!-- ROTATION -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Rotation · the part that bricks apps</div>
+      <h2>When and how to rotate pins</h2>
+      <p>Rotation is where pinning gets dangerous. A pin is a promise baked into apps already on phones; changing it wrong means those phones stop talking to your server.</p>
+    </div>
+
+    <h4 class="subhead">When to rotate</h4>
+    <div class="grid">
+      <div class="card">
+        <div class="k">Scheduled</div>
+        <p style="color:var(--slate)">Ahead of certificate/key expiry, and periodically as hygiene. Note: if you <b>reuse the same key</b> on cert renewal, the SPKI pin doesn't change and no client update is needed — only <em>key</em> changes force a pin change.</p>
+      </div>
+      <div class="card">
+        <div class="k">Emergency</div>
+        <p style="color:var(--slate)">On a suspected or confirmed <b>private-key compromise</b>, a CA breach, or a forced CA migration. This is the scenario the backup pin exists for.</p>
+      </div>
+      <div class="card">
+        <div class="k">Structural</div>
+        <p style="color:var(--slate)">Changing hosting/CDN or TLS provider that alters the presented key or intermediate. Anything that changes the pinned public key requires a planned rotation.</p>
+      </div>
+    </div>
+
+    <h4 class="subhead">How to rotate safely (native)</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>Ship the next key's pin <em>before</em> you need it</h3>
+          <p>Generate the backup key pair in advance and include its SPKI hash as a second pin in a released app. Now installed clients trust both the current key and the future one.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>Wait for adoption</h3>
+          <p>Let the release roll out so the large majority of active users are on a build that knows the backup pin. This is why you plan rotation weeks ahead — you're racing the update-adoption curve.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Switch the server to the backup key</h3>
+          <p>Issue a new certificate using the pre-shipped backup key and deploy it. Clients that already trust that pin connect seamlessly; nothing breaks.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Mint the next backup</h3>
+          <p>Generate a fresh offline backup key and ship its pin in the next app release, so you're always one key ahead. Rotation is a rolling pipeline, never a one-off.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <span class="tag">The failure mode to name in an interview</span>
+      Rotating a native pin <b>without a pre-shipped backup</b> instantly bricks every client that hasn't updated — they refuse the new key, and they can't be fixed remotely because pinning has cut them off. Recovery means an emergency app-store release and hoping users update. This is the single biggest operational risk of pinning, and the reason backup pins are non-negotiable.
+    </div>
+
+    <h4 class="subhead">Rotating via a library + code push (OTA)</h4>
+    <p class="body-copy">Because a library's pins live in JS, you <em>can</em> update them with CodePush / EAS Update and rotate without an app-store release — which is the main reason teams reach for a library. It genuinely solves the “native pins are frozen in the binary” problem. But there are sharp edges:</p>
+    <div class="ce">
+      <div class="pro">
+        <h4>Why it can work</h4>
+        <ul>
+          <li><span class="tick">✓</span> The OTA update service (Expo/Microsoft) is usually a <b>different, un-pinned domain</b>, so a client with a broken pin to <em>your</em> API can still download the fix.</li>
+          <li><span class="tick">✓</span> Config-only OTA pin updates are allowed by store policies (no native code change).</li>
+          <li><span class="tick">✓</span> Turns a multi-day store rotation into minutes.</li>
+        </ul>
+      </div>
+      <div class="con">
+        <h4>Why it's risky</h4>
+        <ul>
+          <li><span class="cross">✗</span> Only pins the JS-library traffic — everything else in the app is still unprotected.</li>
+          <li><span class="cross">✗</span> You're now trusting the <b>OTA channel</b> as part of your security boundary; it must be signature-verified, or a bad push could weaken/replace your pins.</li>
+          <li><span class="cross">✗</span> Code push can't change <b>native</b> pinning or native modules — only the JS bundle.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note good">
+      <span class="tag">Best of both</span>
+      A robust setup: <b>native pinning</b> for whole-app coverage, backed by a <b>remotely fetched, cryptographically signed pin list</b> and always-present backup pins. You get OS-level coverage, and you can rotate keys without waiting on the store — the flexibility people chase with a library, without giving up coverage.
+    </div>
+  </div>
+</section>
+
+<!-- CODE -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Implementation Patterns</div>
+      <h2>Pinning &amp; device-integrity code</h2>
+    </div>
+
+    <p class="codecap">Android · network_security_config.xml (covers all app traffic)</p>
+<pre><code>&lt;network-security-config&gt;
+  &lt;domain-config&gt;
+    &lt;domain includeSubdomains="true"&gt;api.myapp.com&lt;/domain&gt;
+    &lt;pin-set expiration="2026-12-31"&gt;
+      <span class="g">&lt;pin digest="SHA-256"&gt;r/m5B44373O61nnd94LA67DMq45L8gQI...=&lt;/pin&gt;</span>  <span class="c">&lt;!-- current --&gt;</span>
+      <span class="g">&lt;pin digest="SHA-256"&gt;YLh1ua5N81AY_MD16AYPq1c5L8gQI...=&lt;/pin&gt;</span>  <span class="c">&lt;!-- backup --&gt;</span>
+    &lt;/pin-set&gt;
+  &lt;/domain-config&gt;
+&lt;/network-security-config&gt;</code></pre>
+
+    <p class="codecap">JS library · pinning applies ONLY to this fetch</p>
+<pre><code>import { fetch } from 'react-native-ssl-pinning';
+
+<span class="c">// ⚠️ Only requests through THIS fetch are pinned.</span>
+<span class="c">// Default fetch/Axios/&lt;Image&gt;/SDKs are NOT covered.</span>
+await fetch('https://api.myapp.com/me', {
+  method: 'GET',
+  sslPinning: { certs: ['cert-current', 'cert-backup'] }, <span class="g">// current + backup</span>
+  headers: { Accept: 'application/json' },
+});</code></pre>
+
+    <p class="codecap">Extract the SPKI pin from a server (for either approach)</p>
+<pre><code><span class="c"># Hash the server's public key exactly as the pin format expects</span>
+openssl s_client -connect api.myapp.com:443 -servername api.myapp.com \
+  | openssl x509 -pubkey -noout \
+  | openssl pkey -pubin -outform der \
+  | openssl dgst -sha256 -binary \
+  | openssl enc -base64
+<span class="c"># → r/m5B44373O61nnd94LA67DMq45L8gQI...=</span></code></pre>
+
+    <p class="codecap">Device-integrity gate (defense in depth, not a pinning substitute)</p>
+<pre><code>import JailMonkey from 'react-native-jailmonkey';
 import { Alert, BackHandler } from 'react-native';
 
 export function enforceDeviceSecurity() {
   if (JailMonkey.isJailBroken() || JailMonkey.hookDetected()) {
-    Alert.alert(
-      'Security Exception',
+    Alert.alert('Security Exception',
       'Untrusted environment detected. App closing for security.',
-      [{ text: 'OK', onPress: () => BackHandler.exitApp() }]
-    );
+      [{ text: 'OK', onPress: () =&gt; BackHandler.exitApp() }]);
     return false;
   }
   return true;
-}
-
-// 2. Android network_security_config.xml (Public key pinning)
-/*
-&lt;network-security-config&gt;
-  &lt;domain-config&gt;
-    &lt;domain includeSubdomains="true"&gt;api.myapp.com&lt;/domain&gt;
-    &lt;pin-set expiration="2026-12-31"&gt;
-      &lt;!-- Primary Public Key Hash --&gt;
-      &lt;pin digest="SHA-256"&gt;r/m5B44373O61nnd94LA67DMq45L8gQI...=&lt;/pin&gt;
-      &lt;!-- Backup Rotation Hash --&gt;
-      &lt;pin digest="SHA-256"&gt;YLh1ua5N81AY_MD16AYPq1c5L8gQI...=&lt;/pin&gt;
-    &lt;/pin-set&gt;
-  &lt;/domain-config&gt;
-&lt;/network-security-config&gt;
-*/</code></pre>
+}</code></pre>
   </div>
 </section>
 
+<!-- MYTHS -->
 <section>
   <div class="wrap">
     <div class="eyebrow">Interview Pitfalls</div>
     <h2>Client Security Realities</h2>
+
     <div class="myth">
-      <div class="claim">"Client-side obfuscation makes a mobile app completely unhackable."</div>
-      <p class="truth"><b>False.</b> Client code runs on untrusted user hardware. Obfuscation and pinning raise the cost of reverse engineering, but true security secrets and sensitive business rules must always remain on the backend server.</p>
+      <div class="claim">"SSL pinning stops a man-in-the-middle even if the attacker steals the server's private key."</div>
+      <p class="truth"><b>False.</b> A leaked private key lets the attacker present your real public key, which <b>matches the pin</b>. Pinning trusts that key. The only remedy is to rotate to a new key pair and move clients onto a new pin — which is why backup pins exist.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"A pinning library secures the whole app's network traffic."</div>
+      <p class="truth"><b>False.</b> Library pinning only covers requests made through the library's own <code>fetch</code>. Default <code>fetch</code>, Axios, image loads, WebViews, and third-party SDKs are unpinned unless routed through it. Native config pins <b>all</b> traffic.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"We only need to pin one key — the current one."</div>
+      <p class="truth"><b>Dangerous.</b> A single pin is a single point of failure. If that key must change, every un-updated client is bricked. Always ship a <b>backup pin</b> (an offline key not yet in use) so you can rotate without breaking clients.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Pin the certificate so it's tightly locked down."</div>
+      <p class="truth"><b>Brittle.</b> Certificates are reissued frequently; pinning the whole cert breaks on every renewal. Pin the <b>public-key (SPKI) hash</b> and reuse the key across renewals so the pin stays stable.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Client-side obfuscation and pinning make an app unhackable."</div>
+      <p class="truth"><b>False.</b> Client code runs on untrusted hardware. Pinning and obfuscation raise the attacker's cost; they don't make secrets safe. True secrets and authorization must live on the backend.</p>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">React Native App Security Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native App Security guide — senior interview prep. Verify pinning APIs, config formats, and rotation tooling against current Android, Apple, TrustKit, and library docs before relying on them in production.</div>
 </footer>
 </body>
 </html>

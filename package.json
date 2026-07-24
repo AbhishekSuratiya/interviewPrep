@@ -24,7 +24,6 @@
   "homepage": "https://github.com/AbhishekSuratiya/interviewPrep#readme",
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
-    "firebase": "^12.16.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

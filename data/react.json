@@ -4,6 +4,139 @@
   "color": "#61dafb",
   "sections": [
     {
+      "id": "react-internals-architecture",
+      "title": "React Internals & Architecture (JSX to Pixels)",
+      "emoji": "⚙️",
+      "topics": [
+        {
+          "id": "jsx-to-pixels-pipeline",
+          "title": "From JSX to DOM Pixels (End-to-End Pipeline)",
+          "summary": "The exact multi-phase execution pipeline from JSX compilation to browser paint.",
+          "explanation": "Rendering a React component is a 6-stage pipeline: 1) JSX compilation transforms tags into React.createElement / _jsx runtime calls returning immutable React element objects ({ $$typeof, type, props }). 2) Event/State dispatch schedules a re-render and assigns a priority lane. 3) Render Phase (workLoopConcurrent) recursively walks Fiber nodes, diffing props and building workInProgress nodes while checking shouldYield() (~5ms budget). 4) Double Buffering links current and workInProgress trees via .alternate pointers. 5) Commit Phase (synchronous) executes BeforeMutation, Mutation (DOM updates), and Layout (useLayoutEffect). 6) Browser Paint renders pixels, followed by async useEffect execution.",
+          "analogy": "React rendering is like film animation: JSX is the screenplay script, the Render Phase is sketching frames in the studio (discardable), the Commit Phase is splicing the finalized reel, and Browser Paint is projecting the light onto the screen.",
+          "keyPoints": [
+            "JSX compiles to runtime element objects describing UI, not real DOM nodes.",
+            "Render phase builds workInProgress tree in heap memory and can be paused/discarded.",
+            "Double-buffering via .alternate pointers prevents partial UI state rendering.",
+            "Commit phase is synchronous and atomic: BeforeMutation, Mutation, and Layout.",
+            "Browser paints pixels before useEffect passive callbacks execute."
+          ],
+          "code": "// 1. JSX compiles to:\nconst element = _jsx('div', { className: 'card', children: 'Hello' });\n\n// 2. React Element structure:\n// { $$typeof: Symbol(react.element), type: 'div', props: { className: 'card', children: 'Hello' } }\n\n// 3. Render Phase workLoop (~5ms time slice budget):\nfunction workLoopConcurrent() {\n  while (workInProgress !== null && !shouldYield()) {\n    workInProgress = performUnitOfWork(workInProgress);\n  }\n}",
+          "situations": [
+            {
+              "question": "Can you explain step-by-step what happens when setState is called inside a click handler until pixels change on screen?",
+              "answer": "1) setState schedules an update on the Fiber node and assigns SyncLane priority. 2) Scheduler queues workLoopConcurrent. 3) Render Phase walks Fiber tree via child/sibling/return pointers, calling component function to get new React elements and diffing with current Fiber. 4) Minimal DOM mutation flags (Placement, Update, Deletion) are recorded on workInProgress Fibers. 5) Commit Phase runs synchronously: applies DOM mutations, updates DOM refs, swaps current = workInProgress, and executes useLayoutEffect. 6) Browser repaints the screen layout. 7) useEffect passive callbacks execute asynchronously."
+            }
+          ]
+        },
+        {
+          "id": "stack-vs-fiber",
+          "title": "Stack Reconciler vs Fiber Reconciler",
+          "summary": "Legacy recursive call-stack diffing vs modern linked-list pausable Fiber engine.",
+          "explanation": "Before React 16 (Stack Reconciler), React traversed the Virtual DOM recursively using the JavaScript call stack. Once started, a render was synchronous and uninterruptible; deep component trees locked the main thread and dropped frames during animations or user typing. React 16 introduced Fiber: replacing call-stack recursion with a heap-allocated linked list of Fiber nodes. Fiber did NOT change the O(n) diffing heuristics (type equality, keys); it changed how work is scheduled and traversed, allowing React to yield control to the browser every ~5ms via MessageChannel macrotasks.",
+          "analogy": "Stack Reconciler is like taking an uninterruptible elevator ride with no stop buttons until the top floor. Fiber is a flight of stairs: after every step (Fiber node), React can pause, catch its breath, handle a user click, and resume.",
+          "keyPoints": [
+            "Stack Reconciler used JS call stack recursion — uninterruptible and thread-blocking.",
+            "Fiber replaced call stack with a heap linked list (child, sibling, return pointers).",
+            "Diffing heuristics (type matching, keys, O(n) complexity) are IDENTICAL in both.",
+            "Fiber enables yielding after every unit of work using MessageChannel (~5ms budget).",
+            "Unfinished Fiber render trees can be discarded with zero DOM side-effects."
+          ],
+          "code": "// Stack Reconciler (Pre-16): Recursive Call Stack\nfunction reconcileSubtree(node) {\n  // Cannot stop mid-tree; call stack keeps position\n  node.children.forEach(child => reconcileSubtree(child));\n}\n\n// Fiber Reconciler (React 16+): Heap Linked-List Traversal\nfunction performUnitOfWork(unitOfWork) {\n  const current = unitOfWork.alternate;\n  let next = beginWork(current, unitOfWork);\n  if (next === null) {\n    next = completeUnitOfWork(unitOfWork); // Uses sibling and return pointers\n  }\n  return next;\n}",
+          "situations": [
+            {
+              "question": "An interviewer asks: 'How did Fiber change React's diffing algorithm?' How do you correct them accurately?",
+              "answer": "Respectfully clarify that Fiber did NOT change the diffing algorithm or heuristics. The O(n) heuristic rules (type comparison by identity, keys for list matching, tearing down subtrees on type mismatch) are identical before and after Fiber. What Fiber changed was the reconciler architecture: replacing recursive call-stack traversal with a heap-based linked list, making render work pausable, prioritized, and interruptible."
+            }
+          ]
+        },
+        {
+          "id": "fiber-node-structure",
+          "title": "Fiber Node Anatomy & Linked List Traversal",
+          "summary": "Deep dive into Fiber properties: tag, type, stateNode, memoizedState, child, sibling, return.",
+          "explanation": "A Fiber is a JavaScript object representing a unit of work for a component instance or host DOM node. Key fields: 1) Identification: tag (WorkTag enum), type (function/string), key, stateNode (DOM element or class instance). 2) Tree Structure: child (first child), sibling (next sibling), return (parent — replaces call stack return address). 3) State & Props: memoizedProps, pendingProps, memoizedState (points to the head of hooks linked list for function components). 4) Effects & Scheduling: flags (mutation effects), lanes (priority bitmask), alternate (pointer to counterpart in double-buffered tree).",
+          "analogy": "A Fiber node is like a detailed job ticket in a factory: it states what product to make (type), what raw materials are needed (props/state), where to send it next (child/sibling/return), and what changes to package (flags).",
+          "keyPoints": [
+            "child, sibling, and return pointers form a manual tree traversal linked-list.",
+            "return pointer replaces the call stack return address for pausing/resuming.",
+            "memoizedState on function components holds the linked list of all React Hooks.",
+            "alternate links current (committed) and workInProgress (building) Fiber nodes.",
+            "flags store bitmasks for DOM mutations (Placement, Update, Deletion, Passive)."
+          ],
+          "code": "// Fiber Node Schema Shape:\nconst fiberNode = {\n  tag: 0,                   // FunctionComponent = 0, HostComponent = 5\n  type: Button,             // Component function or 'div'\n  key: null,\n  stateNode: null,          // Real DOM node or instance reference\n  \n  // Linked List Pointers\n  child: fiberChild,        // First child Fiber\n  sibling: fiberSibling,    // Next sibling Fiber\n  return: fiberParent,      // Parent Fiber (return address)\n  \n  // State & Hooks\n  memoizedProps: { color: 'blue' },\n  memoizedState: hookHead,  // Linked list of useState/useEffect hooks\n  \n  // Scheduling & Double Buffering\n  lanes: 1,                 // SyncLane priority bitmask\n  flags: 4,                 // Update effect flag\n  alternate: currentFiber   // Double buffering alternate pointer\n};",
+          "situations": [
+            {
+              "question": "Where do hooks actually store state inside a functional component between re-renders?",
+              "answer": "Hooks are stored as a singly linked list attached to the `memoizedState` property of the component's Fiber node. Each hook object contains `{ memoizedState, next, queue }`. When a component renders, React reads hooks in call order from this linked list. This is precisely why the Rules of Hooks mandate calling hooks at the top level in exact order — calling hooks conditionally breaks the linked-list traversal offset!"
+            }
+          ]
+        },
+        {
+          "id": "render-commit-split",
+          "title": "Render & Commit Phase Split",
+          "summary": "Pure, interruptible Render phase vs synchronous, atomic Commit phase.",
+          "explanation": "Fiber splits reconciliation into two distinct phases: 1) Render Phase: Pure, side-effect-free calculation that builds the workInProgress tree, calls component functions, and computes DOM diffs. It is interruptible, restartable, and can be executed multiple times or discarded cleanly without leaving half-baked updates in the UI. 2) Commit Phase: Synchronous and uninterruptible. React applies computed mutations to the actual DOM, updates refs, swaps the current tree pointer, and fires lifecycle/layout effects. The commit phase MUST be atomic so users never see a partially rendered UI.",
+          "analogy": "Render Phase is writing a document draft in an offline scratchpad — you can edit, rewrite, or scrap it anytime. Commit Phase is hitting 'Publish' — it happens synchronously all at once so readers never see half-written sentences.",
+          "keyPoints": [
+            "Render Phase is pure, interruptible, and side-effect-free (building WIP tree).",
+            "Commit Phase is synchronous and uninterruptible (applying DOM updates).",
+            "StrictMode double-invokes render phase functions in dev to surface impurity bugs.",
+            "Commit sub-phases: BeforeMutation, Mutation (DOM updates), and Layout.",
+            "useLayoutEffect fires synchronously in Layout phase; useEffect fires post-paint."
+          ],
+          "code": "// Render Phase — Pure calculation (can run multiple times):\nfunction Component() {\n  // MUST NOT perform side effects here!\n  const value = useMemo(() => computeData(props), [props]);\n  return <div>{value}</div>;\n}\n\n// Commit Phase — Synchronous DOM Mutation & Layout Effects:\n// 1. Mutation Phase: DOM nodes created/updated, current = WIP\n// 2. Layout Phase:\nuseLayoutEffect(() => {\n  // Fires synchronously after DOM mutations, BEFORE browser paint\n  const rect = ref.current.getBoundingClientRect();\n}, []);",
+          "situations": [
+            {
+              "question": "Why does React StrictMode invoke functional components twice in development mode?",
+              "answer": "Because the Render Phase in Fiber is interruptible and can be discarded or restarted, component function bodies may run multiple times before committing. If a component contains side effects in its render body (e.g. mutating global variables, pushing to arrays), repeating render creates subtle bugs. StrictMode intentionally double-invokes component bodies and state initializers in development to expose impure render logic early."
+            }
+          ]
+        },
+        {
+          "id": "workloop-scheduler",
+          "title": "The Work Loop & Task Scheduling (MessageChannel)",
+          "summary": "How workLoopConcurrent yields to the browser using MessageChannel macrotasks.",
+          "explanation": "React's Scheduler package manages main-thread execution time. `workLoopConcurrent` executes unit of work (Fiber nodes) in a loop: after processing each Fiber, it calls `shouldYield()`. If ~5ms have elapsed, `shouldYield()` returns true, breaking the loop and releasing the main thread. To schedule the continuation callback, React uses `MessageChannel` (or `scheduler.postTask`). Why `MessageChannel`? Microtasks (Promise.then) drain completely before paint (locking UI), `setTimeout(fn, 0)` clamps to 4ms after nested calls, and `requestIdleCallback` fires unpredictably. MessageChannel posts a Macrotask allowing browser paint and input events to process between 5ms slices.",
+          "analogy": "The WorkLoop is like a polite worker using a shared microwave: after heating each food container for 5 milliseconds, they check if anyone else is waiting in line. If yes, they step aside, let the other person go, and hop back into queue.",
+          "keyPoints": [
+            "workLoopConcurrent checks shouldYield() after every single processed Fiber node.",
+            "Time slice budget is ~5ms per execution block to maintain 60-120 FPS UI responsiveness.",
+            "Yielding relies on MessageChannel macrotasks, NOT microtasks or setTimeout.",
+            "Microtasks drain before browser paint; Macrotasks allow browser paint between slices.",
+            "Resuming work is trivial because workInProgress pointer persists in heap memory."
+          ],
+          "code": "// Fiber WorkLoop Core Loop:\nfunction workLoopConcurrent() {\n  // Process fibers until root completed OR 5ms time slice budget exhausted\n  while (workInProgress !== null && !shouldYield()) {\n    workInProgress = performUnitOfWork(workInProgress);\n  }\n}\n\n// Scheduler Macrotask Yielding via MessageChannel:\nconst channel = new MessageChannel();\nconst port = channel.port2;\nchannel.port1.onmessage = performWorkUntilDeadline;\n\nfunction schedulePerformWorkUntilDeadline() {\n  port.postMessage(null); // Schedules macrotask — browser can paint before it fires!\n}",
+          "situations": [
+            {
+              "question": "Why did React engineering choose MessageChannel macrotasks over Promises/Microtasks for yielding work in Fiber?",
+              "answer": "In the HTML spec event loop, the browser drains the ENTIRE microtask queue before rendering or repainting the display frame. If React yielded work using Promises (microtasks), the browser would keep draining React's work queue without repainting or processing user input — rendering yielding useless! MessageChannel posts a macrotask: between macrotasks, the browser event loop is free to render paints, layout, and handle high-priority user input."
+            }
+          ]
+        },
+        {
+          "id": "lanes-priority-concurrency",
+          "title": "Priority Lanes & Concurrent React",
+          "summary": "Bitmask priority system, startTransition, useDeferredValue, and single-threaded concurrency.",
+          "explanation": "React uses a 31-bit integer bitmask priority system called Lanes. Key lanes: SyncLane (clicks, typing), InputContinuousLane (hover, scroll), DefaultLane (data fetch), TransitionLane (startTransition), IdleLane. When an update occurs, its lane bit is set. If React is rendering a low-priority TransitionLane update and an urgent SyncLane event occurs, `shouldYield()` returns true: React discards the uncommitted workInProgress transition tree, renders the SyncLane update synchronously, and reschedules the transition render afterwards. Concurrency in React is NOT parallel multi-threading; it is single-threaded interleaved scheduling.",
+          "analogy": "Priority Lanes are like airport boarding queues: First-Class passengers (SyncLane) board immediately, while General Economy passengers (TransitionLane) wait in line. If a First-Class passenger arrives mid-boarding, economy boarding pauses instantly to let them through.",
+          "keyPoints": [
+            "Lanes are bitmasks representing update priority levels (Sync, Input, Transition, Idle).",
+            "startTransition marks state updates as low priority (TransitionLane).",
+            "useDeferredValue defers prop updates by rendering old value first, then new value at low priority.",
+            "Concurrent React means interleaved single-threaded execution, NOT multi-threading.",
+            "Total CPU work stays equal or higher; latency on urgent user actions goes way down."
+          ],
+          "code": "// 1. Marking updates as low-priority transition:\nconst [isPending, startTransition] = useTransition();\n\nfunction handleSearch(e) {\n  const text = e.target.value;\n  setInputValue(text); // SyncLane — urgent typing updates input immediately\n  \n  startTransition(() => {\n    setSearchQuery(text); // TransitionLane — non-urgent heavy list filtering\n  });\n}\n\n// 2. Deferring value updates:\nconst deferredQuery = useDeferredValue(searchQuery);",
+          "situations": [
+            {
+              "question": "A developer claims: 'Concurrent React makes your application 2x faster because it uses Web Workers under the hood.' How do you respond?",
+              "answer": "Clarify two major points: 1) Concurrent React does NOT use Web Workers or extra threads for rendering — DOM access and component state require main-thread execution. 2) Concurrency does NOT make overall CPU computation faster; total work is often slightly higher due to potential render restarts. What Concurrent React buys is RESPONSIVENESS — prioritizing urgent updates (typing/clicking) so users never experience dropped frames or input lag during heavy background rendering."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "core-fundamentals",
       "title": "Core Fundamentals",
       "emoji": "⚛️",

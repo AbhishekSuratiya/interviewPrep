@@ -217,7 +217,7 @@
     },
     {
       "id": "performance-libraries",
-      "title": "Performance Libraries",
+      "title": "Performance",
       "emoji": "⚡",
       "topics": [
         {
@@ -285,6 +285,27 @@
             "Simpler/faster than Redux + redux-persist for most RN apps."
           ],
           "code": "import { create } from 'zustand';\nimport { persist, createJSONStorage } from 'zustand/middleware';\nimport { MMKV } from 'react-native-mmkv';\n\nconst mmkvInstance = new MMKV({ id: 'app-state' });\n\n// MMKV storage adapter for Zustand\nconst mmkvZustandStorage = {\n  getItem: (name) => mmkvInstance.getString(name) ?? null,\n  setItem: (name, value) => mmkvInstance.set(name, value),\n  removeItem: (name) => mmkvInstance.delete(name),\n};\n\nconst useAppStore = create(\n  persist(\n    (set, get) => ({\n      theme: 'light',\n      user: null,\n      notifications: [],\n      toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),\n      setUser: (user) => set({ user }),\n      addNotification: (n) => set(s => ({ notifications: [n, ...s.notifications].slice(0, 50) })),\n    }),\n    {\n      name: 'app-storage',\n      storage: createJSONStorage(() => mmkvZustandStorage),\n    }\n  )\n);\n\n// Atomic selectors — only re-renders when theme changes:\nconst theme = useAppStore(state => state.theme); // Stable selector"
+        },
+        {
+          "id": "perf-complete",
+          "title": "Optimization, Profiling & Memory",
+          "summary": "Startup, re-renders, memory leaks, InteractionManager, profiling & flame graphs.",
+          "explanation": "React Native performance has multiple dimensions: 1) Startup: Hermes bytecode, inline requires, lazy module loading. 2) JS Thread: avoid heavy computation (use Web Workers), minimize re-renders (memo, useCallback), batch state updates. 3) UI Thread: avoid unnecessary view creation (FlashList recycling), minimize Yoga layout recalculations (fixed dimensions where possible), use native drivers for animations. 4) Bridge (old arch): minimize bridge calls, batch operations. 5) Memory: avoid large closures in effects, release image memory, unsubscribe listeners. 6) Images: FastImage caching, proper resizing at CDN level.",
+          "analogy": "RN performance is tuning a car across systems: a fast start (Hermes), a clear engine (less JS work/re-renders), smooth wheels (recycled lists, native-driver animations), and not overloading the trunk (memory).",
+          "keyPoints": [
+            "Startup: Hermes bytecode, inline requires, lazy modules.",
+            "JS thread: memoize, batch updates, offload heavy work.",
+            "UI thread: FlashList recycling, fixed sizes, useNativeDriver.",
+            "Defer non-critical work with InteractionManager.",
+            "Memory: clean up listeners/timers, cap image cache, paginate."
+          ],
+          "code": "// Performance checklist:\n\n// 1. Enable Hermes (already covered)\n// gradle.properties: hermesEnabled=true\n\n// 2. InteractionManager — defer work until animations complete\nInteractionManager.runAfterInteractions(() => {\n  loadHeavyData(); // Won't compete with navigation animation\n});\n\n// 3. Native driver for animations — runs on UI thread:\nAnimated.timing(opacity, {\n  toValue: 1,\n  useNativeDriver: true, // CRITICAL — keep off JS thread\n}).start();\n\n// 4. PureComponent / memo for list items\nconst ListItem = React.memo(({ item }) => (\n  <View><Text>{item.title}</Text></View>\n));\n\n// 5. Avoid anonymous functions in render:\n// BAD:\n<Button onPress={() => navigate('Profile', { id })} />\n// GOOD:\nconst handlePress = useCallback(() => navigate('Profile', { id }), [id]);\n<Button onPress={handlePress} />\n\n// 6. Measure with Flipper + Perf Monitor:\n// Enable in: Debug > Show Perf Monitor\n// JS FPS target: 60\n// UI FPS target: 60",
+          "situations": [
+            {
+              "question": "Your React Native app has 500MB size, 5-second startup, janky scroll, and memory crashes on low-end devices. Where do you start?",
+              "answer": "Systematic approach, one issue at a time: 1) App Size (500MB): Enable ABI splits in build.gradle (one APK per CPU arch: ~50MB each instead of one 500MB). Enable ProGuard. Convert images to WebP. Use on-demand resources for large assets. 2) Startup (5s): Enable Hermes bytecode. Enable inlineRequires in metro. Audit top-level imports — move heavy modules inside functions. Use InteractionManager.runAfterInteractions for non-critical initialization. 3) Scroll jank: Switch FlatList → FlashList. Add React.memo to list items. Use FastImage. Enable removeClippedSubviews. 4) Memory crashes: Flipper/Instruments heap snapshots. Look for listener leaks (AppState, Keyboard). Limit image cache size. Implement pagination — don't load all 2000 posts into memory."
+            }
+          ]
         }
       ]
     },
@@ -387,34 +408,6 @@
             "Prefer Native Stack over JS Stack for performance."
           ],
           "code": "import { createNativeStackNavigator } from '@react-navigation/native-stack';\nimport { createBottomTabNavigator } from '@react-navigation/bottom-tabs';\n\nconst Stack = createNativeStackNavigator();\nconst Tab = createBottomTabNavigator();\n\n// Nested structure:\n// - Stack (root)\n//   - Auth screens (Login, Register)\n//   - Main (Tab)\n//     - Home tab (own nested Stack)\n//     - Profile tab\n//     - Settings tab\n\nfunction MainTabs() {\n  return (\n    <Tab.Navigator\n      screenOptions={({ route }) => ({\n        tabBarIcon: ({ focused, color }) => (\n          <Icon name={route.name.toLowerCase()} color={color} />\n        ),\n      })}\n    >\n      <Tab.Screen name=\"Home\" component={HomeStack} />\n      <Tab.Screen name=\"Profile\" component={ProfileScreen} />\n      <Tab.Screen name=\"Settings\" component={SettingsStack} />\n    </Tab.Navigator>\n  );\n}\n\nfunction RootNavigator() {\n  const { isAuthenticated } = useAuth();\n  return (\n    <Stack.Navigator screenOptions={{ headerShown: false }}>\n      {!isAuthenticated ? (\n        <Stack.Screen name=\"Auth\" component={AuthStack} />\n      ) : (\n        <Stack.Screen name=\"Main\" component={MainTabs} />\n      )}\n    </Stack.Navigator>\n  );\n}"
-        }
-      ]
-    },
-    {
-      "id": "rn-performance",
-      "title": "Performance Optimization",
-      "emoji": "🏎️",
-      "topics": [
-        {
-          "id": "perf-complete",
-          "title": "Complete Performance Optimization Guide",
-          "summary": "Startup, runtime, memory, and animation — systematic approach to 60fps.",
-          "explanation": "React Native performance has multiple dimensions: 1) Startup: Hermes bytecode, inline requires, lazy module loading. 2) JS Thread: avoid heavy computation (use Web Workers), minimize re-renders (memo, useCallback), batch state updates. 3) UI Thread: avoid unnecessary view creation (FlashList recycling), minimize Yoga layout recalculations (fixed dimensions where possible), use native drivers for animations. 4) Bridge (old arch): minimize bridge calls, batch operations. 5) Memory: avoid large closures in effects, release image memory, unsubscribe listeners. 6) Images: FastImage caching, proper resizing at CDN level.",
-          "analogy": "RN performance is tuning a car across systems: a fast start (Hermes), a clear engine (less JS work/re-renders), smooth wheels (recycled lists, native-driver animations), and not overloading the trunk (memory).",
-          "keyPoints": [
-            "Startup: Hermes bytecode, inline requires, lazy modules.",
-            "JS thread: memoize, batch updates, offload heavy work.",
-            "UI thread: FlashList recycling, fixed sizes, useNativeDriver.",
-            "Defer non-critical work with InteractionManager.",
-            "Memory: clean up listeners/timers, cap image cache, paginate."
-          ],
-          "code": "// Performance checklist:\n\n// 1. Enable Hermes (already covered)\n// gradle.properties: hermesEnabled=true\n\n// 2. InteractionManager — defer work until animations complete\nInteractionManager.runAfterInteractions(() => {\n  loadHeavyData(); // Won't compete with navigation animation\n});\n\n// 3. Native driver for animations — runs on UI thread:\nAnimated.timing(opacity, {\n  toValue: 1,\n  useNativeDriver: true, // CRITICAL — keep off JS thread\n}).start();\n\n// 4. PureComponent / memo for list items\nconst ListItem = React.memo(({ item }) => (\n  <View><Text>{item.title}</Text></View>\n));\n\n// 5. Avoid anonymous functions in render:\n// BAD:\n<Button onPress={() => navigate('Profile', { id })} />\n// GOOD:\nconst handlePress = useCallback(() => navigate('Profile', { id }), [id]);\n<Button onPress={handlePress} />\n\n// 6. Measure with Flipper + Perf Monitor:\n// Enable in: Debug > Show Perf Monitor\n// JS FPS target: 60\n// UI FPS target: 60",
-          "situations": [
-            {
-              "question": "Your React Native app has 500MB size, 5-second startup, janky scroll, and memory crashes on low-end devices. Where do you start?",
-              "answer": "Systematic approach, one issue at a time: 1) App Size (500MB): Enable ABI splits in build.gradle (one APK per CPU arch: ~50MB each instead of one 500MB). Enable ProGuard. Convert images to WebP. Use on-demand resources for large assets. 2) Startup (5s): Enable Hermes bytecode. Enable inlineRequires in metro. Audit top-level imports — move heavy modules inside functions. Use InteractionManager.runAfterInteractions for non-critical initialization. 3) Scroll jank: Switch FlatList → FlashList. Add React.memo to list items. Use FastImage. Enable removeClippedSubviews. 4) Memory crashes: Flipper/Instruments heap snapshots. Look for listener leaks (AppState, Keyboard). Limit image cache size. Implement pagination — don't load all 2000 posts into memory."
-            }
-          ]
         }
       ]
     }

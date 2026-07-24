@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Internals: From JSX to Pixels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5;
+  --paper-2:#F7F9FC;
+  --ink:#0E1626;
+  --slate:#4A5670;
+  --line:#C9D1DE;
+  --legacy:#B0175C;
+  --legacy-bg:#FBE9F1;
+  --modern:#0B7A64;
+  --modern-bg:#E2F2ED;
+  --hermes:#9A5B06;
+  --hermes-bg:#FBEEDA;
+  --react-blue:#2563EB;
+  --react-blue-bg:#EFF6FF;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--legacy);outline-offset:3px;border-radius:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
+h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+p{margin:0 0 1em}
+.lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:62ch}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.mono{font-family:var(--mono);font-size:.86em}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+
+/* ---------- hero ---------- */
+header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--react-blue);margin-bottom:22px}
+.hero h1 span{display:block}
+.hero h1 .dim{color:var(--slate)}
+.hero .lede{margin-top:28px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.chip{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--paper-2);
+  padding:6px 12px;border-radius:100px;color:var(--slate);
+}
+
+/* ---------- sections ---------- */
+section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:38px}
+.section-head p{color:var(--slate);margin-top:14px}
+
+/* ---------- interactive switch: engine lanes ---------- */
+.switch{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:100px;padding:4px;gap:4px;margin-bottom:28px}
+.switch button{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  border:0;background:transparent;color:var(--slate);padding:9px 18px;border-radius:100px;cursor:pointer;
+  transition:background .18s,color .18s;
+}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper-2)}
+
+.lanes{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper-2);
+}
+.lane-head{
+  padding:14px 16px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);
+  background:#E4E9F1;
+}
+.lane-head:last-child{border-right:0}
+.lane-head b{display:block;font-family:var(--body);font-size:.92rem;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink);margin-top:3px}
+
+.stage{
+  grid-column:var(--col);
+  margin:10px;padding:14px 15px;border-radius:10px;
+  border:1px solid var(--line);background:#fff;
+  animation:rise .35s ease both;
+}
+.stage.span{grid-column:1 / -1}
+.stage h3{font-size:.98rem}
+.stage p{margin:5px 0 0;font-size:.86rem;color:var(--slate);line-height:1.5}
+.stage .tick{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;color:var(--slate);display:block;margin-bottom:6px}
+.stage.hot{border-color:var(--legacy);background:var(--legacy-bg)}
+.stage.hot .tick,.stage.hot h3{color:var(--legacy)}
+.stage.good{border-color:var(--modern);background:var(--modern-bg)}
+.stage.good .tick,.stage.good h3{color:var(--modern)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.stage{animation:none}}
+.lane-note{margin-top:16px;font-size:.9rem;color:var(--slate);max-width:70ch}
+
+/* ---------- steps ---------- */
+.steps{display:grid;gap:0;border-top:1px solid var(--line)}
+.step{
+  display:grid;grid-template-columns:64px 1fr;gap:22px;
+  padding:24px 0;border-bottom:1px solid var(--line);align-items:start;
+}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--react-blue);padding-top:4px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:66ch}
+.step-body .thread{
+  display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--slate);border:1px solid var(--line);border-radius:3px;padding:2px 7px;margin-left:10px;vertical-align:3px;
+}
+
+/* ---------- cards & grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px}
+.card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--modern);margin-bottom:9px}
+.card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+.card p + p{margin-top:10px}
+
+/* ---------- simulator ---------- */
+.sim-box{
+  background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;
+}
+.sim-controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.sim-btn{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 18px;border-radius:8px;cursor:pointer;
+  transition:all .18s;
+}
+.sim-btn:hover{background:var(--paper)}
+.sim-btn.urgent{border-color:var(--legacy);color:var(--legacy);background:var(--legacy-bg)}
+.sim-log{
+  font-family:var(--mono);font-size:.82rem;background:#0E1626;color:#38BDF8;padding:16px;border-radius:8px;
+  min-height:140px;max-height:220px;overflow-y:auto;line-height:1.6;
+}
+.sim-log .err{color:#F43F5E}
+.sim-log .ok{color:#34D399}
+.sim-log .warn{color:#FBBF24}
+
+/* ---------- compare table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--slate);background:#E4E9F1;
+}
+tbody th{font-weight:600;width:23%}
+td:last-child{color:var(--modern)}
+td:nth-child(2){color:var(--legacy)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+
+/* ---------- myths ---------- */
+.myth{border-left:3px solid var(--legacy);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:14px}
+.myth .claim{font-weight:600;color:var(--ink)}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
+
+footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){
+  .lanes{grid-template-columns:1fr}
+  .stage,.stage.span{grid-column:1}
+  .lane-head{border-right:0}
+  .step{grid-template-columns:1fr;gap:6px}
+  .step-n{padding-top:0}
+  tbody th{width:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag">React Internals & Architecture</div>
+    <h1>
+      <span>From JSX to DOM Pixels.</span>
+      <span class="dim">Under the Reconciler Hood.</span>
+    </h1>
+    <p class="lede">JSX is syntax sugar. Everything vital in React happens in the reconciler engine — traversing Fiber nodes, yielding to the browser event loop via MessageChannel, double-buffering work-in-progress trees, and executing atomic DOM commits.</p>
+    <div class="hero-meta">
+      <span class="chip">JSX Runtime</span>
+      <span class="chip">Stack Reconciler</span>
+      <span class="chip">Fiber Architecture</span>
+      <span class="chip">workLoopConcurrent</span>
+      <span class="chip">MessageChannel (5ms)</span>
+      <span class="chip">Double Buffering</span>
+      <span class="chip">Render / Commit Split</span>
+      <span class="chip">Priority Lanes</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Architecture Engine Comparison</div>
+      <h2>Stack Reconciler (Pre-16) vs Fiber (16+)</h2>
+      <p>The core diffing rules (type comparison, keys, O(n) heuristics) never changed. What changed was how React schedules, traverses, and pauses work. Flip between engines below.</p>
+    </div>
+
+    <div class="switch" role="group" aria-label="Choose engine">
+      <button id="btn-stack" aria-pressed="true" onclick="setEngine('stack')">Pre-React 16 — Stack Reconciler</button>
+      <button id="btn-fiber" aria-pressed="false" onclick="setEngine('fiber')">React 16+ — Fiber Reconciler</button>
+    </div>
+
+    <div class="lanes" id="lanes"></div>
+    <p class="lane-note" id="lane-note"></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">End-to-End Pipeline</div>
+      <h2>From JSX to Browser Pixels, Step by Step</h2>
+      <p>The complete multi-phase journey of every component render and state update in modern React.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>JSX Compilation & Runtime Element Creation<span class="thread">Build Time & Render Time</span></h3>
+          <p>Babel/SWC transpiles JSX into runtime function calls (<code>_jsx</code> or <code>React.createElement</code>). Executing these returns a plain, immutable JS object: <code>{ $$typeof: Symbol(react.element), type, props, key, ref }</code>. It is a lightweight description of UI, NOT a DOM node.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>State Update Scheduling & Priority Lane Allocation<span class="thread">JS Thread</span></h3>
+          <p>Calling <code>setState</code> schedules a re-render. React assigns a bitmask priority lane (e.g. <code>SyncLane</code> for click/typing, <code>TransitionLane</code> for <code>startTransition</code>). Work is queued on the target Fiber node.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>Render Phase: Fiber WorkLoop Execution<span class="thread">Interruptible</span></h3>
+          <p>React runs <code>workLoopConcurrent</code>, walking Fiber nodes via <code>child</code>, <code>sibling</code>, and <code>return</code> pointers. <code>beginWork</code> runs component functions and diffs elements; <code>completeWork</code> creates in-memory DOM nodes and bubbles effect flags. Crucially, after processing each Fiber, React calls <code>shouldYield()</code> (~5ms budget). If true, it yields back to the browser!</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>Double Buffering & Tree Swap<span class="thread">Heap Memory</span></h3>
+          <p>React maintains two trees: <code>current</code> (on screen) and <code>workInProgress</code> (building). Each Fiber has an <code>.alternate</code> pointer to its counterpart. If an urgent update interrupts render, React simply discards the WIP tree with <b>zero DOM cleanup side-effects</b> because the DOM was never touched!</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>Commit Phase: Synchronous DOM Mutations<span class="thread">Synchronous / Atomic</span></h3>
+          <p>Once render completes cleanly, React enters the Commit Phase (uninterruptible):<br>
+          • <b>BeforeMutation</b>: Reads DOM snapshots (<code>getSnapshotBeforeUpdate</code>).<br>
+          • <b>Mutation</b>: Applies DOM insertions, updates, and deletions. Swaps <code>current = workInProgress</code>.<br>
+          • <b>Layout</b>: Fires <code>useLayoutEffect</code> synchronously before browser paint.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">06</div>
+        <div class="step-body">
+          <h3>Browser Paint & Passive Effects<span class="thread">Main Thread</span></h3>
+          <p>The browser repaints pixels to the display screen. Immediately post-paint, React schedules and fires <code>useEffect</code> passive cleanup and setup callbacks asynchronously so user interaction is never blocked.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Interactive Simulator</div>
+      <h2>Fiber WorkLoop & Interruption Simulator</h2>
+      <p>Simulate how React handles urgent user input interrupting an ongoing low-priority transition render.</p>
+    </div>
+
+    <div class="sim-box">
+      <div class="sim-controls">
+        <button class="sim-btn" onclick="startTransitionRender()">1. Start Low-Priority Transition Render</button>
+        <button class="sim-btn urgent" onclick="triggerUrgentInput()">2. Trigger Urgent Keypress (SyncLane)</button>
+        <button class="sim-btn" onclick="clearSimLog()">Clear Terminal Log</button>
+      </div>
+
+      <div class="sim-log" id="sim-log">
+        > WorkLoop Idle. Click 'Start Low-Priority Transition Render' to begin testing...
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Myth Busting</div>
+      <h2>7 Common React Misconceptions Busted</h2>
+      <p>Clarifying deep architectural nuances commonly tested in senior frontend interviews.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 1: "Props changing is what triggers a component re-render."</div>
+      <div class="truth"><b>Reality:</b> Re-renders are triggered by state updates, context changes, or parent re-renders. When a parent re-renders, ALL children re-render by default regardless of whether props changed. <code>React.memo</code> is an opt-in check to prevent this.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 2: "Fiber changed React's diffing algorithm."</div>
+      <div class="truth"><b>Reality:</b> The diffing heuristics (type identity check, keys for lists, unmount on type mismatch) are IDENTICAL before and after Fiber. Fiber changed the reconciler architecture (how work is scheduled & traversed), not the diff rules.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 3: "Concurrent React means multi-threaded parallel execution."</div>
+      <div class="truth"><b>Reality:</b> JavaScript remains strictly single-threaded. Concurrency in React means <i>interleaved execution</i> — React works in short ~5ms time slices, yields control via <code>MessageChannel</code> macrotasks, and resumes.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 4: "MessageChannel yields work using Microtasks (Promise.then)."</div>
+      <div class="truth"><b>Reality:</b> Microtasks drain completely before browser paint, which would lock the UI thread. React uses <code>MessageChannel</code> (or <code>scheduler.postTask</code>) to schedule <i>Macrotasks</i>, letting the browser paint and handle inputs between 5ms slices.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 5: "The old Virtual DOM tree is the real HTML DOM."</div>
+      <div class="truth"><b>Reality:</b> The old virtual tree is React's in-memory heap representation of what was last committed. The real DOM lives inside the browser C++ engine.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 6: "Keys are global unique identifiers that re-render components."</div>
+      <div class="truth"><b>Reality:</b> Keys are scoped strictly to sibling array elements. Changing a key forces React to <i>unmount and remount</i> a fresh instance (destroying state), not re-render.</div>
+    </div>
+
+    <div class="myth">
+      <div class="claim">Myth 7: "Concurrent rendering makes total CPU work faster."</div>
+      <div class="truth"><b>Reality:</b> Concurrent rendering increases or keeps total CPU work equal due to potential restarts. What it improves is <i>input latency and responsiveness</i> by prioritizing urgent work.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Comparison Matrix</div>
+      <h2>Stack Reconciler vs Fiber Reconciler</h2>
+      <p>Side-by-side technical breakdown of React's reconciler architectures.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Architectural Axis</th>
+            <th>Pre-React 16 (Stack Reconciler)</th>
+            <th>React 16+ (Fiber Reconciler)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Traversal Mechanism</th>
+            <td>JS Call Stack (Recursive function calls)</td>
+            <td>Heap Linked List (child, sibling, return pointers)</td>
+          </tr>
+          <tr>
+            <th>Interruptibility</th>
+            <td>Uninterruptible (Sync to completion)</td>
+            <td>Interruptible Render Phase (yields via workLoop)</td>
+          </tr>
+          <tr>
+            <th>Yield Mechanism</th>
+            <td>None (Locks main thread during long renders)</td>
+            <td>MessageChannel macrotasks (~5ms time slice budget)</td>
+          </tr>
+          <tr>
+            <th>Tree Architecture</th>
+            <td>Single Tree (Mutates native DOM imperatively)</td>
+            <td>Double-buffered (current & workInProgress alternate trees)</td>
+          </tr>
+          <tr>
+            <th>Priority Support</th>
+            <td>FIFO (All state updates execute sequentially)</td>
+            <td>Bitmask Priority Lanes (Sync, Input, Transition, Idle)</td>
+          </tr>
+          <tr>
+            <th>Diffing Heuristics</th>
+            <td>O(n) Heuristic (Type identity & Keys)</td>
+            <td>O(n) Heuristic (Identical rules preserved)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</footer>
+
+<script>
+const DATA = {
+  stack: {
+    lanes: [
+      { col: 1, head: 'Call Stack', sub: 'JavaScript Thread', tick: 'RECURSION', title: 'Deep Call Stack', text: 'React walks component tree recursively via function calls. Position lives on JS call stack.', hot: true },
+      { col: 2, head: 'Reconciliation', sub: 'Synchronous Diffing', tick: 'O(n) DIFFING', title: 'Synchronous Walk', text: 'Diffs elements immediately. Cannot pause: returning from function destroys traversal state.', hot: true },
+      { col: 3, head: 'DOM Mutations', sub: 'Direct Patching', tick: 'COMMIT', title: 'Imperative Patches', text: 'Applies DOM mutations directly during recursion. High latency on large trees.', hot: true }
+    ],
+    note: '⚠️ Stack Reconciler limitation: Large component trees lock the main thread, dropping frames during scrolling or typing.'
+  },
+  fiber: {
+    lanes: [
+      { col: 1, head: 'Priority Queue & Lanes', sub: 'Scheduler', tick: 'PRIORITY', title: 'Lanes & MessageChannel', text: 'Assigns priority (Sync, Transition). Schedules time-sliced workLoop callback via MessageChannel macrotask.', good: true },
+      { col: 2, head: 'Render Phase (Async)', sub: 'Fiber WorkLoop', tick: 'INTERRUPTIBLE', title: 'workLoopConcurrent', text: 'Walks Fiber nodes via child/sibling/return pointers. Checks shouldYield() every 5ms. Alternate WIP tree built in heap.', good: true },
+      { col: 3, head: 'Commit Phase (Sync)', sub: 'DOM Operations', tick: 'ATOMIC COMMIT', title: 'Atomic DOM Swap', text: 'Swaps current = workInProgress. Applies DOM mutations synchronously. Fires useLayoutEffect, then useEffect post-paint.', good: true }
+    ],
+    note: '⚡ Fiber capability: Render phase is pausable and restartable. High-priority user input cuts the line without blocking.'
+  }
+};
+
+function setEngine(mode) {
+  const isStack = mode === 'stack';
+  document.getElementById('btn-stack').setAttribute('aria-pressed', isStack ? 'true' : 'false');
+  document.getElementById('btn-fiber').setAttribute('aria-pressed', !isStack ? 'true' : 'false');
+
+  const info = DATA[mode];
+  const container = document.getElementById('lanes');
+  container.innerHTML = `
+    <div class="lane-head">Phase 1<b>${mode === 'stack' ? 'Call Stack' : 'Scheduler & Lanes'}</b></div>
+    <div class="lane-head">Phase 2<b>${mode === 'stack' ? 'Recursive Diff' : 'Fiber WorkLoop (Async)'}</b></div>
+    <div class="lane-head">Phase 3<b>${mode === 'stack' ? 'DOM Mutation' : 'Atomic Commit (Sync)'}</b></div>
+    ${info.lanes.map(l => `
+      <div class="stage ${l.hot ? 'hot' : ''} ${l.good ? 'good' : ''}" style="--col:${l.col}">
+        <span class="tick">${l.tick}</span>
+        <h3>${l.title}</h3>
+        <p>${l.text}</p>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('lane-note').textContent = info.note;
+}
+
+// Initial engine set
+setEngine('fiber');
+
+// Interactive WorkLoop Simulation Logic
+let simState = 'idle';
+let simTimer = null;
+
+function appendSimLog(msg, type = '') {
+  const log = document.getElementById('sim-log');
+  const span = document.createElement('div');
+  if (type) span.className = type;
+  span.textContent = '> ' + msg;
+  log.appendChild(span);
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearSimLog() {
+  document.getElementById('sim-log').innerHTML = '> WorkLoop Idle. Click \'Start Low-Priority Transition Render\' to begin testing...';
+  simState = 'idle';
+  if (simTimer) clearInterval(simTimer);
+}
+
+function startTransitionRender() {
+  if (simState === 'rendering_transition') return;
+  simState = 'rendering_transition';
+  appendSimLog('[TransitionLane] Starting background render of 500 list items...', 'warn');
+  
+  let item = 1;
+  simTimer = setInterval(() => {
+    if (item <= 5) {
+      appendSimLog(`[workLoopConcurrent] Processed Fiber Node #${item * 100} (time slice active).`);
+      item++;
+    } else {
+      clearInterval(simTimer);
+      simState = 'idle';
+      appendSimLog('[CommitPhase] Transition render completed successfully! Swapped WIP tree to Current.', 'ok');
+    }
+  }, 600);
+}
+
+function triggerUrgentInput() {
+  if (simState === 'rendering_transition') {
+    clearInterval(simTimer);
+    appendSimLog('[INTERRUPT] ⚡ Urgent User Keypress detected (SyncLane)!', 'err');
+    appendSimLog('[shouldYield()] Returned true. Yielding workLoop to browser...', 'err');
+    appendSimLog('[Discard] Discarded WorkInProgress Transition Tree (0 DOM side-effects!).', 'warn');
+    appendSimLog('[SyncLane] Rendered urgent keypress update immediately.', 'ok');
+    appendSimLog('[Reschedule] Restarting background Transition Render from root...', 'warn');
+    simState = 'idle';
+    setTimeout(startTransitionRender, 1000);
+  } else {
+    appendSimLog('[SyncLane] Urgent Keypress rendered immediately synchronously.', 'ok');
+  }
+}
+</script>
+</body>
+</html>

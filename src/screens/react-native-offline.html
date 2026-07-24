@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>React Native Offline-First Architecture — Outbox Pattern & Sync Engines</title>
+<title>React Native Offline-First Architecture — Local DB, Outbox & Sync Engines</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +15,13 @@
   --slate:#4A5670;
   --line:#C9D1DE;
   --off:#0B7A64;
+  --off-bg:#E2F2ED;
+  --good:#059669;
+  --good-bg:#D1FAE5;
+  --bad:#B0175C;
+  --bad-bg:#FBE9F1;
+  --info:#2563EB;
+  --warn:#D97706;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -28,22 +35,88 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--off);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--off)}
+.card p{margin-top:8px;color:var(--slate);font-size:.93rem}
+.card h3{color:var(--ink)}
+
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--off);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
+
 pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.9rem}
+th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+tbody th{font-weight:600;width:20%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+/* architecture flow */
+.arch{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px;background:var(--paper-2)}
+.arch-row{display:grid;grid-template-columns:172px 1fr;gap:18px;padding:18px 20px;border-bottom:1px solid var(--line);align-items:center}
+.arch-row:last-child{border-bottom:0}
+.arch-row .lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--off);font-weight:600}
+.arch-row p{margin:0;color:var(--slate);font-size:.92rem}
+.arch-row.hot{background:var(--off-bg)}
+@media (max-width:640px){.arch-row{grid-template-columns:1fr;gap:4px}}
+
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--good)}
+.note.amber{border-left-color:var(--warn)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+.ce{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+.ce > div{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--paper-2)}
+.ce h4{font-size:1rem;margin-bottom:10px}
+.ce ul{margin:0;padding-left:18px;font-size:.9rem;color:var(--slate);line-height:1.65}
+.ce li{margin-bottom:6px}
+.ce .pro{border-color:var(--good)}.ce .pro h4{color:var(--good)}
+.ce .con{border-color:var(--bad)}.ce .con h4{color:var(--bad)}
+.tick{color:var(--good);font-weight:600}.cross{color:var(--bad);font-weight:600}
+@media (max-width:640px){.ce{grid-template-columns:1fr}}
+
+.myth{border-left:3px solid var(--off);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){.step{grid-template-columns:1fr;gap:4px}.step-n{padding-top:0}}
 </style>
 </head>
 <body>
@@ -51,74 +124,267 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
   <div class="wrap">
     <div class="hero-tag">Offline-First Architecture</div>
     <h1>
-      <span>Local First, Sync Second.</span>
-      <span class="dim">Outbox Pattern, NetInfo & Conflict Resolution.</span>
+      <span>Local first,</span>
+      <span class="dim">sync second.</span>
     </h1>
-    <p class="lede">Build resilient mobile applications that treat local SQLite database state as the single source of truth, queueing network operations during offline periods.</p>
+    <p class="lede">Offline-first flips the usual flow: the UI reads and writes a <em>local</em> database and never blocks on the network. A background sync engine reconciles that local state with the server whenever a connection exists. Four pieces make it work — a local DB, a write outbox, connectivity detection, and a sync engine — and the whole design lives or dies on how you resolve conflicts.</p>
     <div class="hero-meta">
-      <span class="chip">Outbox Pattern</span>
-      <span class="chip">Optimistic UI Updates</span>
-      <span class="chip">NetInfo Listeners</span>
-      <span class="chip">Conflict Strategies (LWW)</span>
+      <span class="chip">Local DB (source of truth)</span>
+      <span class="chip">Outbox / write queue</span>
+      <span class="chip">NetInfo</span>
+      <span class="chip">Sync engine</span>
+      <span class="chip">Conflict resolution</span>
     </div>
   </div>
 </header>
 
+<!-- MENTAL MODEL -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Offline Core Patterns</div>
-    <h2>Resilient Mobile Offline Flow</h2>
-    <div class="grid" style="margin-top:28px">
-      <div class="card">
-        <div>
-          <div class="k">Local Source of Truth</div>
-          <h3>Read Local DB First</h3>
-          <p>UI components render exclusively from local SQLite / WatermelonDB queries rather than waiting on HTTP API responses.</p>
-        </div>
+    <div class="section-head">
+      <div class="eyebrow">The mental model</div>
+      <h2>The UI never talks to the network</h2>
+      <p>In an offline-first app the network is an <em>implementation detail of syncing</em>, not something screens wait on. Reads and writes hit local storage; the server is reconciled in the background.</p>
+    </div>
+
+    <div class="arch">
+      <div class="arch-row">
+        <div class="lbl">Read path</div>
+        <p>Screens render from <b>local DB queries</b> (ideally reactive, so the UI updates when the DB changes). No spinners waiting on HTTP.</p>
       </div>
-      <div class="card">
-        <div>
-          <div class="k">Queueing Mutations</div>
-          <h3>Outbox Pattern</h3>
-          <p>User actions offline append mutation payloads to an outbox queue table in SQLite, preserving creation order and arguments.</p>
-        </div>
+      <div class="arch-row hot">
+        <div class="lbl">Write path</div>
+        <p>A user action <b>writes to the local DB immediately</b> (optimistic UI) <b>and</b> appends an intent to the <b>outbox</b> queue. The UI already reflects the change.</p>
       </div>
-      <div class="card">
-        <div>
-          <div class="k">Reconnection & Flush</div>
-          <h3>NetInfo Sync Engine</h3>
-          <p>Listens for network reconnection, sequentially flushes outbox items to the server API, and handles HTTP 409 conflict resolutions.</p>
-        </div>
+      <div class="arch-row">
+        <div class="lbl">Detect</div>
+        <p><b>NetInfo</b> reports connectivity changes. On “reachable,” it wakes the sync engine.</p>
+      </div>
+      <div class="arch-row hot">
+        <div class="lbl">Sync engine</div>
+        <p><b>Push:</b> flush outbox mutations to the server in order, with retries. <b>Pull:</b> fetch server changes since a cursor and merge into the local DB, resolving conflicts.</p>
+      </div>
+      <div class="arch-row">
+        <div class="lbl">Reconcile</div>
+        <p>Server responses update local rows (confirm, rewrite ids, or override on conflict). The local DB converges toward the server's truth.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- THE FOUR BUILDING BLOCKS -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Implementation Snippet</div>
-    <h2>Offline Outbox Queue Pattern</h2>
-    <pre><code>import NetInfo from '@react-native-community/netinfo';
+    <div class="section-head">
+      <div class="eyebrow">The four building blocks</div>
+      <h2>Each piece, in detail</h2>
+    </div>
 
-// Queue mutation locally
-async function queueOfflineMutation(type: string, payload: any) {
-  await db.execute('INSERT INTO outbox (type, payload, timestamp) VALUES (?, ?, ?)', [
-    type,
-    JSON.stringify(payload),
-    Date.now(),
-  ]);
+    <h4 class="subhead">1 · Local database — the source of truth</h4>
+    <p class="body-copy">Everything the user sees comes from here, so it must survive restarts and handle relational data. Key–value stores (MMKV, AsyncStorage) are fine for settings but not for a syncing dataset — you want SQLite or a database built on it. A <strong>reactive</strong> DB (queries that re-emit when data changes) is what makes optimistic writes feel instant.</p>
 
-  // Flush immediately if network is reachable
-  const state = await NetInfo.fetch();
-  if (state.isConnected && state.isInternetReachable) {
-    await flushOutboxQueue();
+    <h4 class="subhead">2 · Outbox — the write queue</h4>
+    <p class="body-copy">The outbox is an append-only table of <em>intents</em> (“create post”, “like 42”) captured while offline (or always, then flushed). It's the pattern that makes writes durable and ordered. A good outbox row carries:</p>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Why</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><code>id</code> / <code>idempotencyKey</code></th><td>A client-generated UUID so retries don't create duplicates — the server dedupes on it.</td></tr>
+          <tr><th scope="row"><code>type</code> + <code>payload</code></th><td>The mutation and its arguments, serialized. Replayed against the server on flush.</td></tr>
+          <tr><th scope="row"><code>createdAt</code> / sequence</th><td>Preserves <b>ordering</b> — “create” must reach the server before its “update.”</td></tr>
+          <tr><th scope="row"><code>status</code> / <code>retryCount</code></th><td>pending → in-flight → done/failed, with backoff and a dead-letter after N tries.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 class="subhead">3 · Connectivity detection — NetInfo</h4>
+    <p class="body-copy"><code>@react-native-community/netinfo</code> reports connection type and — crucially — <code>isInternetReachable</code> (connected to Wi-Fi ≠ has internet). The sync engine subscribes and flushes on the offline→online transition, rather than polling.</p>
+
+    <h4 class="subhead">4 · Sync engine — push, pull, reconcile</h4>
+    <p class="body-copy">The engine does two directions. <strong>Push</strong> drains the outbox sequentially with retry/backoff and marks items done on success. <strong>Pull</strong> asks the server “what changed since cursor X?”, merges those changes locally, and advances the cursor. The hard part is what happens when both sides changed the same record — conflict resolution.</p>
+
+    <div class="tablewrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th scope="col">Conflict strategy</th><th scope="col">How</th><th scope="col">Trade-off</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Last-Write-Wins (LWW)</th><td>Compare timestamps/version; newest wins.</td><td>Simplest; silently drops the losing edit. Fine for single-user data.</td></tr>
+          <tr><th scope="row">Server-authoritative</th><td>Server rejects stale writes (409); client refetches and reapplies.</td><td>Predictable and safe; needs conflict UX and a version column.</td></tr>
+          <tr><th scope="row">CRDT / mergeable</th><td>Data types that merge automatically (used by ElectricSQL, Yjs).</td><td>No lost edits, true multi-writer — but heavier model and library lock-in.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- LIBRARY COMPARISON -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Libraries · what to actually use</div>
+      <h2>Build-your-own vs. a sync engine</h2>
+      <p>The real decision is how much of the sync engine you write. Options range from “raw SQLite + hand-rolled outbox” to “managed service that syncs Postgres to on-device SQLite for you.”</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Option</th><th scope="col">What you get</th><th scope="col">Sync</th><th scope="col">Best when</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">SQLite (op-sqlite / expo-sqlite / quick-sqlite)</th><td>Raw, fast JSI SQLite. Total control.</td><td style="color:var(--bad)">You build it</td><td>Custom backend &amp; you want full control of schema + sync logic.</td></tr>
+          <tr><th scope="row">WatermelonDB</th><td>Reactive DB on SQLite, lazy, scales to large datasets; built-in sync <em>protocol</em>.</td><td style="color:var(--warn)">Protocol; you write endpoints</td><td>Large relational offline apps on your own API. The proven default.</td></tr>
+          <tr><th scope="row">RxDB</th><td>Reactive NoSQL with replication plugins (HTTP, GraphQL, CouchDB).</td><td style="color:var(--warn)">Pluggable</td><td>Document data and you want replication out of the box.</td></tr>
+          <tr><th scope="row">Realm / Atlas Device Sync</th><td>Object DB + turnkey bidirectional sync to Atlas.</td><td style="color:var(--good)">Managed</td><td>MongoDB stack — but note Atlas Device Sync is being deprecated, so weigh longevity.</td></tr>
+          <tr><th scope="row">PowerSync / ElectricSQL</th><td>Service that syncs <b>Postgres ⇄ on-device SQLite</b> (Electric leans on CRDTs).</td><td style="color:var(--good)">Managed engine</td><td>You already have Postgres and want sync without building it.</td></tr>
+          <tr><th scope="row">Replicache / Zero, Legend-State</th><td>Sync-engine SDKs with great DX; server push/pull or observable sync.</td><td style="color:var(--good)">Managed engine</td><td>You want first-class optimistic sync and will adopt their model.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 class="subhead">Which is best?</h4>
+    <p class="body-copy">There's no single winner — it's a fit to your backend and scale:</p>
+    <div class="grid">
+      <div class="card">
+        <div class="k">Default choice</div>
+        <h3>WatermelonDB</h3>
+        <p>For most custom-backend RN apps with lots of relational data. Mature, reactive, scales, and its sync protocol handles the push/pull plumbing while leaving you in control of the server.</p>
+      </div>
+      <div class="card">
+        <div class="k">Least infra</div>
+        <h3>PowerSync / ElectricSQL</h3>
+        <p>If you're on Postgres and don't want to hand-write a sync engine, a managed Postgres⇄SQLite service gets you there fastest, with conflict handling built in.</p>
+      </div>
+      <div class="card">
+        <div class="k">Small / simple</div>
+        <h3>SQLite + outbox</h3>
+        <p>For a handful of screens and simple mutations, raw SQLite (op-sqlite/expo-sqlite) with a hand-rolled outbox and LWW is lighter than adopting a whole framework.</p>
+      </div>
+    </div>
+
+    <div class="ce">
+      <div class="pro">
+        <h4>Roll your own (SQLite + outbox)</h4>
+        <ul>
+          <li><span class="tick">✓</span> Full control over schema, ordering, conflict rules.</li>
+          <li><span class="tick">✓</span> No framework lock-in or extra service.</li>
+          <li><span class="cross">✗</span> You own all the hard parts: ordering, retries, dedupe, conflicts, cursors.</li>
+          <li><span class="cross">✗</span> Easy to get subtly wrong (duplicate writes, lost updates).</li>
+        </ul>
+      </div>
+      <div class="con" style="border-color:var(--good)">
+        <h4 style="color:var(--good)">Turnkey sync engine</h4>
+        <ul>
+          <li><span class="tick">✓</span> Conflict handling, retries, and reactivity solved for you.</li>
+          <li><span class="tick">✓</span> Much faster to a correct offline experience.</li>
+          <li><span class="cross">✗</span> Adopt their data model &amp; server contract; possible vendor/deprecation risk.</li>
+          <li><span class="cross">✗</span> Less control when your case doesn't fit the framework's assumptions.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATION STEPS -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Integration · the outbox path end to end</div>
+      <h2>Wiring it up</h2>
+      <p>Steps for the build-your-own approach (the concepts are identical if a framework does the plumbing).</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="step-n">01</div><div class="step-body">
+        <h3>Install the pieces</h3>
+        <p>A local DB (<code>@op-engineering/op-sqlite</code>, <code>expo-sqlite</code>, or WatermelonDB), <code>@react-native-community/netinfo</code>, and a UUID lib for idempotency keys.</p>
+      </div></div>
+      <div class="step"><div class="step-n">02</div><div class="step-body">
+        <h3>Model tables: domain + outbox</h3>
+        <p>Your domain tables (posts, todos…) plus an <code>outbox</code> table with id/idempotencyKey, type, payload, createdAt, status, retryCount, and a <code>sync_cursor</code> for pulls.</p>
+      </div></div>
+      <div class="step"><div class="step-n">03</div><div class="step-body">
+        <h3>Render from local, reactively</h3>
+        <p>Screens subscribe to local queries. No component awaits <code>fetch</code>. Loading states become “is the initial sync done,” not “is this request pending.”</p>
+      </div></div>
+      <div class="step"><div class="step-n">04</div><div class="step-body">
+        <h3>Write locally + enqueue</h3>
+        <p>On a mutation: update the domain row optimistically <b>and</b> insert an outbox row in the same transaction, so the intent can never be lost if the app dies mid-write.</p>
+      </div></div>
+      <div class="step"><div class="step-n">05</div><div class="step-body">
+        <h3>Flush on reconnect</h3>
+        <p>A NetInfo listener (and app-foreground) triggers the push loop: send outbox items in order with the idempotency key, retry with backoff, mark done, dead-letter permanent failures.</p>
+      </div></div>
+      <div class="step"><div class="step-n">06</div><div class="step-body">
+        <h3>Pull &amp; reconcile</h3>
+        <p>Ask the server for changes since the cursor, merge into local tables with your conflict rule, advance the cursor. Reconcile temporary client ids with server ids.</p>
+      </div></div>
+    </div>
+
+    <p class="codecap">Optimistic write + durable outbox (one transaction)</p>
+<pre><code>import NetInfo from '@react-native-community/netinfo';
+import { randomUUID } from 'expo-crypto';
+
+async function createTodo(text) {
+  const id = randomUUID();
+  await db.transaction(async (tx) =&gt; {
+    <span class="g">// 1. optimistic local write — UI updates instantly</span>
+    await tx.execute('INSERT INTO todos (id, text, synced) VALUES (?, ?, 0)', [id, text]);
+    <span class="g">// 2. durable intent in the SAME transaction</span>
+    await tx.execute(
+      'INSERT INTO outbox (id, type, payload, created_at, status) VALUES (?, ?, ?, ?, ?)',
+      [randomUUID(), 'todo.create', JSON.stringify({ id, text }), Date.now(), 'pending']
+    );
+  });
+  const net = await NetInfo.fetch();
+  if (net.isConnected &amp;&amp; net.isInternetReachable) flushOutbox(); <span class="c">// else: on reconnect</span>
+}</code></pre>
+
+    <p class="codecap">Push loop — ordered, idempotent, with retry</p>
+<pre><code>async function flushOutbox() {
+  const items = await db.getAll(
+    "SELECT * FROM outbox WHERE status = 'pending' ORDER BY created_at ASC"
+  );
+  for (const item of items) {
+    try {
+      await api.post('/mutations', JSON.parse(item.payload), {
+        headers: { <span class="g">'Idempotency-Key': item.id</span> }, <span class="c">// server dedupes retries</span>
+      });
+      await db.execute("UPDATE outbox SET status = 'done' WHERE id = ?", [item.id]);
+    } catch (e) {
+      <span class="r">if (item.retry_count &gt;= 5) await deadLetter(item);   // give up, surface to user</span>
+      else await bumpRetry(item);                            <span class="c">// backoff, try later</span>
+      break; <span class="c">// preserve ordering — stop on first failure</span>
+    }
   }
 }</code></pre>
   </div>
 </section>
 
+<!-- MYTHS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Interview Pitfalls</div>
+    <h2>Offline-First Myths</h2>
+
+    <div class="myth">
+      <div class="claim">"Offline support just means caching API responses."</div>
+      <p class="truth"><b>Incomplete.</b> A read cache handles reads, not <b>writes</b>. Offline-first means the local DB is the source of truth and mutations are queued durably (outbox) and synced — otherwise offline edits are lost.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"NetInfo says connected, so I can sync."</div>
+      <p class="truth"><b>Not necessarily.</b> A device on captive-portal Wi-Fi is “connected” but has no internet. Check <code>isInternetReachable</code>, not just <code>isConnected</code>, before flushing.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"Retrying failed mutations is safe."</div>
+      <p class="truth"><b>Only with idempotency keys.</b> Without a client-generated key the server dedupes on, a retry after a dropped response creates duplicate records. Every outbox item needs a stable idempotency key.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"Last-Write-Wins is a fine default for everything."</div>
+      <p class="truth"><b>Risky.</b> LWW silently discards the losing edit — dangerous for shared/multi-user data. Use server-authoritative versioning or CRDTs when concurrent edits matter.</p>
+    </div>
+  </div>
+</section>
+
 <footer>
-  <div class="wrap">React Native Offline-First Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native Offline-First guide — senior interview prep. Library capabilities and sync services (WatermelonDB, RxDB, Realm/Atlas, PowerSync, ElectricSQL) evolve quickly — verify current sync semantics and support status before committing.</div>
 </footer>
 </body>
 </html>

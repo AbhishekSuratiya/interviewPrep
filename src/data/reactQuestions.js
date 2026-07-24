@@ -2,6 +2,32 @@
 // Keyed by the exact topic string used in checklistTopics.js (section id: 'react').
 // Each entry is { q, a } — q is the question, a is a senior-level answer covering the key points.
 export const reactQuestions = {
+  // React Internals & Architecture
+  'From JSX to DOM Pixels (End-to-End Pipeline)': [
+    { q: 'What is the full multi-phase lifecycle of a React render from JSX to browser pixels?', a: '1) JSX compiles to `_jsx` or `React.createElement` returning immutable element objects `{ $$typeof, type, props }`. 2) `setState` schedules work on a Fiber node and assigns a priority lane. 3) Render Phase (`workLoopConcurrent`) walks Fiber nodes, diffing props and building `workInProgress` nodes while checking `shouldYield()` (~5ms time slice). 4) Double Buffering pairs `current` and `workInProgress` trees via `.alternate`. 5) Commit Phase (synchronous) runs `BeforeMutation`, `Mutation` (DOM updates), and `Layout` (`useLayoutEffect`). 6) The browser paints pixels to screen, followed by async `useEffect` execution.' },
+    { q: 'Why is the Render Phase interruptible while the Commit Phase is strictly synchronous?', a: 'The Render Phase only calculates changes and builds in-memory data structures (`workInProgress` tree), touching zero real DOM nodes. If an urgent update arrives or render is canceled, React can discard the WIP tree with zero cleanup cost. The Commit Phase applies mutations to the actual browser DOM — it must be synchronous and atomic so users never see an incomplete or broken UI.' }
+  ],
+  'Stack Reconciler vs Fiber Reconciler': [
+    { q: 'What was the fundamental limitation of the legacy Stack Reconciler before React 16?', a: 'The Stack Reconciler traversed the component tree recursively using the JavaScript call stack. Because stack execution cannot be paused without losing position, once a render started it ran to completion synchronously. On large component trees, this locked the main thread, dropping animation frames and delaying user input.' },
+    { q: 'Did React Fiber change the core O(n) diffing heuristics?', a: 'No. The diffing heuristics (comparing types by reference, list matching via keys, tearing down subtrees on type mismatch) are identical in both reconcilers. Fiber changed the reconciler architecture (replacing call-stack recursion with a heap linked list), allowing React to schedule, prioritize, pause, and resume rendering work.' }
+  ],
+  'Fiber Node Anatomy & Linked List Traversal': [
+    { q: 'What are the main pointers on a Fiber node that replace the JS call stack?', a: '`child` (points to first child), `sibling` (points to next sibling), and `return` (points to parent Fiber). The `return` pointer acts as a manual replacement for the call stack return address, allowing React to drop out of tree traversal mid-render, hand control to the browser, and resume later from the exact Fiber node.' },
+    { q: 'How does memoizedState on a Fiber node store functional component hooks?', a: '`memoizedState` holds a singly linked list of hook objects (`{ memoizedState, next, queue }`). On each render, React reads hooks sequentially along this linked list. This is why the Rules of Hooks require calling hooks unconditionally at the top level — conditional calls corrupt the linked list index.' }
+  ],
+  'Render & Commit Phase Split': [
+    { q: 'What happens during the sub-phases of the Commit Phase?', a: '1) BeforeMutation: Reads DOM snapshots (e.g. `getSnapshotBeforeUpdate`). 2) Mutation: Applies DOM insertions, updates, and deletions, then updates `current = workInProgress`. 3) Layout: Fires `useLayoutEffect` synchronously after DOM mutations but before browser paint.' },
+    { q: 'Why does StrictMode double-invoke component render bodies in development?', a: 'Because the Render Phase in Fiber is interruptible and can be discarded or restarted, component bodies may run multiple times before committing. StrictMode double-invokes render functions in development to catch side-effects (like mutating external variables during render) before they cause production bugs.' }
+  ],
+  'The Work Loop & Task Scheduling (MessageChannel)': [
+    { q: 'How does workLoopConcurrent enforce time slicing without freezing the main thread?', a: '`workLoopConcurrent` loops through Fiber nodes, calling `shouldYield()` after each unit. If ~5ms have elapsed, `shouldYield()` returns true, exiting the loop and returning control to the browser event loop via a `MessageChannel` macrotask.' },
+    { q: 'Why does React use MessageChannel macrotasks instead of Promise microtasks or setTimeout?', a: 'Microtasks (Promises) drain completely before browser paint, which would freeze the UI frame. `setTimeout(fn, 0)` clamps to a 4ms penalty after nested calls. `MessageChannel` posts a clean macrotask, letting the browser repaint and process user input between 5ms time slices.' }
+  ],
+  'Priority Lanes & Concurrent React': [
+    { q: 'What are Priority Lanes and how do they enable interruptible rendering?', a: 'Lanes are a 31-bit bitmask priority system (`SyncLane`, `InputContinuousLane`, `TransitionLane`, `IdleLane`). If React is processing a low-priority `TransitionLane` render and a `SyncLane` update (keypress/click) arrives, React discards the uncommitted WIP transition tree, renders the urgent update immediately, and reschedules the transition render afterwards.' },
+    { q: 'Does Concurrent React perform multi-threaded parallel execution?', a: 'No. JavaScript is strictly single-threaded. Concurrency in React means interleaved scheduling — slicing work into short bursts, yielding to the main thread, and prioritizing urgent user tasks.' }
+  ],
+
   // React Fundamentals
   'What React is — declarative UI and component model': [
     { q: 'What does "declarative" mean in the context of React, and how does it differ from imperative DOM manipulation?', a: 'Declarative means you describe *what* the UI should look like for a given state, and React figures out *how* to update the actual DOM to match — you never manually call `appendChild` or `setAttribute`. Imperative DOM manipulation (jQuery-style) requires you to explicitly script every step to transition the DOM from one state to another, which becomes error-prone and hard to reason about as an app grows, since the DOM\'s actual current state and your mental model of it can drift apart.' },

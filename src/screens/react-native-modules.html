@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>React Native Custom Native Modules — TurboModules & Fabric Components</title>
+<title>React Native Custom Native Modules — Bridge vs TurboModules</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +15,11 @@
   --slate:#4A5670;
   --line:#C9D1DE;
   --mod:#D97706;
+  --old:#B0175C;
+  --old-bg:#FBE9F1;
+  --new:#0B7A64;
+  --new-bg:#E2F2ED;
+  --info:#2563EB;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -28,21 +33,65 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
+strong{font-weight:600}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:10px;margin:0 0 14px}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
 .hero-tag{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mod);margin-bottom:22px}
+.hero h1 span{display:block}
 .hero h1 .dim{color:var(--slate)}
 .hero .lede{margin-top:28px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
 .chip{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line);background:var(--paper-2);padding:6px 12px;border-radius:100px;color:var(--slate)}
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
+.section-head{max-width:64ch;margin-bottom:32px}
+.section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
+.body-copy{color:var(--slate);max-width:66ch}
+
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600;color:var(--mod)}
-pre{font-family:var(--mono);font-size:.82rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+.card p{margin-top:8px;color:var(--slate);font-size:.93rem}
+.card h3{color:var(--ink)}
+
+pre{font-family:var(--mono);font-size:.8rem;line-height:1.6;background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;overflow-x:auto;margin:14px 0 0}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+pre .f{color:#FCD34D}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 6px;font-weight:600}
+.filetag{font-family:var(--mono);font-size:.72rem;color:var(--mod);background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;display:inline-block;margin:16px 0 0}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.9rem}
+th,td{text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:#E4E9F1}
+thead th.old{color:var(--old)}
+thead th.new{color:var(--new)}
+tbody th{font-weight:600;width:8%;font-family:var(--mono);color:var(--slate)}
+td.old{color:var(--old)}
+td.new{color:var(--new)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+.note{border-left:3px solid var(--info);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.old{border-left-color:var(--old)}
+.note.new{border-left-color:var(--new)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+.myth{border-left:3px solid var(--mod);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.myth .claim{font-weight:600}
+.myth .truth{color:var(--slate);font-size:.93rem;margin:8px 0 0}
+.myth .truth b{color:var(--ink);font-weight:600}
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
 </style>
 </head>
@@ -52,78 +101,214 @@ footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
     <div class="hero-tag">Native Interoperability</div>
     <h1>
       <span>Custom Native Modules.</span>
-      <span class="dim">TS Specs, Codegen, TurboModules & Fabric Views.</span>
+      <span class="dim">The old Bridge vs the new TurboModule.</span>
     </h1>
-    <p class="lede">Build custom native bridges using TypeScript specs, Codegen C++ bindings, Kotlin / Swift implementations, and Fabric Native UI components.</p>
+    <p class="lede">A native module exposes platform code (Kotlin/Java, Swift/Obj-C) to JavaScript. The old way registered it by hand and called it over the serialized bridge; the new way starts from a typed spec, generates the glue with Codegen, and calls straight through JSI. Here's the step-by-step difference, a working example of each, and exactly which files you touch.</p>
     <div class="hero-meta">
+      <span class="chip">Bridge · @ReactMethod</span>
+      <span class="chip">TurboModule · JSI</span>
       <span class="chip">TypeScript Spec</span>
       <span class="chip">Codegen</span>
-      <span class="chip">TurboModules</span>
-      <span class="chip">Fabric ViewManager</span>
-      <span class="chip">Kotlin & Swift</span>
+      <span class="chip">ReactPackage</span>
     </div>
   </div>
 </header>
 
+<!-- 8-STEP COMPARISON -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">Architecture Comparison</div>
-    <h2>Old Bridge vs New Architecture Modules</h2>
-    <div class="grid" style="margin-top:28px">
-      <div class="card">
-        <div>
-          <div class="k">Old Architecture</div>
-          <h3>NativeModules (Bridge)</h3>
-          <p>Requires runtime reflection via <code>@ReactMethod</code>, eager instantiation at app startup, and asynchronous JSON serialization over the bridge.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">New Architecture</div>
-          <h3>TurboModules (JSI)</h3>
-          <p>Starts with a TypeScript Spec contract. Codegen generates typed C++/Java abstract classes. Instantiates lazily on first access and enables synchronous JSI method returns.</p>
-        </div>
-      </div>
-      <div class="card">
-        <div>
-          <div class="k">Native UI Rendering</div>
-          <h3>Fabric Components</h3>
-          <p>Wraps native iOS/Android SDK view instances (e.g. camera, map, canvas), exposing type-safe props and events directly to React layout.</p>
-        </div>
-      </div>
+    <div class="section-head">
+      <div class="eyebrow">Step by step</div>
+      <h2>Creating a module: Bridge vs TurboModule</h2>
+      <p>The same goal — expose a native method to JS — done both ways. Read across each row to see what changed.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Step</th>
+            <th scope="col" class="old">Old Architecture (Bridge)</th>
+            <th scope="col" class="new">New Architecture (TurboModule)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">1</th><td class="old">Create native class (<code>MyModule.java</code> / <code>MyModule.kt</code>) extending <code>ReactContextBaseJavaModule</code></td><td class="new">Create a TypeScript spec (<code>NativeMyModule.ts</code>) defining the API</td></tr>
+          <tr><th scope="row">2</th><td class="old">Implement <code>getName()</code></td><td class="new">Run <b>Codegen</b> to generate native interfaces</td></tr>
+          <tr><th scope="row">3</th><td class="old">Annotate methods with <code>@ReactMethod</code></td><td class="new">Implement the generated abstract class/interface (<code>NativeMyModuleSpec</code>)</td></tr>
+          <tr><th scope="row">4</th><td class="old">Create a <code>ReactPackage</code></td><td class="new">Usually no custom <code>ReactPackage</code> (module is registered via the generated provider)</td></tr>
+          <tr><th scope="row">5</th><td class="old">Override <code>createNativeModules()</code> and return the module</td><td class="new">Register the TurboModule using the generated delegate/provider</td></tr>
+          <tr><th scope="row">6</th><td class="old">Add the package in <code>MainApplication.kt</code> (<code>getPackages()</code>)</td><td class="new">Enable the New Architecture &amp; Codegen configuration</td></tr>
+          <tr><th scope="row">7</th><td class="old">JS accesses it via <code>NativeModules.MyModule</code></td><td class="new">JS imports the generated module (<code>TurboModuleRegistry.getEnforcing()</code>)</td></tr>
+          <tr><th scope="row">8</th><td class="old">Calls go through the <b>Bridge</b> (serialization)</td><td class="new">Calls go directly through <b>JSI</b> (no Bridge)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">The one-sentence why</span>
+      Old modules are <b>registered by hand and typed by convention</b> — a mismatch between JS and native surfaces only as a runtime crash, and every call is serialized to JSON over the async bridge. New modules are <b>generated from a typed spec</b>, so mismatches are <b>build errors</b>, modules load <b>lazily</b>, and calls can run <b>synchronously</b> over JSI with no serialization.
     </div>
   </div>
 </section>
 
+<!-- OLD ARCH EXAMPLE -->
 <section>
   <div class="wrap">
-    <div class="eyebrow">TurboModule Workflow</div>
-    <h2>TypeScript Spec & Kotlin Implementation</h2>
-    <pre><code>// 1. NativeMultiplyModule.ts (Spec)
+    <div class="section-head">
+      <div class="eyebrow">Example · Old Architecture (Bridge)</div>
+      <h2>A <code>multiply</code> module, the old way</h2>
+      <p>Four files: the module, a package, registration in <code>MainApplication</code>, and the JS call.</p>
+    </div>
+
+    <span class="filetag">android/app/src/main/java/com/myapp/MyModule.kt</span>
+<pre><code>class MyModule(ctx: ReactApplicationContext) : <span class="g">ReactContextBaseJavaModule</span>(ctx) {
+  <span class="c">// Step 2: the name JS will look up on NativeModules</span>
+  override fun getName() = "MyModule"
+
+  <span class="c">// Step 3: @ReactMethod exposes it to JS. Async result via Promise/callback</span>
+  <span class="f">@ReactMethod</span>
+  fun multiply(a: Double, b: Double, promise: Promise) {
+    promise.resolve(a * b)   <span class="c">// answer is serialized back over the bridge</span>
+  }
+}</code></pre>
+
+    <span class="filetag">android/app/src/main/java/com/myapp/MyPackage.kt</span>
+<pre><code>class MyPackage : <span class="g">ReactPackage</span> {
+  <span class="c">// Step 4 + 5: create the module and return it in the list</span>
+  override fun createNativeModules(ctx: ReactApplicationContext) =
+    listOf(MyModule(ctx))
+  override fun createViewManagers(ctx: ReactApplicationContext) =
+    emptyList&lt;ViewManager&lt;*, *&gt;&gt;()
+}</code></pre>
+
+    <span class="filetag">android/app/src/main/java/com/myapp/MainApplication.kt</span>
+<pre><code>override fun getPackages(): List&lt;ReactPackage&gt; =
+  PackageList(this).packages.apply {
+    <span class="g">add(MyPackage())</span>   <span class="c">// Step 6: register your package</span>
+  }</code></pre>
+
+    <span class="filetag">JS — anywhere in your app</span>
+<pre><code>import { NativeModules } from 'react-native';
+<span class="c">// Step 7: access via NativeModules; call is async over the bridge (Step 8)</span>
+const result = await <span class="g">NativeModules.MyModule</span>.multiply(3, 7); <span class="c">// 21</span></code></pre>
+
+    <div class="note old">
+      <span class="tag">iOS equivalent (old)</span>
+      Same shape in Obj-C: a class with <code>RCT_EXPORT_MODULE()</code> and <code>RCT_EXPORT_METHOD(multiply:...)</code> in <code>MyModule.m</code>. No spec, no codegen — just macros the bridge reads at runtime.
+    </div>
+  </div>
+</section>
+
+<!-- NEW ARCH EXAMPLE -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Example · New Architecture (TurboModule)</div>
+      <h2>The same module, as a TurboModule</h2>
+      <p>Start from a typed spec, let Codegen produce the native interface, implement it, and enable the New Architecture.</p>
+    </div>
+
+    <span class="filetag">src/specs/NativeMyModule.ts &nbsp;·&nbsp; must be prefixed <b>Native</b></span>
+<pre><code><span class="c">// Step 1: the contract. Codegen reads this file.</span>
 import type { TurboModule } from 'react-native';
 import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
-  multiply(a: number, b: number): number; // Synchronous JSI!
+  multiply(a: number, b: number): number;   <span class="c">// can be SYNCHRONOUS via JSI</span>
 }
+<span class="c">// Step 7: JS imports this directly — typed, no NativeModules lookup</span>
+export default TurboModuleRegistry.<span class="g">getEnforcing</span>&lt;Spec&gt;('MyModule');</code></pre>
 
-export default TurboModuleRegistry.getEnforcing&lt;Spec&gt;('MultiplyModule');
+    <span class="filetag">package.json &nbsp;·&nbsp; Codegen config (Step 2 + 6)</span>
+<pre><code>"codegenConfig": {
+  "name": "MyModuleSpec",
+  "type": "modules",
+  "jsSrcsDir": "src/specs"
+}
+<span class="c"># Step 6: turn the New Architecture ON</span>
+<span class="c"># android/gradle.properties → newArchEnabled=true</span>
+<span class="c"># iOS → RCT_NEW_ARCH_ENABLED=1 bundle exec pod install</span></code></pre>
 
-// 2. MultiplyModule.kt (Android Kotlin Implementation)
-class MultiplyModule(reactContext: ReactApplicationContext) 
-  : NativeMultiplyModuleSpec(reactContext) {
+    <span class="filetag">android/app/src/main/java/com/myapp/MyModule.kt</span>
+<pre><code><span class="c">// Step 3: extend the class Codegen generated from the spec</span>
+class MyModule(ctx: ReactApplicationContext) : <span class="g">NativeMyModuleSpec</span>(ctx) {
+  override fun getName() = "MyModule"
 
-  override fun getName() = "MultiplyModule"
-
+  <span class="c">// No @ReactMethod — the generated base already declares it (typed)</span>
   override fun multiply(a: Double, b: Double): Double {
-    return a * b // Synchronous return directly to JS via JSI
+    return a * b   <span class="c">// Step 8: returned straight to JS over JSI, no serialization</span>
   }
 }</code></pre>
+
+    <span class="filetag">MainApplication.kt &nbsp;·&nbsp; register via the TurboModule provider (Step 4 + 5)</span>
+<pre><code><span class="c">// A BaseReactPackage exposes the module by name + declares it to the registry</span>
+class MyPackage : <span class="g">BaseReactPackage</span>() {
+  override fun getModule(name: String, ctx: ReactApplicationContext) =
+    if (name == "MyModule") MyModule(ctx) else null
+  override fun getReactModuleInfoProvider() = ReactModuleInfoProvider {
+    mapOf("MyModule" to ReactModuleInfo(
+      "MyModule", "MyModule", false, false, false, <span class="g">isTurboModule = true</span>))
+  }
+}</code></pre>
+
+    <span class="filetag">JS — same call site, now typed &amp; synchronous-capable</span>
+<pre><code>import MyModule from './specs/NativeMyModule';
+const result = <span class="g">MyModule.multiply(3, 7)</span>; <span class="c">// 21 — can be synchronous, fully typed</span></code></pre>
+
+    <div class="note new">
+      <span class="tag">What changed in practice</span>
+      You wrote a <b>spec</b> instead of relying on <code>@ReactMethod</code>, ran <b>Codegen</b> (it runs during the native build) to get <code>NativeMyModuleSpec</code>, implemented that generated class, and flipped <b>newArchEnabled</b>. In return: JS/native mismatches are compile errors, the module loads on first use, and the call skips the bridge.
+    </div>
+  </div>
+</section>
+
+<!-- FILES CHEAT SHEET -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Cheat sheet</div>
+      <h2>Which files you actually touch</h2>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">File</th><th scope="col" class="old">Bridge</th><th scope="col" class="new">TurboModule</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" style="width:34%"><code>NativeMyModule.ts</code> (spec)</th><td class="old">—</td><td class="new">✓ define the typed API</td></tr>
+          <tr><th scope="row"><code>package.json</code> → <code>codegenConfig</code></th><td class="old">—</td><td class="new">✓ point Codegen at the spec</td></tr>
+          <tr><th scope="row"><code>MyModule.kt</code> / <code>.swift</code></th><td class="old">✓ extends <code>ReactContextBaseJavaModule</code></td><td class="new">✓ extends generated <code>…Spec</code></td></tr>
+          <tr><th scope="row"><code>MyPackage.kt</code></th><td class="old">✓ <code>createNativeModules()</code></td><td class="new">✓ <code>BaseReactPackage</code> provider</td></tr>
+          <tr><th scope="row"><code>MainApplication.kt</code></th><td class="old">✓ add package to <code>getPackages()</code></td><td class="new">✓ add package to <code>getPackages()</code></td></tr>
+          <tr><th scope="row"><code>gradle.properties</code> / Podfile env</th><td class="old">—</td><td class="new">✓ <code>newArchEnabled=true</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MYTHS -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Interview Pitfalls</div>
+    <h2>Native Module Myths</h2>
+
+    <div class="myth">
+      <div class="claim">"TurboModules removed getName() and the ReactPackage entirely."</div>
+      <p class="truth"><b>Not quite.</b> You still implement <code>getName()</code> and still register the module through a package in <code>getPackages()</code> — but the package is a <code>BaseReactPackage</code> that declares the module to the TurboModule registry, and the method signatures come from the generated spec, not <code>@ReactMethod</code>.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"Codegen is a separate command you run manually."</div>
+      <p class="truth"><b>Usually no.</b> Codegen runs automatically as part of the native build (Gradle / pod install) from your <code>codegenConfig</code>. It reads the <code>Native*.ts</code> spec and emits the C++/Java/Obj-C interfaces you implement.</p>
+    </div>
+    <div class="myth">
+      <div class="claim">"All TurboModule calls are synchronous."</div>
+      <p class="truth"><b>Only when appropriate.</b> JSI <em>allows</em> synchronous returns (great for cheap getters), but long-running work should still return a Promise so it doesn't block the JS thread. The win is that sync is now <em>possible</em>, not mandatory.</p>
+    </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">React Native Native Modules Guide — Senior Interview Prep.</div>
+  <div class="wrap">React Native Native Modules guide — senior interview prep. New Architecture APIs (Codegen config, package base classes) still shift between RN versions — verify class names and setup against the docs for your exact version.</div>
 </footer>
 </body>
 </html>

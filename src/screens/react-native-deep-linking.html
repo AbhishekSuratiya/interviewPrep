@@ -20,6 +20,10 @@
   --universal-bg:#DBEAFE;
   --deferred:#7C3AED;
   --deferred-bg:#EDE9FE;
+  --bad:#B0175C;
+  --bad-bg:#FBE9F1;
+  --good:#059669;
+  --good-bg:#D1FAE5;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -41,6 +45,7 @@ h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin
 h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98}
 h2{font-size:clamp(1.7rem,3.6vw,2.5rem);line-height:1.05}
 h3{font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+h4{font-family:var(--display);font-weight:600;letter-spacing:-.01em;margin:0}
 p{margin:0 0 1em}
 .lede{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--slate);max-width:60ch}
 .eyebrow{
@@ -50,6 +55,7 @@ p{margin:0 0 1em}
 .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
 .mono{font-family:var(--mono);font-size:.86em}
 code{font-family:var(--mono);font-size:.86em;background:#DFE5EE;padding:1px 5px;border-radius:3px}
+strong{font-weight:600}
 
 /* ---------- hero ---------- */
 header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
@@ -68,12 +74,22 @@ header.hero{padding:clamp(56px,10vw,110px) 0 clamp(40px,6vw,72px);border-bottom:
 section{padding:clamp(48px,8vw,86px) 0;border-bottom:1px solid var(--line)}
 .section-head{max-width:64ch;margin-bottom:38px}
 .section-head p{color:var(--slate);margin-top:14px}
+.subhead{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:1.4rem;margin:44px 0 6px}
+.subhead:first-child{margin-top:0}
+.subhead + p{color:var(--slate);margin-top:0}
 
 /* ---------- grid & cards ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-style:space-between}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column}
 .card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
 .card p{font-size:.92rem;color:var(--slate);margin:8px 0 0}
+
+/* ---------- numbered steps ---------- */
+.steps{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+.step-n{font-family:var(--mono);font-size:.8rem;color:var(--link);padding-top:3px;letter-spacing:.08em}
+.step-body p{color:var(--slate);margin:6px 0 0;max-width:64ch}
+.step-body p:last-child{margin-bottom:0}
 
 /* ---------- code block ---------- */
 pre{
@@ -81,6 +97,11 @@ pre{
   background:#0E1626;color:#E2F2ED;padding:18px;border-radius:10px;
   overflow-x:auto;margin:14px 0 0;
 }
+pre code{background:none;padding:0;border-radius:0;font-size:inherit;color:inherit}
+pre .c{color:#7C8AA5}
+pre .g{color:#7EE0C0}
+pre .r{color:#F3A7C4}
+.codecap{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:22px 0 0}
 
 /* ---------- table ---------- */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper-2)}
@@ -92,6 +113,27 @@ thead th{
 }
 tbody th{font-weight:600;width:22%}
 tr:last-child th,tr:last-child td{border-bottom:0}
+td code,th code{white-space:nowrap}
+
+/* ---------- callouts ---------- */
+.note{border-left:3px solid var(--universal);background:var(--paper-2);padding:16px 20px;border-radius:0 10px 10px 0;margin:20px 0 0;font-size:.93rem;color:var(--slate)}
+.note.warn{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--good)}
+.note b{color:var(--ink);font-weight:600}
+.note .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;color:var(--ink)}
+
+/* ---------- file path visual ---------- */
+.pathbox{font-family:var(--mono);font-size:.8rem;background:#0E1626;color:#E2F2ED;border-radius:10px;padding:16px 18px;margin-top:8px;overflow-x:auto;line-height:1.9;white-space:pre}
+.pathbox .dir{color:#7EE0C0}
+.pathbox .file{color:#FCD34D}
+.pathbox .muted{color:#7C8AA5}
+
+/* ---------- flow ---------- */
+.flow{display:grid;gap:0;border-top:1px solid var(--line);margin-top:8px}
+.flow-row{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:18px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.flow-row .when{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--deferred)}
+.flow-row p{margin:0;color:var(--slate);font-size:.93rem}
+@media (max-width:640px){.flow-row{grid-template-columns:1fr;gap:4px}}
 
 /* ---------- myths & qna ---------- */
 .myth{border-left:3px solid var(--link);background:var(--paper-2);padding:18px 20px;border-radius:0 10px 10px 0;margin-bottom:16px}
@@ -102,151 +144,358 @@ tr:last-child th,tr:last-child td{border-bottom:0}
 .qna{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px}
 .qna-q{font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;gap:8px}
 .qna-a{color:var(--slate);font-size:.93rem;line-height:1.6}
+.qna-a ol{margin:8px 0 0;padding-left:20px;line-height:1.7}
+.qna-a li{margin-bottom:8px}
 
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
+
+@media (max-width:720px){
+  .step{grid-template-columns:1fr;gap:4px}
+  .step-n{padding-top:0}
+}
 </style>
 </head>
 <body>
 
 <header class="hero">
   <div class="wrap">
-    <div class="hero-tag">React Native Navigation & Links</div>
+    <div class="hero-tag">React Native Navigation &amp; Links</div>
     <h1>
       <span>Deep Linking Architecture.</span>
-      <span class="dim">Schemes, Universal Links & App Links.</span>
+      <span class="dim">Schemes, Universal &amp; App Links.</span>
     </h1>
-    <p class="lede">Deep links route web URLs and custom protocols into specific React Native screens. Learn how to configure OS-level verification, React Navigation routing, and deferred installation attribution.</p>
+    <p class="lede">A deep link routes a URL to a specific screen inside your app. The hard parts aren't the routing — they're proving to the OS that you own the domain, putting the verification files in exactly the right place, handling links that arrive <em>before</em> the app is installed, and not trusting a single byte of what the link contains.</p>
     <div class="hero-meta">
       <span class="chip">myapp://</span>
       <span class="chip">Universal Links (iOS)</span>
       <span class="chip">App Links (Android)</span>
-      <span class="chip">AASA File</span>
-      <span class="chip">assetlinks.json</span>
-      <span class="chip">React Navigation</span>
+      <span class="chip">/.well-known/</span>
+      <span class="chip">AASA + assetlinks.json</span>
+      <span class="chip">Deferred · Branch.io</span>
     </div>
   </div>
 </header>
 
+<!-- THREE TYPES -->
 <section>
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">Three Types of Deep Links</div>
       <h2>Deep Link Architecture Comparison</h2>
+      <p>Three mechanisms, escalating in reliability and trust. Interviewers want you to know not just what they are, but why each one exists.</p>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div>
-          <div class="k" style="color:var(--link)">Legacy / Basic</div>
-          <h3>Custom URL Schemes</h3>
-          <p>URLs starting with <code>myapp://profile/123</code>. Easy to implement in native manifests. However, browsers prompt a warning, and if the app isn't installed, the link simply fails without web fallback.</p>
-        </div>
+        <div class="k" style="color:var(--link)">Legacy / Basic</div>
+        <h3>Custom URL Schemes</h3>
+        <p>URLs like <code>myapp://profile/123</code>. Trivial to register in the native manifest. But <b>any</b> app can claim the same scheme, browsers show a warning prompt, and if the app isn't installed the link just fails — no web fallback.</p>
       </div>
 
       <div class="card">
-        <div>
-          <div class="k" style="color:var(--universal)">Modern Standard</div>
-          <h3>Universal & App Links</h3>
-          <p>Standard HTTPS URLs (<code>https://myapp.com/profile/123</code>). Verified via server configuration files (<code>apple-app-site-association</code> and <code>assetlinks.json</code>). Seamlessly opens the app if installed, or falls back to the browser website.</p>
-        </div>
+        <div class="k" style="color:var(--universal)">Modern Standard</div>
+        <h3>Universal &amp; App Links</h3>
+        <p>Ordinary HTTPS URLs (<code>https://myapp.com/profile/123</code>), verified by the OS against a file <b>you host on the domain</b>. Opens the app if installed, otherwise the website — and can't be hijacked, because ownership is proven server-side.</p>
       </div>
 
       <div class="card">
-        <div>
-          <div class="k" style="color:var(--deferred)">Deferred Attribution</div>
-          <h3>Deferred Deep Links</h3>
-          <p>Preserves link context when a user clicks a link <em>before</em> installing the app. After App Store / Play Store installation, the app reads the initial deferred link and navigates to the target content automatically.</p>
-        </div>
+        <div class="k" style="color:var(--deferred)">Deferred Attribution</div>
+        <h3>Deferred Deep Links</h3>
+        <p>Preserves the destination when the user taps a link <em>before</em> the app exists on their device. After they install from the store and open, the app recovers the original target and navigates there. Requires a third-party SDK — the OS can't do it alone.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- HOW A TAP RESOLVES -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The mechanism</div>
+      <h2>What actually happens on a tap</h2>
+      <p>The difference between a scheme and a universal link is entirely about <em>who decides</em> the app is allowed to handle the URL.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-row">
+        <div class="when">Custom scheme</div>
+        <p>The OS sees <code>myapp://</code>, looks for any installed app that registered that scheme, and opens it. No verification — an ambiguous match can go to the wrong app, which is the hijacking hole.</p>
+      </div>
+      <div class="flow-row">
+        <div class="when">Universal link (iOS)</div>
+        <p>On app install, iOS fetches <code>https://myapp.com/.well-known/apple-app-site-association</code> and checks that your app's <code>appID</code> is listed. Only then will tapping an <code>https://myapp.com/...</code> link open your app instead of Safari.</p>
+      </div>
+      <div class="flow-row">
+        <div class="when">App link (Android)</div>
+        <p>With <code>android:autoVerify="true"</code>, Android fetches <code>https://myapp.com/.well-known/assetlinks.json</code> and matches your package name + signing-cert fingerprint. Verified links skip the “open with” chooser entirely.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">Why HTTPS links are the answer to hijacking</span>
+      A custom scheme is a <b>claim</b>; a universal/app link is a <b>proof</b>. Because the OS won't associate the domain with your app unless it can fetch a file that only the domain owner could have placed there, no rogue app can intercept your <code>https://</code> links. This is the single most common deep-linking interview point.
+    </div>
+  </div>
+</section>
+
+<!-- REACT NAVIGATION -->
 <section>
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">React Navigation Setup</div>
-      <h2>Configuring React Navigation Link Routing</h2>
+      <h2>Routing links into screens</h2>
+      <p>Once the OS hands your app a URL, React Navigation's <code>linking</code> config maps it to a screen. You must handle both cold start and warm (already-running) cases.</p>
     </div>
 
-    <pre><code>import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+<pre><code>import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { Linking } from 'react-native';
 
 const linking: LinkingOptions&lt;RootStackParamList&gt; = {
-  prefixes: [
-    'myapp://',
-    'https://myapp.com',
-    'https://www.myapp.com',
-  ],
+  prefixes: ['myapp://', 'https://myapp.com', 'https://www.myapp.com'],
   config: {
     screens: {
       Home: '',
       Profile: 'user/:userId',
       PostDetails: {
         path: 'posts/:postId',
-        parse: { postId: (id) => Number(id) },
+        parse: { postId: (id) =&gt; Number(id) },
       },
     },
   },
+  <span class="c">// Cold start: app was launched *by* the link</span>
   async getInitialURL() {
-    // Cold start link handling
-    const url = await Linking.getInitialURL();
-    return url;
+    return await Linking.getInitialURL();
+  },
+  <span class="c">// Warm start: link arrives while app is already open</span>
+  subscribe(listener) {
+    const sub = Linking.addEventListener('url', ({ url }) =&gt; listener(url));
+    return () =&gt; sub.remove();
   },
 };
 
 export default function App() {
-  return (
-    &lt;NavigationContainer linking={linking}&gt;
-      {/* Screens */}
-    &lt;/NavigationContainer&gt;
-  );
+  return &lt;NavigationContainer linking={linking}&gt;{/* screens */}&lt;/NavigationContainer&gt;;
 }</code></pre>
+
+    <div class="note warn">
+      <span class="tag">The bug everyone ships once</span>
+      Handling only <code>getInitialURL()</code> works when the app is <b>closed</b>, but does nothing when it's already running in the background — the link silently no-ops. You need <b>both</b> <code>getInitialURL</code> (cold start) and the <code>url</code> event subscription (warm start). React Navigation's <code>linking</code> prop wires up both for you; if you roll your own with the raw <code>Linking</code> API, you must do both by hand.
+    </div>
   </div>
 </section>
 
+<!-- WHERE THE FILES GO -->
 <section>
   <div class="wrap">
     <div class="section-head">
-      <div class="eyebrow">Server Verification Specs</div>
-      <h2>Universal Links (AASA) & Android Asset Links</h2>
+      <div class="eyebrow">Server verification · where the files live</div>
+      <h2>The <code>/.well-known/</code> folder</h2>
+      <p>This is the part people get wrong. The OS looks for your verification files at one exact, standardized location. Miss any detail and links silently fall back to the browser with no error.</p>
     </div>
 
-    <div class="grid">
+    <p style="color:var(--slate);max-width:66ch"><code>/.well-known/</code> is a standardized directory (RFC 8615) at the <strong>root of your domain</strong> reserved for machine-readable metadata — the same place SSL/ACME challenges, <code>security.txt</code>, and passkey configs live. Apple and Google both look here for the app-association files. It is served by your <em>web server / host</em>, not bundled inside the app.</p>
+
+    <div class="pathbox"><span class="muted">https://myapp.com/</span>
+└── <span class="dir">.well-known/</span>
+    ├── <span class="file">apple-app-site-association</span>   <span class="muted"># iOS — NO .json extension</span>
+    └── <span class="file">assetlinks.json</span>              <span class="muted"># Android</span></div>
+
+    <h4 class="subhead">The rules that make or break it</h4>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Requirement</th><th scope="col">Why</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Exact path <code>/.well-known/…</code></th><td>Both OSes fetch this specific location. It must be on the <b>apex/exact domain</b> the link uses (<code>myapp.com</code> vs <code>www.myapp.com</code> are different — register both if you link both).</td></tr>
+          <tr><th scope="row">HTTPS with a valid cert</th><td>Fetched over TLS only. Self-signed or expired certs fail verification.</td></tr>
+          <tr><th scope="row">Content-Type <code>application/json</code></th><td>Required for the AASA even though it has <b>no <code>.json</code> extension</b>. A wrong MIME type is the most common iOS failure.</td></tr>
+          <tr><th scope="row">No redirects</th><td>Apple's CDN and Android's verifier fetch the file directly. A 301/302 (e.g. http→https or apex→www) breaks it. Serve <b>200 OK</b> at the real path.</td></tr>
+          <tr><th scope="row">Publicly reachable, no auth</th><td>No login walls, no geo-blocking, no <code>robots</code>/WAF blocking the store's fetchers.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid" style="margin-top:26px">
       <div class="card">
-        <div>
-          <div class="k" style="color:var(--universal)">iOS AASA File</div>
-          <p>Must be served at <code>https://myapp.com/.well-known/apple-app-site-association</code> with <code>application/json</code> header.</p>
-          <pre><code>{
+        <div class="k" style="color:var(--universal)">iOS · apple-app-site-association</div>
+        <p style="margin-top:0">Modern format uses <code>components</code> (path, query, fragment matching). <code>appID</code> is <code>&lt;TeamID&gt;.&lt;BundleID&gt;</code>. Also add the <code>Associated Domains</code> entitlement <code>applinks:myapp.com</code> in Xcode.</p>
+<pre><code>{
   "applinks": {
-    "apps": [],
     "details": [{
       "appID": "TEAMID.com.myapp",
-      "paths": ["/user/*", "/posts/*"]
+      "components": [
+        { "/": "/user/*" },
+        { "/": "/posts/*" }
+      ]
     }]
   }
 }</code></pre>
-        </div>
       </div>
 
       <div class="card">
-        <div>
-          <div class="k" style="color:var(--universal)">Android assetlinks.json</div>
-          <p>Must be served at <code>https://myapp.com/.well-known/assetlinks.json</code> with SHA-256 fingerprint of release certificate.</p>
-          <pre><code>[{
+        <div class="k" style="color:var(--good)">Android · assetlinks.json</div>
+        <p style="margin-top:0">Needs the <b>SHA-256 fingerprint</b> of the signing cert. With Play App Signing, use the fingerprint from the Play Console (not your local upload key). Add an intent-filter with <code>android:autoVerify="true"</code>.</p>
+<pre><code>[{
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
     "package_name": "com.myapp",
-    "sha256_cert_fingerprints": ["AB:CD:..."]
+    "sha256_cert_fingerprints": ["AB:CD:EF:..."]
   }
 }]</code></pre>
-        </div>
       </div>
+    </div>
+
+    <p class="codecap">Get the Android fingerprint &amp; verify both files</p>
+<pre><code><span class="c"># SHA-256 of your signing cert (or copy it from Play Console → App integrity)</span>
+keytool -list -v -keystore my-release.keystore -alias my-alias
+
+<span class="c"># iOS: validate the AASA (Apple's tool)</span>
+<span class="muted">→ https://search.developer.apple.com/appsearch-validation-tool/</span>
+
+<span class="c"># Android: ask Google's verifier exactly what the device will see</span>
+<span class="muted">→ https://digitalassetlinks.googleapis.com/v1/statements:list</span>
+<span class="muted">    ?source.web.site=https://myapp.com</span>
+<span class="muted">    &amp;relation=delegate_permission/common.handle_all_urls</span></code></pre>
+
+    <div class="note">
+      <span class="tag">Heads up: caching &amp; timing</span>
+      iOS fetches the AASA <b>at install time</b> through Apple's CDN, which caches aggressively — changes can take a while to propagate, and you often need to reinstall the app to re-trigger the fetch. Android verifies on install too; use <code>adb shell pm verify-app-links --re-verify com.myapp</code> to force re-verification while debugging.
     </div>
   </div>
 </section>
 
+<!-- DEFERRED DEEP LINKING -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The one nobody can define</div>
+      <h2>Deferred deep linking, explained</h2>
+      <p>Plainly: a <strong>deferred</strong> deep link is a deep link whose destination is <em>remembered across an app install</em>. The navigation is “deferred” until after the app exists.</p>
+    </div>
+
+    <p style="color:var(--slate);max-width:68ch">A normal deep link assumes the app is already installed. But the most valuable moment is a user who taps <code>myapp.com/posts/42</code>, <strong>doesn't have the app</strong>, gets sent to the App Store, installs, and opens it — landing on the generic home screen, the shared post lost. Deferred deep linking closes that gap: it carries the original destination (and marketing attribution) <em>through</em> the install so the first launch opens post 42.</p>
+
+    <h4 class="subhead">Why you need a third party for it</h4>
+    <p>Neither iOS nor Android natively passes link data through a store install — for privacy, there's no durable identifier connecting “the browser that clicked” to “the app that just launched.” So an attribution SDK bridges the two.</p>
+
+    <div class="flow">
+      <div class="flow-row">
+        <div class="when">1 · Click</div>
+        <p>User taps a Branch link (<code>myapp.app.link/xyz</code>). Branch records the click plus the intended deep-link data and any campaign params, then redirects to the correct store.</p>
+      </div>
+      <div class="flow-row">
+        <div class="when">2 · Install</div>
+        <p>User installs and opens the app. The Branch SDK initializes on first launch and asks Branch's server: “does this new open match a recent click?”</p>
+      </div>
+      <div class="flow-row">
+        <div class="when">3 · Match</div>
+        <p>Branch matches click → open — deterministically on Android (Play Install Referrer) and via other signals on iOS — and returns the stored deep-link data.</p>
+      </div>
+      <div class="flow-row">
+        <div class="when">4 · Route</div>
+        <p>Your app reads the returned params in the SDK callback and navigates to the real destination. First launch lands on post 42, not Home.</p>
+      </div>
+    </div>
+
+    <h4 class="subhead">Branch.io — and where you configure it</h4>
+    <p>Branch is the most common choice (alternatives: AppsFlyer OneLink, Adjust; Firebase Dynamic Links is being shut down, so don't pick it for new work). Configuration lives in <strong>two places</strong>: the Branch dashboard and your app.</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Where</th><th scope="col">What you set up</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Branch dashboard</th><td>Your link domain (<code>myapp.app.link</code> or a custom subdomain), the iOS Bundle ID + App Store ID, Android package + SHA-256, default deep-link data, and redirect/fallback rules.</td></tr>
+          <tr><th scope="row">iOS project</th><td>Add the Branch <code>key</code> to <code>Info.plist</code>, add the Branch link domain to your <b>Associated Domains</b> entitlement (Branch hosts the AASA for its domain), and init the SDK in <code>AppDelegate</code>.</td></tr>
+          <tr><th scope="row">Android project</th><td>Add the Branch key to the manifest, register an intent-filter for the Branch link domain, and initialize in your <code>Application</code> class.</td></tr>
+          <tr><th scope="row">JS / React Native</th><td>Subscribe to the SDK's session callback; it fires on every launch with <code>+clicked_branch_link</code> and your custom params.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="codecap">Reading the deferred link in React Native</p>
+<pre><code>import branch from 'react-native-branch';
+
+<span class="c">// Fires on cold start AND when a Branch link opens the app.</span>
+const unsubscribe = branch.subscribe(({ error, params }) =&gt; {
+  if (error) return;
+  <span class="c">// True only when the app was opened via a Branch link</span>
+  if (params['+clicked_branch_link']) {
+    <span class="g">const target = params.$deeplink_path;</span>   <span class="c">// e.g. "posts/42"</span>
+    navigateFromUrl(target);                       <span class="c">// works even on first-ever launch</span>
+  }
+});</code></pre>
+
+    <div class="note good">
+      <span class="tag">One-line interview answer</span>
+      “A deferred deep link remembers where the user was headed <b>across the install</b> — they tap a link without the app, install from the store, and the first launch still opens the right screen. The OS can't carry that context through an install, so you use an attribution SDK like <b>Branch.io</b> to match the pre-install click to the post-install open and hand your app the original deep-link data.”
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Security · treat every link as hostile</div>
+      <h2>Deep links are untrusted input</h2>
+      <p>A deep link is an entry point into your app that anyone can craft and send by SMS, email, or a web page. Handle its contents with the same suspicion as a query string on a public API.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="k" style="color:var(--bad)">Scheme hijacking</div>
+        <h3>Prefer verified links</h3>
+        <p>Any app can register <code>myapp://</code> and intercept it. Use <b>Universal / App Links</b> (OS-verified domain ownership) for anything sensitive. Keep the custom scheme only as a convenience/fallback, never as your trust boundary.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--bad)">Blind trust in params</div>
+        <h3>Validate &amp; authorize</h3>
+        <p>Never perform a privileged action straight from a link. <code>myapp://delete-account</code> or <code>?userId=999</code> must still pass <b>authentication and server-side authorization</b>. The link chooses a screen; it does not grant permission.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--bad)">Open redirect</div>
+        <h3>Allowlist redirects</h3>
+        <p>If a link carries a <code>redirect</code> or <code>next</code> URL, validate it against an <b>allowlist of your own hosts</b>. An unchecked redirect turns your app into a phishing launchpad.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--bad)">Injection &amp; traversal</div>
+        <h3>Sanitize before use</h3>
+        <p>Coerce and bound types (<code>Number(postId)</code>), reject unexpected shapes, and never feed raw link params into file paths, DB queries, or <code>WebView</code> URLs. Escape/validate at the boundary.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--bad)">Secrets in the URL</div>
+        <h3>Don't ship tokens in links</h3>
+        <p>Links land in logs, analytics, clipboards, and referrers. Magic-link / auth tokens must be <b>single-use, short-lived, and server-validated</b> — treat the link as a hint to start a flow, not proof of identity.</p>
+      </div>
+      <div class="card">
+        <div class="k" style="color:var(--good)">Defense in depth</div>
+        <h3>Re-check on the server</h3>
+        <p>The client can be bypassed entirely (attackers call your API directly). Every action a deep link can trigger must be independently authorized on the backend. The link is UX; the server is the gate.</p>
+      </div>
+    </div>
+
+    <p class="codecap">Validate at the boundary before you navigate</p>
+<pre><code>function handleDeepLink(url) {
+  const { pathname, searchParams } = new URL(url);
+
+  <span class="c">// 1. Only accept paths you actually own</span>
+  <span class="r">if (!ALLOWED_PATHS.test(pathname)) return goHome();</span>
+
+  <span class="c">// 2. Coerce &amp; bound every param — never trust the raw string</span>
+  const postId = Number(searchParams.get('postId'));
+  if (!Number.isInteger(postId) || postId &lt;= 0) return goHome();
+
+  <span class="c">// 3. Gate protected destinations behind auth + server authz</span>
+  if (isProtected(pathname) &amp;&amp; !isAuthenticated()) {
+    return goToLogin({ returnTo: pathname });
+  }
+
+  navigate(pathname, { postId });
+}</code></pre>
+  </div>
+</section>
+
+<!-- MYTHS -->
 <section>
   <div class="wrap">
     <div class="section-head">
@@ -255,15 +504,58 @@ export default function App() {
     </div>
 
     <div class="myth">
-      <div class="claim">"Custom URL schemes can't be hijacked by other malicious apps."</div>
-      <p class="truth"><b>False.</b> Multiple apps on Android or iOS can register the same custom scheme (e.g. <code>myapp://</code>). Universal Links / App Links solve this because the OS verifies ownership via server-side SSL domain association.</p>
+      <div class="claim">"Custom URL schemes can't be hijacked by other apps."</div>
+      <p class="truth"><b>False.</b> Multiple apps can register the same custom scheme (<code>myapp://</code>). Universal / App Links solve this because the OS verifies domain ownership via a file only you can host.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"The AASA file is named apple-app-site-association.json."</div>
+      <p class="truth"><b>False.</b> It has <b>no extension</b> — just <code>apple-app-site-association</code> — served with a <code>Content-Type: application/json</code> header from <code>/.well-known/</code> over HTTPS with no redirects.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"Deferred deep linking is a built-in feature of iOS/Android."</div>
+      <p class="truth"><b>False.</b> The OS does not carry link data through a store install. Deferred deep linking is provided by attribution SDKs (Branch, AppsFlyer, Adjust) that match a pre-install click to the post-install first open.</p>
+    </div>
+
+    <div class="myth">
+      <div class="claim">"If the link opened my screen, the user is authorized to be there."</div>
+      <p class="truth"><b>False.</b> A link is attacker-controllable input. Authentication and authorization must be enforced independently, on the server — the deep link only selects a destination.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIO -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Senior Technical Scenario</div>
+      <h2>End-to-end walkthrough</h2>
+    </div>
+
+    <div class="qna">
+      <div class="qna-q">
+        <span>💬</span>
+        <span><strong>Question:</strong> "Marketing sends a campaign link to a shared post. It must open the exact post if the app is installed, open the website on desktop, and — if a mobile user doesn't have the app — install it and still land on that post. Walk me through it."</span>
+      </div>
+      <div class="qna-a">
+        <strong>Plan:</strong>
+        <ol>
+          <li><strong>Use HTTPS Universal/App Links, not a custom scheme</strong>, so the OS opens the app directly and the same URL works as a website fallback on desktop.</li>
+          <li><strong>Host the verification files</strong> at <code>https://myapp.com/.well-known/apple-app-site-association</code> (Content-Type <code>application/json</code>, no extension, no redirects) and <code>/.well-known/assetlinks.json</code> (with the Play signing SHA-256). Add Associated Domains on iOS and <code>autoVerify</code> on Android.</li>
+          <li><strong>Map the path in React Navigation</strong> (<code>posts/:postId</code>) and handle both cold start (<code>getInitialURL</code>) and warm start (<code>url</code> event).</li>
+          <li><strong>For the not-installed case, wrap it as a Branch link</strong> so the destination is deferred through the store install; read <code>$deeplink_path</code> in <code>branch.subscribe</code> on first launch and route to the post.</li>
+          <li><strong>Validate before navigating:</strong> confirm the path is one we own, coerce <code>postId</code> to a positive integer, and gate any private post behind auth with a <code>returnTo</code> back to the link.</li>
+          <li><strong>Verify</strong> with Apple's AASA validator and Google's Digital Asset Links API, and test a real install-from-store flow — not just an already-installed device.</li>
+        </ol>
+      </div>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    React Native Deep Linking Guide — Senior Interview Prep.
+    React Native Deep Linking guide — senior interview prep. Verify AASA/assetlinks formats and SDK setup against current Apple, Android, and Branch docs; the file formats and matching rules change over time.
   </div>
 </footer>
 </body>

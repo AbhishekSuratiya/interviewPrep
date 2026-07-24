@@ -1,7 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useMemo } from 'react';
 import { checklistSections } from '../data/checklistTopics';
 import { reactNativeQuestions } from '../data/reactNativeQuestions';
 import { javascriptQuestions } from '../data/javascriptQuestions';
@@ -161,7 +158,6 @@ function ProgressBar({ done, total, color, isLight }) {
 }
 
 export default function Checklist({ isLight, initialSection }) {
-  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState(
     (initialSection && checklistSections.some(s => s.id === initialSection))
       ? initialSection
@@ -174,76 +170,20 @@ export default function Checklist({ isLight, initialSection }) {
   const [copiedId, setCopiedId] = useState(null); // topic id whose copy icon shows a checkmark
   const [expanded, setExpanded] = useState({}); // topic id -> bool, shows its question list
   const [answerShown, setAnswerShown] = useState({}); // question id -> bool, shows its answer
-  const lastRemoteValueRef = useRef(null);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState(false);
+  const syncing = false;
+  const syncError = false;
 
   const flashCopied = (id) => {
     setCopiedId(id);
     setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
   };
 
-  // 1. Listen to Firestore in real-time
-  useEffect(() => {
-    if (!user) {
-      setInitialLoadDone(true);
-      return;
-    }
-    setInitialLoadDone(false);
-    setSyncing(true);
-    setSyncError(false);
-
-    const unsub = onSnapshot(
-      doc(db, 'users', user.uid),
-      (snap) => {
-        setSyncing(false);
-        if (snap.exists() && snap.data().known) {
-          const remoteKnown = snap.data().known;
-          lastRemoteValueRef.current = remoteKnown;
-          setKnown((prev) => {
-            if (JSON.stringify(prev) !== JSON.stringify(remoteKnown)) {
-              return remoteKnown;
-            }
-            return prev;
-          });
-        }
-        setInitialLoadDone(true);
-      },
-      (err) => {
-        console.error('Failed to listen to checklist progress:', err);
-        setSyncError(true);
-        setSyncing(false);
-        setInitialLoadDone(true);
-      }
-    );
-
-    return () => unsub();
-  }, [user]);
-
-  // 2. Persist Local & Firestore Sync
+  // Persist progress to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(known));
     } catch { /* ignore */ }
-
-    if (user && initialLoadDone) {
-      // Avoid writing if this update came from the server
-      if (
-        lastRemoteValueRef.current &&
-        JSON.stringify(known) === JSON.stringify(lastRemoteValueRef.current)
-      ) {
-        return;
-      }
-
-      setDoc(doc(db, 'users', user.uid), { known }, { merge: true })
-        .then(() => setSyncError(false))
-        .catch((err) => {
-          console.error('Failed to save checklist progress to Firestore:', err);
-          setSyncError(true);
-        });
-    }
-  }, [known, user, initialLoadDone]);
+  }, [known]);
 
   const section = checklistSections.find((s) => s.id === activeSection);
   const questionBank = QUESTION_BANKS[activeSection] || {};

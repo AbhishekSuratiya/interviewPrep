@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useSkillData } from './hooks/useSkillData';
-import { useTheme } from './hooks/useTheme';
 import Home from './components/Home';
 import TopBar from './components/TopBar';
 import SkillHero from './components/SkillHero';
@@ -10,8 +9,6 @@ import CodePractice from './components/CodePractice';
 import Checklist from './components/Checklist';
 import PersonalBehavioralSection from './components/PersonalBehavioralSection';
 import BehavioralSection from './components/BehavioralSection';
-import AuthModal from './components/AuthModal';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrepJournal from './components/PrepJournal';
 import TopicDetailPage from './components/TopicDetailPage';
 import ScreenPage from './components/ScreenPage';
@@ -26,24 +23,8 @@ const DETAIL_PAGE_SECTIONS = new Set([
 ]);
 
 function AppShell() {
-  const { user, logout } = useAuth();
-  // undefined = still loading auth state, null = guest/skipped, object = logged in
-  const [skipped, setSkipped] = useState(() => !!localStorage.getItem('auth:skipped'));
-  const showAuthModal = user === undefined ? false : (user === null && !skipped);
-
-  const handleSkip = () => {
-    localStorage.setItem('auth:skipped', '1');
-    setSkipped(true);
-  };
-
-  // When user logs in, clear the skipped flag
-  if (user && skipped) {
-    localStorage.removeItem('auth:skipped');
-    setSkipped(false);
-  }
-
-  const { theme, toggle: toggleTheme } = useTheme();
-  const isLight = theme === 'light';
+  // Editorial "paper" theme — single light theme, no dark mode.
+  const isLight = true;
 
   const [activeSkill, setActiveSkill] = useState('home');
   const [navContext, setNavContext] = useState(null); // { section?, problemId? }
@@ -99,7 +80,7 @@ function AppShell() {
   const hasNonSenior = visibleSections.some(s => !s.isSenior);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isLight ? 'bg-[#f8fafc]' : 'bg-[#030712]'}`}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <TopBar
         activeSkill={activeSkill}
         onBackToHome={() => { setNavContext(null); handleSelectSkill('home'); }}
@@ -108,9 +89,6 @@ function AppShell() {
         onSearch={isCodePractice || isChecklist || activeSkill === 'home' ? () => { } : setSearch}
         isLight={isLight}
         hideSearch={isCodePractice || isChecklist || activeSkill === 'home'}
-        onShowAuth={() => setSkipped(false)}
-        theme={theme}
-        onThemeToggle={toggleTheme}
       />
 
       <div>
@@ -291,11 +269,6 @@ function AppShell() {
         />
       )}
 
-      {/* Auth Modal — shown on first visit until user logs in or skips */}
-      {showAuthModal && (
-        <AuthModal isLight={isLight} onSkip={handleSkip} />
-      )}
-
       {/* Global Study Notepad / Prep Journal overlay */}
       <PrepJournal isLight={isLight} />
     </div>
@@ -303,9 +276,5 @@ function AppShell() {
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
-  );
+  return <AppShell />;
 }

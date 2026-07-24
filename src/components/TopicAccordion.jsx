@@ -5,41 +5,45 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`
-      rounded-xl border transition-all duration-200 overflow-hidden
-      ${isLight
-        ? open ? 'border-blue-200 bg-white shadow-sm' : 'border-gray-200 bg-white hover:border-blue-200 hover:shadow-sm'
-        : open ? 'border-white/12 bg-white/4' : 'border-white/6 bg-white/2 hover:border-white/10 hover:bg-white/3'}
-    `}>
+    <div
+      className="transition-all duration-200 overflow-hidden"
+      style={{
+        borderRadius: 12,
+        border: `1px solid ${open ? 'var(--accent)' : 'var(--line)'}`,
+        background: 'var(--paper-2)',
+      }}
+    >
       {/* Trigger */}
       <button
         className="w-full flex items-center gap-4 px-5 py-4 text-left group"
         onClick={() => setOpen(o => !o)}
       >
-        <span className={`
-          w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0
-          transition-colors duration-200
-          ${isLight
-            ? open ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
-            : open ? 'bg-blue-500/20 text-blue-400' : 'bg-white/6 text-white/40'}
-        `}>
+        <span
+          className="w-7 h-7 flex items-center justify-center text-xs flex-shrink-0 transition-colors"
+          style={{
+            fontFamily: 'var(--mono)',
+            borderRadius: 8,
+            background: open ? 'var(--accent)' : 'var(--paper)',
+            border: '1px solid var(--line)',
+            color: open ? '#fff' : 'var(--slate)',
+          }}
+        >
           {index + 1}
         </span>
 
         <div className="flex-1 min-w-0">
-          <div className={`font-semibold text-sm mb-0.5 ${isLight ? 'text-gray-900' : 'text-white/90'}`}>
+          <div style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: '.98rem', color: 'var(--ink)' }}>
             {topic.title}
           </div>
-          <div className={`text-xs truncate ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
+          <div className="text-[13px] truncate" style={{ color: 'var(--slate)' }}>
             {topic.summary}
           </div>
         </div>
 
-        <span className={`
-          text-base flex-shrink-0 transition-transform duration-300
-          ${open ? 'rotate-180' : ''}
-          ${isLight ? 'text-gray-400' : 'text-white/30'}
-        `}>
+        <span
+          className={`text-base flex-shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--slate)' }}
+        >
           ▾
         </span>
       </button>
@@ -47,12 +51,12 @@ export default function TopicAccordion({ topic, index, isLight, onOpenCode }) {
       {/* Panel */}
       <div className={`topic-panel ${open ? 'open' : ''}`}>
         <div className="topic-panel-inner">
-          <div className={`mx-5 border-t mb-5 ${isLight ? 'border-gray-100' : 'border-white/6'}`} />
+          <div className="mx-5 mb-5" style={{ borderTop: '1px solid var(--line)' }} />
 
           <div className="px-5 pb-5 space-y-5">
             {/* Explanation */}
             <div>
-              <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${isLight ? 'text-blue-600' : 'text-blue-400'}`}>
+              <div className="mb-2" style={{ fontFamily: 'var(--mono)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent)' }}>
                 Explanation
               </div>
               <ReadAloudPlayer
