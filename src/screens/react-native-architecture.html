@@ -20,6 +20,9 @@
   --modern-bg:#E2F2ED;
   --hermes:#9A5B06;
   --hermes-bg:#FBEEDA;
+  --lane-js:#2C4A8C;
+  --lane-shadow:#9A5B06;
+  --lane-ui:#0B7A64;
   --display:"Bricolage Grotesque",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -160,10 +163,28 @@ tr:last-child th,tr:last-child td{border-bottom:0}
 
 footer{padding:44px 0 70px;color:var(--slate);font-size:.86rem}
 
+/* Per-stage thread label: on desktop the column position says which thread
+   a stage runs on, so it's hidden. On mobile the grid collapses to one
+   column and that cue is lost — so each card names its own thread. */
+.stage-lane{display:none}
+
 @media (max-width:720px){
   .lanes{grid-template-columns:1fr}
   .stage,.stage.span{grid-column:1}
-  .lane-head{border-right:0}
+  .lane-head{display:none}          /* stacked headers no longer map to stages */
+  .stage{border-left-width:4px}
+  .stage-lane{
+    display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;
+    text-transform:uppercase;font-weight:500;background:#E4E9F1;color:var(--slate);
+    border-radius:4px;padding:3px 8px;margin-bottom:9px;
+  }
+  .stage[data-lane="1"]{border-left-color:var(--lane-js)}
+  .stage[data-lane="2"]{border-left-color:var(--lane-shadow)}
+  .stage[data-lane="3"]{border-left-color:var(--lane-ui)}
+  .stage[data-lane="1"] .stage-lane{color:var(--lane-js);background:#E3E9F5}
+  .stage[data-lane="2"] .stage-lane{color:var(--lane-shadow);background:var(--hermes-bg)}
+  .stage[data-lane="3"] .stage-lane{color:var(--lane-ui);background:var(--modern-bg)}
+  .stage.span .stage-lane{background:transparent;border:1px dashed currentColor}
   .step{grid-template-columns:1fr;gap:6px}
   .step-n{padding-top:0}
   tbody th{width:auto}
@@ -546,7 +567,16 @@ function setArch(which){
     el.className = 'stage' + (s.span ? ' span' : '') + (s.cls ? ' ' + s.cls : '');
     if(!s.span){ el.style.setProperty('--col', s.col); }
     el.style.animationDelay = (i * 45) + 'ms';
-    el.innerHTML = '<span class="tick">' + s.tick + '</span><h3>' + s.t + '</h3><p>' + s.d + '</p>';
+
+    // Name the thread on the card itself. Hidden on desktop (the column
+    // already says it); shown on mobile where the grid collapses to one column.
+    var laneName = s.span ? 'Crosses all three threads' : HEADS[s.col - 1][1];
+    el.setAttribute('data-lane', s.span ? 'span' : String(s.col));
+
+    el.innerHTML =
+      '<span class="stage-lane">' + laneName + '</span>' +
+      '<span class="tick">' + s.tick + '</span>' +
+      '<h3>' + s.t + '</h3><p>' + s.d + '</p>';
     lanes.appendChild(el);
   });
 

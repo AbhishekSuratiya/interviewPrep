@@ -52,39 +52,49 @@ export default function SectionCard({ section, isSenior, isLight, onOpenCode, se
       {screenPath ? (
         <button
           onClick={() => onOpenScreen && onOpenScreen(screenPath)}
-          className="w-full flex items-center gap-3 px-6 py-4 text-left group transition-colors"
+          className="w-full flex flex-wrap items-center gap-x-3 gap-y-3 px-5 sm:px-6 py-4 text-left group transition-colors"
           style={{ borderBottom: '1px solid var(--line)', background: 'var(--line-2)' }}
         >
-          <span className="text-xl">{section.emoji}</span>
-          <h2 className="flex-1" style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--ink)' }}>
-            {section.title}
-          </h2>
-          {countPill}
-          <span
-            className="text-xs flex-shrink-0 px-3 py-1.5 rounded-full font-medium transition-all"
-            style={{ fontFamily: 'var(--mono)', letterSpacing: '.04em', color: 'var(--modern)', background: 'var(--modern-bg)', border: '1px solid var(--modern)' }}
-          >
-            Open full page →
-          </span>
+          {/* Title block — full width on mobile, shares the row on larger screens */}
+          <div className="flex items-center gap-3 min-w-0 basis-full sm:basis-auto sm:flex-1">
+            <span className="text-xl flex-shrink-0">{section.emoji}</span>
+            <h2 className="min-w-0" style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--ink)' }}>
+              {section.title}
+            </h2>
+          </div>
+          {/* Meta — wraps onto its own row on mobile */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {countPill}
+            <span
+              className="text-xs flex-shrink-0 px-3 py-1.5 rounded-full font-medium transition-all"
+              style={{ fontFamily: 'var(--mono)', letterSpacing: '.04em', color: 'var(--modern)', background: 'var(--modern-bg)', border: '1px solid var(--modern)' }}
+            >
+              Open full page →
+            </span>
+          </div>
         </button>
       ) : (
         <div
-          className="flex items-center gap-3 px-6 py-4"
+          className="flex flex-wrap items-center gap-x-3 gap-y-3 px-5 sm:px-6 py-4"
           style={{ borderBottom: '1px solid var(--line)', background: 'var(--line-2)' }}
         >
-          <span className="text-xl">{section.emoji}</span>
-          <h2 className="flex-1" style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--ink)' }}>
-            {section.title}
-          </h2>
-          {countPill}
-          {isSenior && (
-            <span
-              className="text-[11px] px-2.5 py-1 rounded-full"
-              style={{ fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--legacy)', background: 'var(--legacy-bg)' }}
-            >
-              Senior
-            </span>
-          )}
+          <div className="flex items-center gap-3 min-w-0 basis-full sm:basis-auto sm:flex-1">
+            <span className="text-xl flex-shrink-0">{section.emoji}</span>
+            <h2 className="min-w-0" style={{ fontFamily: 'var(--display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--ink)' }}>
+              {section.title}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {countPill}
+            {isSenior && (
+              <span
+                className="text-[11px] px-2.5 py-1 rounded-full"
+                style={{ fontFamily: 'var(--mono)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--legacy)', background: 'var(--legacy-bg)' }}
+              >
+                Senior
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -104,7 +114,8 @@ export default function SectionCard({ section, isSenior, isLight, onOpenCode, se
                 style={{ fontFamily: 'var(--mono)', background: 'var(--paper)', border: '1px solid var(--line)', color: 'var(--slate)' }}
               >{i + 1}</span>
               <span className="text-sm truncate flex-1">{topic.title}</span>
-              <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ fontFamily: 'var(--mono)', color: 'var(--modern)' }}>
+              {/* Hover affordance is pointless on touch — hide it so titles get the width */}
+              <span className="hidden sm:inline text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ fontFamily: 'var(--mono)', color: 'var(--modern)' }}>
                 Open page →
               </span>
             </button>
