@@ -5,6 +5,27 @@ const DEVICON_BASE = 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons'
 
 const SKILLS_METADATA = [
   {
+    id: 'react-native',
+    title: 'React Native',
+    category: 'Core Concepts',
+    color: '#a78bfa',
+    iconUrl: `${DEVICON_BASE}/react/react-original.svg`,
+    isReactNative: true,
+    description: 'Build native cross-platform mobile apps: bridge and JSI systems, gesture handling, thread model, and native module integration.',
+    stats: '9 Sections • 22 Topics',
+    badge: 'Mobile'
+  },
+  {
+    id: 'react',
+    title: 'React',
+    category: 'Core Concepts',
+    color: '#60a5fa',
+    iconUrl: `${DEVICON_BASE}/react/react-original.svg`,
+    description: 'Master React internals: functional hooks, fiber architecture, concurrent rendering, virtual DOM, and performance tuning.',
+    stats: '11 Sections • 24 Topics',
+    badge: 'Framework'
+  },
+  {
     id: 'javascript',
     title: 'JavaScript',
     category: 'Core Concepts',
@@ -23,27 +44,6 @@ const SKILLS_METADATA = [
     description: 'Strengthen type safety: generic interfaces, utility types, conditional types, mapped types, declaration merging, and tsconfig settings.',
     stats: '6 Sections • 14 Topics',
     badge: 'Core Concept'
-  },
-  {
-    id: 'react',
-    title: 'React',
-    category: 'Core Concepts',
-    color: '#60a5fa',
-    iconUrl: `${DEVICON_BASE}/react/react-original.svg`,
-    description: 'Master React internals: functional hooks, fiber architecture, concurrent rendering, virtual DOM, and performance tuning.',
-    stats: '11 Sections • 24 Topics',
-    badge: 'Framework'
-  },
-  {
-    id: 'react-native',
-    title: 'React Native',
-    category: 'Core Concepts',
-    color: '#a78bfa',
-    iconUrl: `${DEVICON_BASE}/react/react-original.svg`,
-    isReactNative: true,
-    description: 'Build native cross-platform mobile apps: bridge and JSI systems, gesture handling, thread model, and native module integration.',
-    stats: '9 Sections • 22 Topics',
-    badge: 'Mobile'
   },
   {
     id: 'nodejs',

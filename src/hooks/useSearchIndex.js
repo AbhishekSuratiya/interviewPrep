@@ -97,14 +97,13 @@ function fuzzyScore(query, target) {
 // ── Skill JSON files to fetch ──────────────────────────────────────────────
 
 const SKILL_FILES = [
+  { id: 'react-native', file: '/data/react-native.json', label: 'React Native' },
+  { id: 'react', file: '/data/react.json', label: 'React' },
   { id: 'javascript', file: '/data/javascript.json', label: 'JavaScript' },
   { id: 'typescript', file: '/data/typescript.json', label: 'TypeScript' },
-  { id: 'react', file: '/data/react.json', label: 'React' },
-  { id: 'react-native', file: '/data/react-native.json', label: 'React Native' },
   { id: 'nodejs', file: '/data/nodejs.json', label: 'Node.js' },
   { id: 'ai', file: '/data/ai.json', label: 'Artificial Intelligence' },
   { id: 'senior', file: '/data/senior.json', label: 'Senior Topics' },
-  { id: 'personal-behavioral', file: '/data/personal-behavioral.json', label: 'My Personal' },
 ];
 
 // ── Build search index ─────────────────────────────────────────────────────
